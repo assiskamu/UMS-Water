@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kalkulator Permintaan & Bekalan Air UMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --primary-light: #e0f4ff;
+      --primary-dark: #054a91;
+      --accent: #00bcd4;
+      --danger: #d32f2f;
+      --success: #2e7d32;
+      --bg: #f5fbff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, sans-serif;
+      background: radial-gradient(circle at top, #e6f7ff, #f7fbff);
+      color: #12324a;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+      color: #fff;
+      padding: 1.8rem 1rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: 0.03em;
+    }
+
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      background-color: rgba(255, 255, 255, 0.15);
+      font-size: 0.8rem;
+    }
+
+    .badge span {
+      font-size: 1.1rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 1.5rem auto 2.5rem;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 1.3rem 1.5rem;
+      margin-bottom: 1.3rem;
+      box-shadow: 0 8px 25px rgba(13, 110, 253, 0.08);
+      border: 1px solid rgba(13, 110, 253, 0.1);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h2 span.icon {
+      font-size: 1.25rem;
+    }
+
+    .card p.lead {
+      margin-top: 0;
+      font-size: 0.9rem;
+      color: #476582;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #23405b;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 0.4rem 0.55rem;
+      border-radius: 0.5rem;
+      border: 1px solid #c5d9ec;
+      font-size: 0.9rem;
+      outline: none;
+      background-color: #fafdff;
+    }
+
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+      background-color: #ffffff;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.8rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      background-color: #fdfefe;
+    }
+
+    th,
+    td {
+      padding: 0.4rem 0.5rem;
+      border-bottom: 1px solid #dde7f3;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    thead {
+      background: linear-gradient(
+        90deg,
+        rgba(13, 110, 253, 0.08),
+        rgba(0, 188, 212, 0.05)
+      );
+    }
+
+    tfoot td {
+      font-weight: 700;
+      background-color: #f3f8ff;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.6rem;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: transform 0.05s ease, box-shadow 0.12s ease,
+        background-color 0.12s ease;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+    }
+
+    button.secondary {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
+      gap: 1.2rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-surplus {
+      background-color: rgba(46, 125, 50, 0.08);
+      color: var(--success);
+    }
+
+    .status-deficit {
+      background-color: rgba(211, 47, 47, 0.08);
+      color: var(--danger);
+    }
+
+    .summary-text {
+      font-size: 0.88rem;
+      margin-top: 0.5rem;
+      color: #36526f;
+    }
+
+    .note {
+      font-size: 0.78rem;
+      color: #627d96;
+      margin-top: 0.2rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background-color: rgba(13, 110, 253, 0.05);
+      color: #2d4c69;
+      margin-right: 0.4rem;
+      margin-top: 0.2rem;
+    }
+
+    canvas {
+      background: radial-gradient(circle at top, #f2fbff, #ffffff);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 1.25rem 1rem;
+      }
+      header h1 {
+        font-size: 1.3rem;
+      }
+      .two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>Kalkulator Permintaan & Bekalan Air UMS</h1>
+        <p>
+          Alat pantas untuk menganggar profil penggunaan air mengikut zon / kategori
+          di Universiti Malaysia Sabah serta membandingkannya dengan kapasiti bekalan.
+        </p>
+      </div>
+      <div class="badge">
+        <span>💧</span> Ruang rujukan: per kapita, puncak & MLD
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- INPUT KATEGORI -->
+    <section class="card">
+      <h2><span class="icon">📥</span> Input Permintaan Air Mengikut Kategori</h2>
+      <p class="lead">
+        Tetapkan kategori (contoh: Asrama, Fakulti & Pentadbiran, Masjid, Sukan)
+        bersama bilangan pengguna, kadar penggunaan per kapita, dan faktor permintaan
+        puncak (peak factor).
+      </p>
+
+      <div class="note">
+        Tip: 1 m<sup>3</sup>/hari = 1,000 L/hari. Peak factor biasa: 1.2–1.5 untuk
+        asrama & kawasan tumpuan pelajar.
+      </div>
+
+      <div style="overflow-x: auto; margin-top: 0.6rem;">
+        <table id="category-input-table">
+          <thead>
+            <tr>
+              <th>Kategori</th>
+              <th>Populasi (orang)</th>
+              <th>Per kapita (L/org/hari)</th>
+              <th>Faktor puncak</th>
+            </tr>
+          </thead>
+          <tbody id="category-body">
+            <tr class="category-row">
+              <td>
+                <input
+                  type="text"
+                  class="cat-name"
+                  value="Asrama"
+                  placeholder="Contoh: Asrama"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-pop"
+                  value="6621"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-percap"
+                  value="200"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-peak"
+                  value="1.3"
+                  min="1"
+                  step="0.05"
+                />
+              </td>
+            </tr>
+            <tr class="category-row">
+              <td>
+                <input
+                  type="text"
+                  class="cat-name"
+                  value="Fakulti & Pentadbiran"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-pop"
+                  value="8000"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-percap"
+                  value="50"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-peak"
+                  value="1.2"
+                  min="1"
+                  step="0.05"
+                />
+              </td>
+            </tr>
+            <tr class="category-row">
+              <td>
+                <input
+                  type="text"
+                  class="cat-name"
+                  value="Masjid & Surau"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-pop"
+                  value="3000"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-percap"
+                  value="15"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-peak"
+                  value="1.5"
+                  min="1"
+                  step="0.05"
+                />
+              </td>
+            </tr>
+            <tr class="category-row">
+              <td>
+                <input
+                  type="text"
+                  class="cat-name"
+                  value="Sukan & Rekreasi"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-pop"
+                  value="1500"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-percap"
+                  value="60"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-peak"
+                  value="1.4"
+                  min="1"
+                  step="0.05"
+                />
+              </td>
+            </tr>
+            <tr class="category-row">
+              <td>
+                <input
+                  type="text"
+                  class="cat-name"
+                  placeholder="Kategori tambahan (jika ada)"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-pop"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-percap"
+                  min="0"
+                  step="1"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  class="cat-peak"
+                  min="1"
+                  step="0.05"
+                  value="1.3"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button id="add-row-btn" type="button" class="secondary">
+          ➕ Tambah baris kategori
+        </button>
+        <button id="calculate-btn" type="button" class="primary">
+          🔍 Kira permintaan & banding dengan bekalan
+        </button>
+      </div>
+    </section>
+
+    <!-- INPUT BEKALAN -->
+    <section class="card">
+      <h2><span class="icon">🚰</span> Input Bekalan Air (Supply)</h2>
+      <p class="lead">
+        Masukkan anggaran kapasiti bekalan air harian yang diterima kampus
+        (daripada JANS dan sumber lain). Nilai dalam juta liter sehari (MLD).
+      </p>
+
+      <div class="input-grid">
+        <div>
+          <label for="supply-mld">Kapasiti bekalan harian (MLD)</label>
+          <input
+            type="number"
+            id="supply-mld"
+            value="5"
+            min="0"
+            step="0.1"
+          />
+          <div class="note">
+            Contoh: jika UMS menerima sekitar 4.5–5.0 MLD daripada loji rawatan.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OUTPUT & ANALISIS -->
+    <section class="card">
+      <h2><span class="icon">📊</span> Analisis Permintaan Air Mengikut Kategori</h2>
+      <p class="lead">
+        Jadual di bawah menunjukkan permintaan purata dan puncak (peak) bagi
+        setiap kategori, berdasarkan input yang dimasukkan.
+      </p>
+
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Kategori</th>
+              <th>Populasi</th>
+              <th>Per kapita (L/org/hari)</th>
+              <th>Purata (m³/hari)</th>
+              <th>Faktor puncak</th>
+              <th>Permintaan puncak (m³/hari)</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <!-- Diisi oleh JavaScript -->
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Jumlah</td>
+              <td id="total-pop">–</td>
+              <td>–</td>
+              <td id="total-avg-m3">–</td>
+              <td>–</td>
+              <td id="total-peak-m3">–</td>
+            </tr>
+            <tr>
+              <td>Jumlah dalam MLD</td>
+              <td colspan="2"></td>
+              <td id="total-avg-mld">–</td>
+              <td></td>
+              <td id="total-peak-mld">–</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="chip">
+        🔹 Formula: Purata = Populasi × Per kapita / 1,000
+      </div>
+      <div class="chip">
+        🔹 Puncak = Purata × Faktor puncak
+      </div>
+    </section>
+
+    <!-- DEMAND VS SUPPLY -->
+    <section class="card">
+      <h2><span class="icon">⚖️</span> Ringkasan Demand–Supply (MLD)</h2>
+      <div class="two-column">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Nilai (MLD)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Jumlah permintaan purata</td>
+                <td id="summary-avg-mld">–</td>
+                <td id="status-avg">–</td>
+              </tr>
+              <tr>
+                <td>Jumlah permintaan puncak</td>
+                <td id="summary-peak-mld">–</td>
+                <td id="status-peak">–</td>
+              </tr>
+              <tr>
+                <td>Kapasiti bekalan harian</td>
+                <td id="supply-avg-mld">–</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Surplus / Defisit purata</td>
+                <td id="surplus-avg-mld">–</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Surplus / Defisit semasa puncak</td>
+                <td id="surplus-peak-mld">–</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="summary-text" id="summary-text">
+            Tekan butang <strong>“Kira permintaan & banding dengan bekalan”</strong>
+            untuk melihat ringkasan analisis.
+          </div>
+        </div>
+
+        <div>
+          <canvas id="demand-by-category-chart" height="200"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHART SHARE -->
+    <section class="card">
+      <h2><span class="icon">📈</span> Agihan Permintaan Mengikut Kategori</h2>
+      <p class="lead">
+        Rajah ini menunjukkan sumbangan (%) setiap kategori kepada permintaan purata
+        keseluruhan kampus.
+      </p>
+      <canvas id="demand-share-chart" height="200"></canvas>
+    </section>
+
+    <!-- NOTA KAEDAH -->
+    <section class="card">
+      <h2><span class="icon">🧮</span> Nota Metodologi (Ringkas)</h2>
+      <ul style="margin-top: 0.2rem; padding-left: 1.1rem; font-size: 0.85rem;">
+        <li>
+          <strong>Langkah 1 – Per kapita:</strong> Untuk setiap kategori, permintaan
+          purata dikira berdasarkan bilangan pengguna dikali kadar penggunaan
+          per kapita (L/org/hari), ditukar kepada m³/hari.
+        </li>
+        <li>
+          <strong>Langkah 2 – Permintaan puncak:</strong> Nilai purata digandakan
+          dengan faktor puncak (contoh 1.3) bagi menggambarkan hari/hari jam
+          penggunaan tertinggi.
+        </li>
+        <li>
+          <strong>Langkah 3 – Penukaran kepada MLD:</strong> 1 MLD = 1,000 m³/hari.
+          Jumlah permintaan purata dan puncak dijumlah dan dibandingkan dengan
+          kapasiti bekalan.
+        </li>
+        <li>
+          <strong>Langkah 4 – Tafsiran:</strong> Jika permintaan melebihi bekalan,
+          nilai ditunjukkan sebagai <span style="color: var(--danger);">defisit</span>.
+          Jika bekalan lebih tinggi daripada permintaan, ia diklasifikasikan sebagai
+          <span style="color: var(--success);">surplus</span>.
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const addRowBtn = document.getElementById("add-row-btn");
+      const calcBtn = document.getElementById("calculate-btn");
+      const categoryBody = document.getElementById("category-body");
+
+      const resultsBody = document.getElementById("results-body");
+      const totalPopEl = document.getElementById("total-pop");
+      const totalAvgM3El = document.getElementById("total-avg-m3");
+      const totalPeakM3El = document.getElementById("total-peak-m3");
+      const totalAvgMLDEl = document.getElementById("total-avg-mld");
+      const totalPeakMLDEl = document.getElementById("total-peak-mld");
+
+      const supplyInput = document.getElementById("supply-mld");
+      const summaryAvgMLDEl = document.getElementById("summary-avg-mld");
+      const summaryPeakMLDEl = document.getElementById("summary-peak-mld");
+      const supplyAvgMLDEl = document.getElementById("supply-avg-mld");
+      const surplusAvgMLDEl = document.getElementById("surplus-avg-mld");
+      const surplusPeakMLDEl = document.getElementById("surplus-peak-mld");
+      const statusAvgEl = document.getElementById("status-avg");
+      const statusPeakEl = document.getElementById("status-peak");
+      const summaryTextEl = document.getElementById("summary-text");
+
+      const categoryChartCtx = document
+        .getElementById("demand-by-category-chart")
+        .getContext("2d");
+      const shareChartCtx = document
+        .getElementById("demand-share-chart")
+        .getContext("2d");
+
+      let categoryChart = null;
+      let shareChart = null;
+
+      function formatNumber(num) {
+        if (!isFinite(num)) return "–";
+        return num.toLocaleString("ms-MY", {
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function createStatusPill(status, isPeak) {
+        if (!status) return "";
+        const cls =
+          status === "Surplus" ? "status-surplus" : "status-deficit";
+        const label =
+          status === "Surplus"
+            ? isPeak
+              ? "Surplus (puncak)"
+              : "Surplus"
+            : isPeak
+            ? "Defisit (puncak)"
+            : "Defisit";
+        return `<span class="status-pill ${cls}">${
+          status === "Surplus" ? "✔️" : "⚠️"
+        } ${label}</span>`;
+      }
+
+      function calculate() {
+        const rows = Array.from(
+          document.querySelectorAll(".category-row")
+        );
+
+        const categoryNames = [];
+        const peakDemands = [];
+        const avgDemands = [];
+
+        let totalPop = 0;
+        let totalAvgM3 = 0;
+        let totalPeakM3 = 0;
+
+        resultsBody.innerHTML = "";
+
+        rows.forEach((row) => {
+          const nameInput = row.querySelector(".cat-name");
+          const popInput = row.querySelector(".cat-pop");
+          const perCapInput = row.querySelector(".cat-percap");
+          const peakInput = row.querySelector(".cat-peak");
+
+          const name = (nameInput.value || "").trim();
+          const pop = parseFloat(popInput.value);
+          const perCap = parseFloat(perCapInput.value);
+          const peak = parseFloat(peakInput.value);
+
+          if (!name || !isFinite(pop) || pop <= 0 || !isFinite(perCap)) {
+            return;
+          }
+
+          const avgM3 = (pop * perCap) / 1000; // L -> m³
+          const peakM3 = avgM3 * (isFinite(peak) && peak > 0 ? peak : 1);
+
+          totalPop += pop;
+          totalAvgM3 += avgM3;
+          totalPeakM3 += peakM3;
+
+          categoryNames.push(name);
+          avgDemands.push(avgM3);
+          peakDemands.push(peakM3);
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${name}</td>
+            <td>${formatNumber(pop)}</td>
+            <td>${formatNumber(perCap)}</td>
+            <td>${formatNumber(avgM3)}</td>
+            <td>${isFinite(peak) ? formatNumber(peak) : "–"}</td>
+            <td>${formatNumber(peakM3)}</td>
+          `;
+          resultsBody.appendChild(tr);
+        });
+
+        const totalAvgMLD = totalAvgM3 / 1000;
+        const totalPeakMLD = totalPeakM3 / 1000;
+
+        totalPopEl.textContent = totalPop ? formatNumber(totalPop) : "–";
+        totalAvgM3El.textContent = formatNumber(totalAvgM3);
+        totalPeakM3El.textContent = formatNumber(totalPeakM3);
+        totalAvgMLDEl.textContent = formatNumber(totalAvgMLD);
+        totalPeakMLDEl.textContent = formatNumber(totalPeakMLD);
+
+        // Demand vs supply
+        const supplyMLD = parseFloat(supplyInput.value);
+        const supplyValid = isFinite(supplyMLD) && supplyMLD >= 0;
+
+        summaryAvgMLDEl.textContent = formatNumber(totalAvgMLD);
+        summaryPeakMLDEl.textContent = formatNumber(totalPeakMLD);
+        supplyAvgMLDEl.textContent = supplyValid
+          ? formatNumber(supplyMLD)
+          : "–";
+
+        let surplusAvg = null;
+        let surplusPeak = null;
+        let statusAvg = "";
+        let statusPeak = "";
+
+        if (supplyValid) {
+          surplusAvg = supplyMLD - totalAvgMLD;
+          surplusPeak = supplyMLD - totalPeakMLD;
+
+          surplusAvgMLDEl.textContent = formatNumber(surplusAvg);
+          surplusPeakMLDEl.textContent = formatNumber(surplusPeak);
+
+          if (totalAvgMLD > 0) {
+            statusAvg = surplusAvg >= 0 ? "Surplus" : "Deficit";
+          }
+          if (totalPeakMLD > 0) {
+            statusPeak = surplusPeak >= 0 ? "Surplus" : "Deficit";
+          }
+        } else {
+          surplusAvgMLDEl.textContent = "–";
+          surplusPeakMLDEl.textContent = "–";
+        }
+
+        statusAvgEl.innerHTML = createStatusPill(statusAvg, false);
+        statusPeakEl.innerHTML = createStatusPill(statusPeak, true);
+
+        // Ringkasan teks
+        if (!categoryNames.length) {
+          summaryTextEl.innerHTML =
+            "Sila masukkan sekurang-kurangnya satu kategori dengan populasi dan kadar per kapita untuk menjana analisis.";
+        } else if (!supplyValid) {
+          summaryTextEl.innerHTML =
+            "Permintaan purata dianggarkan sebanyak <strong>" +
+            formatNumber(totalAvgMLD) +
+            " MLD</strong>, manakala permintaan puncak sebanyak <strong>" +
+            formatNumber(totalPeakMLD) +
+            " MLD</strong>. Sila masukkan nilai kapasiti bekalan untuk menilai sama ada terdapat surplus atau defisit.";
+        } else {
+          const avgWord = surplusAvg >= 0 ? "surplus" : "defisit";
+          const peakWord = surplusPeak >= 0 ? "surplus" : "defisit";
+
+          summaryTextEl.innerHTML =
+            "Dengan kapasiti bekalan sebanyak <strong>" +
+            formatNumber(supplyMLD) +
+            " MLD</strong>, jumlah permintaan purata kampus dianggarkan " +
+            "<strong>" +
+            formatNumber(totalAvgMLD) +
+            " MLD</strong> (" +
+            avgWord +
+            " " +
+            formatNumber(Math.abs(surplusAvg)) +
+            " MLD), manakala permintaan puncak dianggarkan " +
+            "<strong>" +
+            formatNumber(totalPeakMLD) +
+            " MLD</strong> (" +
+            peakWord +
+            " " +
+            formatNumber(Math.abs(surplusPeak)) +
+            " MLD).";
+        }
+
+        // Kemas kini carta
+        updateCharts(categoryNames, avgDemands, peakDemands);
+      }
+
+      function updateCharts(labels, avgData, peakData) {
+        // Bar chart: peak demand by category
+        if (categoryChart) {
+          categoryChart.destroy();
+        }
+        categoryChart = new Chart(categoryChartCtx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Purata (m³/hari)",
+                data: avgData,
+                backgroundColor: "rgba(13, 110, 253, 0.6)",
+                borderRadius: 6,
+              },
+              {
+                label: "Puncak (m³/hari)",
+                data: peakData,
+                backgroundColor: "rgba(0, 188, 212, 0.6)",
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              title: {
+                display: true,
+                text: "Permintaan Air Mengikut Kategori",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "m³/hari",
+                },
+              },
+            },
+          },
+        });
+
+        // Pie chart: share of average demand
+        if (shareChart) {
+          shareChart.destroy();
+        }
+        shareChart = new Chart(shareChartCtx, {
+          type: "pie",
+          data: {
+            labels,
+            datasets: [
+              {
+                data: avgData,
+                backgroundColor: [
+                  "rgba(13, 110, 253, 0.8)",
+                  "rgba(0, 188, 212, 0.8)",
+                  "rgba(3, 169, 244, 0.8)",
+                  "rgba(0, 150, 136, 0.8)",
+                  "rgba(63, 81, 181, 0.8)",
+                  "rgba(33, 150, 243, 0.8)",
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "right",
+              },
+              title: {
+                display: true,
+                text: "Agihan Permintaan Purata Mengikut Kategori",
+              },
+            },
+          },
+        });
+      }
+
+      addRowBtn.addEventListener("click", () => {
+        const tr = document.createElement("tr");
+        tr.className = "category-row";
+        tr.innerHTML = `
+          <td><input type="text" class="cat-name" placeholder="Nama kategori" /></td>
+          <td><input type="number" class="cat-pop" min="0" step="1" /></td>
+          <td><input type="number" class="cat-percap" min="0" step="1" /></td>
+          <td><input type="number" class="cat-peak" value="1.3" min="1" step="0.05" /></td>
+        `;
+        categoryBody.appendChild(tr);
+      });
+
+      calcBtn.addEventListener("click", calculate);
+
+      // kiraan awal dengan nilai contoh
+      calculate();
+    });
+  </script>
+</body>
+</html>
