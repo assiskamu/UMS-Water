@@ -70,21 +70,6 @@
       gap: 1rem;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.9rem;
-    }
-
-    .brand img {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.8);
-      object-fit: contain;
-      background: #ffffff;
-    }
-
     header h1 {
       margin: 0;
       font-size: 1.45rem;
@@ -335,10 +320,25 @@
       line-height: 1.5;
     }
 
+    footer {
+      text-align: center;
+      padding: 0.8rem 1rem 1.2rem;
+      font-size: 0.78rem;
+      color: #607d8b;
+      background: #f1f7fd;
+      border-top: 1px solid #d3e1f2;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.8rem 1rem;
+      margin-top: 0.6rem;
+    }
+
     @media (max-width: 768px) {
       header { padding: 1.15rem 1rem; }
       header h1 { font-size: 1.25rem; }
-      .brand img { width: 44px; height: 44px; }
       .two-column { grid-template-columns: 1fr; }
     }
   </style>
@@ -346,26 +346,22 @@
 <body>
   <header>
     <div class="header-inner">
-      <div class="brand">
-        <!-- Tukar src di bawah kepada URL logo rasmi UMS jika ada -->
-        <img src="https://via.placeholder.com/150x150.png?text=UMS"
-             alt="Logo UMS" />
-        <div>
-          <h1>Kalkulator Permintaan & Bekalan Air UMS</h1>
-          <p>
-            Anggaran profil penggunaan air mengikut zon kampus dan perbandingan
-            dengan kapasiti bekalan harian.
-          </p>
-        </div>
+      <div>
+        <h1>Kalkulator Permintaan & Bekalan Air UMS</h1>
+        <p>
+          Anggaran demand–supply air kampus termasuk sumber alternatif
+          (tangkapan air hujan, reuse, air tasik, kondensasi penghawa dingin)
+          dan analisis kos–faedah asas.
+        </p>
       </div>
       <div class="badge">
-        <span>💧</span> Planning-level water balance tool
+        <span>💧</span> Planning-level water & CBA tool
       </div>
     </div>
   </header>
 
   <main>
-    <!-- INPUT KATEGORI -->
+    <!-- INPUT KATEGORI DEMAND -->
     <section class="card">
       <h2><span class="icon">📥</span> Input Permintaan Air Mengikut Kategori</h2>
       <p class="lead">
@@ -439,22 +435,134 @@
       </div>
     </section>
 
-    <!-- INPUT SUPPLY -->
+    <!-- INPUT SUPPLY (JANS) -->
     <section class="card">
-      <h2><span class="icon">🚰</span> Input Bekalan Air (Supply)</h2>
+      <h2><span class="icon">🚰</span> Input Bekalan Air (Supply Sedia Ada)</h2>
       <p class="lead">
         Masukkan anggaran kapasiti bekalan air harian yang diterima kampus
-        (daripada JANS dan sumber lain). Nilai dalam juta liter sehari (MLD).
+        (daripada JANS dan sumber utama lain). Nilai dalam juta liter sehari (MLD).
       </p>
 
-      <label for="supply-mld">Kapasiti bekalan harian (MLD)</label>
+      <label for="supply-mld">Kapasiti bekalan harian sedia ada (MLD)</label>
       <input type="number" id="supply-mld" value="5" min="0" step="0.1" />
       <div class="note">
         Contoh: jika UMS menerima sekitar 4.5–5.0 MLD daripada loji rawatan.
       </div>
     </section>
 
-    <!-- ANALISIS KATEGORI -->
+    <!-- PARAMETER TARIF & KEWANGAN -->
+    <section class="card">
+      <h2><span class="icon">💹</span> Parameter Tarif & Kewangan</h2>
+      <p class="lead">
+        Parameter ini digunakan untuk mengira penjimatan bil air & pembetungan
+        serta NPV, BCR dan payback bagi setiap sumber air alternatif.
+      </p>
+
+      <div class="input-grid">
+        <div>
+          <label for="tariff-water">Tarif air terawat (RM/m³)</label>
+          <input type="number" id="tariff-water" value="1.20" min="0" step="0.01" />
+        </div>
+        <div>
+          <label for="tariff-sewer">Kadar pembetungan (RM/m³)</label>
+          <input type="number" id="tariff-sewer" value="0.80" min="0" step="0.01" />
+        </div>
+        <div>
+          <label for="analysis-years">Tempoh analisis kewangan (tahun)</label>
+          <input type="number" id="analysis-years" value="20" min="1" step="1" />
+        </div>
+        <div>
+          <label for="discount-rate">Kadar diskaun (% setahun)</label>
+          <input type="number" id="discount-rate" value="5" min="0" step="0.1" />
+        </div>
+      </div>
+
+      <div class="note">
+        Kebiasaannya kadar diskaun 3–7% digunakan untuk projek infrastruktur
+        awam, bergantung kepada garis panduan agensi.
+      </div>
+    </section>
+
+    <!-- INPUT SUMBER AIR ALTERNATIF -->
+    <section class="card">
+      <h2><span class="icon">💧</span> Sumber Air Alternatif (Extra Supply & CBA)</h2>
+      <p class="lead">
+        Masukkan kapasiti teknikal, faktor penggunaan, CAPEX dan OPEX bagi
+        setiap sumber air alternatif. Sumber ini akan menambah bekalan efektif
+        dan digunakan dalam analisis kos–faedah.
+      </p>
+
+      <div style="overflow-x: auto; margin-top: 0.6rem;">
+        <table id="alt-input-table">
+          <thead>
+            <tr>
+              <th>Sumber</th>
+              <th>Kapasiti (m³/hari)</th>
+              <th>Faktor penggunaan (% hari/tahun)</th>
+              <th>CAPEX (RM)</th>
+              <th>OPEX tetap (RM/tahun)</th>
+              <th>OPEX berubah (RM/m³)</th>
+              <th>Jangka hayat (tahun)</th>
+            </tr>
+          </thead>
+          <tbody id="alt-body">
+            <tr class="alt-row">
+              <td><input type="text" class="alt-name" value="Tangkapan air hujan" /></td>
+              <td><input type="number" class="alt-capacity" value="300" min="0" /></td>
+              <td><input type="number" class="alt-util" value="80" min="0" max="100" /></td>
+              <td><input type="number" class="alt-capex" value="1200000" min="0" /></td>
+              <td><input type="number" class="alt-opex-fixed" value="60000" min="0" /></td>
+              <td><input type="number" class="alt-opex-var" value="0.10" min="0" step="0.01" /></td>
+              <td><input type="number" class="alt-life" value="25" min="1" /></td>
+            </tr>
+            <tr class="alt-row">
+              <td><input type="text" class="alt-name" value="Air tasik / tasik kampus" /></td>
+              <td><input type="number" class="alt-capacity" value="200" min="0" /></td>
+              <td><input type="number" class="alt-util" value="70" min="0" max="100" /></td>
+              <td><input type="number" class="alt-capex" value="900000" min="0" /></td>
+              <td><input type="number" class="alt-opex-fixed" value="45000" min="0" /></td>
+              <td><input type="number" class="alt-opex-var" value="0.15" min="0" step="0.01" /></td>
+              <td><input type="number" class="alt-life" value="20" min="1" /></td>
+            </tr>
+            <tr class="alt-row">
+              <td><input type="text" class="alt-name" value="Reuse (greywater / RO)" /></td>
+              <td><input type="number" class="alt-capacity" value="250" min="0" /></td>
+              <td><input type="number" class="alt-util" value="80" min="0" max="100" /></td>
+              <td><input type="number" class="alt-capex" value="1500000" min="0" /></td>
+              <td><input type="number" class="alt-opex-fixed" value="90000" min="0" /></td>
+              <td><input type="number" class="alt-opex-var" value="0.25" min="0" step="0.01" /></td>
+              <td><input type="number" class="alt-life" value="20" min="1" /></td>
+            </tr>
+            <tr class="alt-row">
+              <td><input type="text" class="alt-name" value="Kondensasi penghawa dingin" /></td>
+              <td><input type="number" class="alt-capacity" value="50" min="0" /></td>
+              <td><input type="number" class="alt-util" value="90" min="0" max="100" /></td>
+              <td><input type="number" class="alt-capex" value="200000" min="0" /></td>
+              <td><input type="number" class="alt-opex-fixed" value="15000" min="0" /></td>
+              <td><input type="number" class="alt-opex-var" value="0.05" min="0" step="0.01" /></td>
+              <td><input type="number" class="alt-life" value="15" min="1" /></td>
+            </tr>
+            <tr class="alt-row">
+              <td><input type="text" class="alt-name" placeholder="Sumber tambahan" /></td>
+              <td><input type="number" class="alt-capacity" min="0" /></td>
+              <td><input type="number" class="alt-util" min="0" max="100" /></td>
+              <td><input type="number" class="alt-capex" min="0" /></td>
+              <td><input type="number" class="alt-opex-fixed" min="0" /></td>
+              <td><input type="number" class="alt-opex-var" min="0" step="0.01" /></td>
+              <td><input type="number" class="alt-life" min="1" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button id="add-alt-row-btn" type="button" class="secondary">
+          ➕ Tambah baris sumber alternatif
+        </button>
+      </div>
+    </section>
+
+    <!-- ANALISIS KATEGORI DEMAND -->
     <section class="card">
       <h2><span class="icon">📊</span> Analisis Permintaan Air Mengikut Kategori</h2>
       <p class="lead">
@@ -526,8 +634,18 @@
                 <td id="status-peak">–</td>
               </tr>
               <tr>
-                <td>Kapasiti bekalan harian</td>
+                <td>Bekalan sedia ada (JANS)</td>
                 <td id="supply-avg-mld">–</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Extra supply (air hujan / reuse / tasik / AC)</td>
+                <td id="alt-supply-mld">–</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td><strong>Bekalan efektif (JANS + sumber alternatif)</strong></td>
+                <td id="effective-supply-mld">–</td>
                 <td></td>
               </tr>
               <tr>
@@ -551,7 +669,7 @@
 
           <div class="summary-text" id="summary-text">
             Tekan butang <strong>“Kira permintaan & banding dengan bekalan”</strong>
-            untuk melihat ringkasan analisis.
+            untuk melihat ringkasan analisis termasuk kesan sumber alternatif.
           </div>
         </div>
 
@@ -561,7 +679,7 @@
       </div>
     </section>
 
-    <!-- PIE CHART -->
+    <!-- PIE CHART DEMAND SHARE -->
     <section class="card">
       <h2><span class="icon">📈</span> Agihan Permintaan Mengikut Kategori</h2>
       <p class="lead">
@@ -571,14 +689,100 @@
       <canvas id="demand-share-chart" height="200"></canvas>
     </section>
 
-    <!-- METODOLOGI + DISLCAIMER -->
+    <!-- ANALISIS CBA SUMBER ALTERNATIF -->
+    <section class="card">
+      <h2><span class="icon">💼</span> Analisis Kewangan Sumber Air Alternatif</h2>
+      <p class="lead">
+        Jadual di bawah merumuskan volum, penjimatan, CAPEX, OPEX, aliran tunai
+        bersih, payback period, NPV dan BCR bagi setiap sumber air alternatif.
+      </p>
+
+      <div style="overflow-x: auto;">
+        <table id="alt-results-table">
+          <thead>
+            <tr>
+              <th>Sumber</th>
+              <th>Kapasiti (m³/hari)</th>
+              <th>Utilisasi (% hari)</th>
+              <th>Vol. tahunan (m³/tahun)</th>
+              <th>CAPEX (RM)</th>
+              <th>OPEX tahunan (RM/tahun)</th>
+              <th>Saving air + pembetungan (RM/tahun)</th>
+              <th>CF bersih (RM/tahun)</th>
+              <th>Payback (tahun)</th>
+              <th>NPV (RM)</th>
+              <th>BCR</th>
+            </tr>
+          </thead>
+          <tbody id="alt-results-body">
+            <!-- JS akan isi -->
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Jumlah / Agregat</td>
+              <td id="alt-total-capacity">–</td>
+              <td>–</td>
+              <td id="alt-total-volume">–</td>
+              <td id="alt-total-capex">–</td>
+              <td id="alt-total-opex">–</td>
+              <td id="alt-total-saving">–</td>
+              <td id="alt-total-netcf">–</td>
+              <td>–</td>
+              <td id="alt-total-npv">–</td>
+              <td id="alt-total-bcr">–</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="two-column" style="margin-top: 1rem;">
+        <div>
+          <h3 style="font-size:0.96rem; margin-top:0;">Ringkasan Kewangan Projek</h3>
+          <table id="alt-summary-table">
+            <tbody>
+              <tr>
+                <td>Jumlah CAPEX semua sumber</td>
+                <td id="sum-capex">–</td>
+              </tr>
+              <tr>
+                <td>Jumlah penjimatan air + pembetungan / tahun</td>
+                <td id="sum-saving">–</td>
+              </tr>
+              <tr>
+                <td>Jumlah OPEX / tahun</td>
+                <td id="sum-opex">–</td>
+              </tr>
+              <tr>
+                <td>Aliran tunai bersih tahunan</td>
+                <td id="sum-netcf">–</td>
+              </tr>
+              <tr>
+                <td>NPV projek (semua sumber)</td>
+                <td id="sum-npv">–</td>
+              </tr>
+              <tr>
+                <td>BCR projek (semua sumber)</td>
+                <td id="sum-bcr">–</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <canvas id="cba-npv-chart" height="200" style="margin-bottom:0.8rem;"></canvas>
+          <canvas id="cba-payback-chart" height="200"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- METODOLOGI + DISCLAIMER -->
     <section class="card">
       <h2><span class="icon">🧮</span> Nota Metodologi (Ringkas) & Penafian</h2>
       <div class="disclaimer">
         <p><strong>Metodologi ringkas:</strong></p>
         <ul style="margin-top: 0.2rem; padding-left: 1.1rem;">
           <li>
-            <strong>Langkah 1 – Per kapita:</strong> Untuk setiap kategori,
+            <strong>Langkah 1 – Per kapita:</strong> Untuk setiap kategori demand,
             permintaan purata dikira berdasarkan bilangan pengguna dikali kadar
             penggunaan per kapita (L/org/hari), ditukar kepada m³/hari.
           </li>
@@ -588,17 +792,16 @@
             atau masa penggunaan tertinggi.
           </li>
           <li>
-            <strong>Langkah 3 – Penukaran kepada MLD:</strong> 1 MLD =
-            1,000 m³/hari. Jumlah permintaan purata dan puncak dijumlah dan
-            dibandingkan dengan kapasiti bekalan.
+            <strong>Langkah 3 – Extra supply:</strong> Kapasiti sumber air
+            alternatif ditukar kepada bekalan efektif (m³/hari) menggunakan
+            faktor penggunaan (% hari/tahun) dan ditambah kepada bekalan JANS.
           </li>
           <li>
-            <strong>Langkah 4 – Tafsiran:</strong> Jika permintaan melebihi
-            bekalan, nilai ditunjukkan sebagai
-            <span style="color: var(--danger); font-weight: 600;">defisit</span>.
-            Jika bekalan lebih tinggi daripada permintaan, ia diklasifikasikan
-            sebagai
-            <span style="color: var(--success); font-weight: 600;">surplus</span>.
+            <strong>Langkah 4 – Penjimatan & CBA:</strong> Volum air alternatif
+            dikalikan dengan tarif air + pembetungan untuk mendapatkan penjimatan
+            tahunan, ditolak OPEX untuk mendapatkan aliran tunai bersih.
+            NPV dan BCR dikira menggunakan tempoh analisis dan kadar diskaun
+            yang ditetapkan.
           </li>
         </ul>
 
@@ -606,15 +809,19 @@
         <p>
           Kalkulator ini disediakan untuk tujuan perancangan dan analisis awal
           (planning-level estimate) berdasarkan andaian input pengguna. Nilai
-          yang dijana bukanlah rekod rasmi penggunaan air Universiti Malaysia
-          Sabah dan tidak menggantikan data meter/bil air yang disahkan oleh
-          pihak berkuasa berkaitan. Sebarang keputusan kejuruteraan atau
-          pelaburan sebenar hendaklah dirujuk dan disahkan dengan data teknikal
-          terperinci serta pihak berkepentingan rasmi.
+          yang dijana bukanlah rekod rasmi penggunaan atau bekalan air
+          Universiti Malaysia Sabah dan tidak menggantikan data meter/bil air
+          yang disahkan oleh pihak berkuasa berkaitan. Sebarang keputusan
+          kejuruteraan atau pelaburan sebenar hendaklah dirujuk dan disahkan
+          dengan data teknikal terperinci serta pihak berkepentingan rasmi.
         </p>
       </div>
     </section>
   </main>
+
+  <footer>
+    © 2025 UMS Water Demand–Supply & CBA Calculator. All rights reserved.
+  </footer>
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
@@ -622,6 +829,9 @@
       const calcBtn = document.getElementById("calculate-btn");
       const exportBtn = document.getElementById("export-excel-btn");
       const categoryBody = document.getElementById("category-body");
+
+      const addAltRowBtn = document.getElementById("add-alt-row-btn");
+      const altBody = document.getElementById("alt-body");
 
       const resultsBody = document.getElementById("results-body");
       const totalPopEl = document.getElementById("total-pop");
@@ -634,6 +844,8 @@
       const summaryAvgMLDEl = document.getElementById("summary-avg-mld");
       const summaryPeakMLDEl = document.getElementById("summary-peak-mld");
       const supplyAvgMLDEl = document.getElementById("supply-avg-mld");
+      const altSupplyMLDEl = document.getElementById("alt-supply-mld");
+      const effectiveSupplyMLDEl = document.getElementById("effective-supply-mld");
       const surplusAvgMLDEl = document.getElementById("surplus-avg-mld");
       const surplusPeakMLDEl = document.getElementById("surplus-peak-mld");
       const statusAvgEl = document.getElementById("status-avg");
@@ -643,15 +855,46 @@
       const rowAvg = document.getElementById("row-avg");
       const rowPeak = document.getElementById("row-peak");
 
+      // CBA elements
+      const altResultsBody = document.getElementById("alt-results-body");
+      const altTotalCapacityEl = document.getElementById("alt-total-capacity");
+      const altTotalVolumeEl = document.getElementById("alt-total-volume");
+      const altTotalCapexEl = document.getElementById("alt-total-capex");
+      const altTotalOpexEl = document.getElementById("alt-total-opex");
+      const altTotalSavingEl = document.getElementById("alt-total-saving");
+      const altTotalNetCFEl = document.getElementById("alt-total-netcf");
+      const altTotalNPVEl = document.getElementById("alt-total-npv");
+      const altTotalBCREl = document.getElementById("alt-total-bcr");
+
+      const sumCapexEl = document.getElementById("sum-capex");
+      const sumSavingEl = document.getElementById("sum-saving");
+      const sumOpexEl = document.getElementById("sum-opex");
+      const sumNetCFEl = document.getElementById("sum-netcf");
+      const sumNPVEl = document.getElementById("sum-npv");
+      const sumBCREl = document.getElementById("sum-bcr");
+
+      const tariffWaterInput = document.getElementById("tariff-water");
+      const tariffSewerInput = document.getElementById("tariff-sewer");
+      const analysisYearsInput = document.getElementById("analysis-years");
+      const discountRateInput = document.getElementById("discount-rate");
+
       const categoryChartCtx = document
         .getElementById("demand-by-category-chart")
         .getContext("2d");
       const shareChartCtx = document
         .getElementById("demand-share-chart")
         .getContext("2d");
+      const cbaNPVCtx = document
+        .getElementById("cba-npv-chart")
+        .getContext("2d");
+      const cbaPaybackCtx = document
+        .getElementById("cba-payback-chart")
+        .getContext("2d");
 
       let categoryChart = null;
       let shareChart = null;
+      let cbaNpvChart = null;
+      let cbaPaybackChart = null;
 
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
@@ -676,6 +919,7 @@
       }
 
       function calculate() {
+        // 1. Demand by category
         const rows = Array.from(document.querySelectorAll(".category-row"));
         const categoryNames = [];
         const peakDemands = [];
@@ -734,15 +978,63 @@
         totalAvgMLDEl.textContent = formatNumber(totalAvgMLD);
         totalPeakMLDEl.textContent = formatNumber(totalPeakMLD);
 
-        // Demand vs supply
-        const supplyMLD = parseFloat(supplyInput.value);
-        const supplyValid = isFinite(supplyMLD) && supplyMLD >= 0;
+        // 2. Baseline supply (JANS)
+        const supplyBaseMLD = parseFloat(supplyInput.value);
+        const supplyValid = isFinite(supplyBaseMLD) && supplyBaseMLD >= 0;
 
+        supplyAvgMLDEl.textContent = supplyValid
+          ? formatNumber(supplyBaseMLD)
+          : "–";
+
+        // 3. Alternative supply + build altData for CBA
+        const altRows = Array.from(document.querySelectorAll(".alt-row"));
+        let altAvgM3PerDayTotal = 0;
+        const altData = [];
+
+        altRows.forEach((row) => {
+          const name = (row.querySelector(".alt-name").value || "").trim();
+          const cap = parseFloat(row.querySelector(".alt-capacity").value);
+          const util = parseFloat(row.querySelector(".alt-util").value);
+          const capex = parseFloat(row.querySelector(".alt-capex").value);
+          const opexFixed = parseFloat(
+            row.querySelector(".alt-opex-fixed").value
+          );
+          const opexVar = parseFloat(
+            row.querySelector(".alt-opex-var").value
+          );
+          const lifeYears = parseFloat(row.querySelector(".alt-life").value);
+
+          if (!name || !isFinite(cap) || cap <= 0 || !isFinite(util) || util <= 0) {
+            return;
+          }
+
+          const avgM3PerDayEff = cap * (util / 100);
+          altAvgM3PerDayTotal += avgM3PerDayEff;
+
+          altData.push({
+            name,
+            capacity: cap,
+            utilPercent: util,
+            capex: isFinite(capex) ? capex : 0,
+            opexFixed: isFinite(opexFixed) ? opexFixed : 0,
+            opexVar: isFinite(opexVar) ? opexVar : 0,
+            lifeYears: isFinite(lifeYears) ? lifeYears : NaN,
+          });
+        });
+
+        const altSupplyMLD = altAvgM3PerDayTotal / 1000;
+        altSupplyMLDEl.textContent = altData.length
+          ? formatNumber(altSupplyMLD)
+          : "0.00";
+
+        const effectiveSupplyMLD = (supplyValid ? supplyBaseMLD : 0) + altSupplyMLD;
+        effectiveSupplyMLDEl.textContent = effectiveSupplyMLD
+          ? formatNumber(effectiveSupplyMLD)
+          : "–";
+
+        // 4. Demand vs effective supply
         summaryAvgMLDEl.textContent = formatNumber(totalAvgMLD);
         summaryPeakMLDEl.textContent = formatNumber(totalPeakMLD);
-        supplyAvgMLDEl.textContent = supplyValid
-          ? formatNumber(supplyMLD)
-          : "–";
 
         let surplusAvg = null;
         let surplusPeak = null;
@@ -752,9 +1044,9 @@
         rowAvg.classList.remove("summary-row-surplus", "summary-row-deficit");
         rowPeak.classList.remove("summary-row-surplus", "summary-row-deficit");
 
-        if (supplyValid) {
-          surplusAvg = supplyMLD - totalAvgMLD;
-          surplusPeak = supplyMLD - totalPeakMLD;
+        if (effectiveSupplyMLD > 0) {
+          surplusAvg = effectiveSupplyMLD - totalAvgMLD;
+          surplusPeak = effectiveSupplyMLD - totalPeakMLD;
 
           surplusAvgMLDEl.textContent = formatNumber(surplusAvg);
           surplusPeakMLDEl.textContent = formatNumber(surplusPeak);
@@ -785,33 +1077,49 @@
         statusAvgEl.innerHTML = createStatusPill(statusAvg, false);
         statusPeakEl.innerHTML = createStatusPill(statusPeak, true);
 
-        // Ringkasan teks
+        // 5. Ringkasan teks
         if (!categoryNames.length) {
           summaryTextEl.innerHTML =
             "Sila masukkan sekurang-kurangnya satu kategori dengan populasi dan kadar per kapita untuk menjana analisis.";
-        } else if (!supplyValid) {
+        } else if (!supplyValid && !altData.length) {
           summaryTextEl.innerHTML =
             "Permintaan purata dianggarkan sebanyak <strong>" +
             formatNumber(totalAvgMLD) +
             " MLD</strong>, manakala permintaan puncak sebanyak <strong>" +
             formatNumber(totalPeakMLD) +
-            " MLD</strong>. Sila masukkan nilai kapasiti bekalan untuk menilai sama ada terdapat surplus atau defisit.";
+            " MLD</strong>. Sila masukkan nilai bekalan JANS dan/atau sumber alternatif untuk menilai surplus atau defisit.";
         } else {
+          const baseText = supplyValid
+            ? "Bekalan sedia ada (JANS) dianggarkan <strong>" +
+              formatNumber(supplyBaseMLD) +
+              " MLD</strong>."
+            : "Bekalan JANS tidak ditetapkan dengan jelas.";
+
+          const altText = altData.length
+            ? " Sumber alternatif menambah kira-kira <strong>" +
+              formatNumber(altSupplyMLD) +
+              " MLD</strong> kepada bekalan."
+            : " Tiada sumber alternatif dimasukkan setakat ini.";
+
+          const effText =
+            " Bekalan efektif (JANS + alternatif) dianggarkan <strong>" +
+            formatNumber(effectiveSupplyMLD) +
+            " MLD</strong>.";
+
           const avgWord = surplusAvg >= 0 ? "surplus" : "defisit";
           const peakWord = surplusPeak >= 0 ? "surplus" : "defisit";
 
           summaryTextEl.innerHTML =
-            "Dengan kapasiti bekalan sebanyak <strong>" +
-            formatNumber(supplyMLD) +
-            " MLD</strong>, jumlah permintaan purata kampus dianggarkan " +
-            "<strong>" +
+            baseText +
+            altText +
+            effText +
+            " Jumlah permintaan purata kampus dianggarkan <strong>" +
             formatNumber(totalAvgMLD) +
             " MLD</strong> (" +
             avgWord +
             " " +
             formatNumber(Math.abs(surplusAvg)) +
-            " MLD), manakala permintaan puncak dianggarkan " +
-            "<strong>" +
+            " MLD), manakala permintaan puncak dianggarkan <strong>" +
             formatNumber(totalPeakMLD) +
             " MLD</strong> (" +
             peakWord +
@@ -820,10 +1128,14 @@
             " MLD).";
         }
 
-        updateCharts(categoryNames, avgDemands, peakDemands);
+        // 6. Update demand charts
+        updateDemandCharts(categoryNames, avgDemands, peakDemands);
+
+        // 7. CBA for alternative sources
+        calculateAltCBA(altData);
       }
 
-      function updateCharts(labels, avgData, peakData) {
+      function updateDemandCharts(labels, avgData, peakData) {
         if (categoryChart) categoryChart.destroy();
         if (shareChart) shareChart.destroy();
 
@@ -897,6 +1209,193 @@
         });
       }
 
+      function calculateAltCBA(altData) {
+        // Clear if no data
+        altResultsBody.innerHTML = "";
+        if (cbaNpvChart) cbaNpvChart.destroy();
+        if (cbaPaybackChart) cbaPaybackChart.destroy();
+
+        const tariffWater = parseFloat(tariffWaterInput.value) || 0;
+        const tariffSewer = parseFloat(tariffSewerInput.value) || 0;
+        const tariffTotal = tariffWater + tariffSewer;
+
+        const analysisYears = parseInt(analysisYearsInput.value, 10) || 0;
+        const discountRate = parseFloat(discountRateInput.value) || 0;
+        const r = discountRate / 100;
+
+        let totalCap = 0;
+        let totalVol = 0;
+        let totalCapex = 0;
+        let totalOpex = 0;
+        let totalSaving = 0;
+        let totalNetCF = 0;
+
+        let totalPVBenefits = 0;
+        let totalPVCosts = 0;
+
+        const labels = [];
+        const npvData = [];
+        const paybackData = [];
+
+        if (!altData.length || analysisYears <= 0) {
+          altTotalCapacityEl.textContent = "0.00";
+          altTotalVolumeEl.textContent = "0.00";
+          altTotalCapexEl.textContent = "0.00";
+          altTotalOpexEl.textContent = "0.00";
+          altTotalSavingEl.textContent = "0.00";
+          altTotalNetCFEl.textContent = "0.00";
+          altTotalNPVEl.textContent = "0.00";
+          altTotalBCREl.textContent = "–";
+
+          sumCapexEl.textContent = "0.00";
+          sumSavingEl.textContent = "0.00";
+          sumOpexEl.textContent = "0.00";
+          sumNetCFEl.textContent = "0.00";
+          sumNPVEl.textContent = "0.00";
+          sumBCREl.textContent = "–";
+
+          return;
+        }
+
+        altData.forEach((s) => {
+          const { name, capacity, utilPercent, capex, opexFixed, opexVar, lifeYears } = s;
+          const volAnnual = capacity * (utilPercent / 100) * 365;
+
+          const savingAnnual = volAnnual * tariffTotal;
+          const opexAnnual = opexFixed + opexVar * volAnnual;
+          const netCF = savingAnnual - opexAnnual;
+
+          // Simple payback
+          let payback = NaN;
+          if (netCF > 0 && capex > 0) {
+            payback = capex / netCF;
+          }
+
+          // NPV & BCR
+          const horizon = isFinite(lifeYears) && lifeYears > 0
+            ? Math.min(analysisYears, Math.round(lifeYears))
+            : analysisYears;
+
+          let pvBenefits = 0;
+          let pvCosts = capex;
+
+          for (let t = 1; t <= horizon; t++) {
+            const df = Math.pow(1 + r, t);
+            pvBenefits += savingAnnual / df;
+            pvCosts += opexAnnual / df;
+          }
+
+          const npv = pvBenefits - pvCosts;
+          const bcr = pvCosts > 0 ? pvBenefits / pvCosts : NaN;
+
+          totalCap += capacity;
+          totalVol += volAnnual;
+          totalCapex += capex;
+          totalOpex += opexAnnual;
+          totalSaving += savingAnnual;
+          totalNetCF += netCF;
+
+          totalPVBenefits += pvBenefits;
+          totalPVCosts += pvCosts;
+
+          labels.push(name);
+          npvData.push(npv);
+          paybackData.push(isFinite(payback) ? payback : null);
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${name}</td>
+            <td>${formatNumber(capacity)}</td>
+            <td>${formatNumber(utilPercent)}</td>
+            <td>${formatNumber(volAnnual)}</td>
+            <td>${formatNumber(capex)}</td>
+            <td>${formatNumber(opexAnnual)}</td>
+            <td>${formatNumber(savingAnnual)}</td>
+            <td>${formatNumber(netCF)}</td>
+            <td>${isFinite(payback) ? formatNumber(payback) : "–"}</td>
+            <td>${formatNumber(npv)}</td>
+            <td>${isFinite(bcr) ? formatNumber(bcr) : "–"}</td>
+          `;
+          altResultsBody.appendChild(tr);
+        });
+
+        const totalNPV = totalPVBenefits - totalPVCosts;
+        const totalBCR = totalPVCosts > 0 ? totalPVBenefits / totalPVCosts : NaN;
+
+        altTotalCapacityEl.textContent = formatNumber(totalCap);
+        altTotalVolumeEl.textContent = formatNumber(totalVol);
+        altTotalCapexEl.textContent = formatNumber(totalCapex);
+        altTotalOpexEl.textContent = formatNumber(totalOpex);
+        altTotalSavingEl.textContent = formatNumber(totalSaving);
+        altTotalNetCFEl.textContent = formatNumber(totalNetCF);
+        altTotalNPVEl.textContent = formatNumber(totalNPV);
+        altTotalBCREl.textContent = isFinite(totalBCR) ? formatNumber(totalBCR) : "–";
+
+        sumCapexEl.textContent = formatNumber(totalCapex);
+        sumSavingEl.textContent = formatNumber(totalSaving);
+        sumOpexEl.textContent = formatNumber(totalOpex);
+        sumNetCFEl.textContent = formatNumber(totalNetCF);
+        sumNPVEl.textContent = formatNumber(totalNPV);
+        sumBCREl.textContent = isFinite(totalBCR) ? formatNumber(totalBCR) : "–";
+
+        // Charts NPV & Payback
+        if (labels.length) {
+          cbaNpvChart = new Chart(cbaNPVCtx, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "NPV (RM)",
+                  data: npvData,
+                  backgroundColor: "rgba(3, 169, 244, 0.8)",
+                  borderRadius: 6,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                title: { display: true, text: "NPV Mengikut Sumber Air Alternatif" },
+              },
+              scales: {
+                y: { beginAtZero: false, title: { display: true, text: "RM" } },
+              },
+            },
+          });
+
+          cbaPaybackChart = new Chart(cbaPaybackCtx, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Payback (tahun)",
+                  data: paybackData,
+                  backgroundColor: "rgba(255, 193, 7, 0.9)",
+                  borderRadius: 6,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+                title: { display: true, text: "Payback Period Mengikut Sumber" },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Tahun" },
+                },
+              },
+            },
+          });
+        }
+      }
+
+      // Add rows for demand categories
       addRowBtn.addEventListener("click", () => {
         const tr = document.createElement("tr");
         tr.className = "category-row";
@@ -909,6 +1408,22 @@
         categoryBody.appendChild(tr);
       });
 
+      // Add rows for alternative sources
+      addAltRowBtn.addEventListener("click", () => {
+        const tr = document.createElement("tr");
+        tr.className = "alt-row";
+        tr.innerHTML = `
+          <td><input type="text" class="alt-name" placeholder="Nama sumber" /></td>
+          <td><input type="number" class="alt-capacity" min="0" /></td>
+          <td><input type="number" class="alt-util" min="0" max="100" /></td>
+          <td><input type="number" class="alt-capex" min="0" /></td>
+          <td><input type="number" class="alt-opex-fixed" min="0" /></td>
+          <td><input type="number" class="alt-opex-var" min="0" step="0.01" /></td>
+          <td><input type="number" class="alt-life" min="1" /></td>
+        `;
+        altBody.appendChild(tr);
+      });
+
       calcBtn.addEventListener("click", calculate);
 
       // Export Excel
@@ -919,12 +1434,12 @@
             return;
           }
 
-          // Pastikan kiraan terkini
+          // Ensure latest calculations
           calculate();
 
           const wb = XLSX.utils.book_new();
 
-          // Sheet 1: Kategori
+          // Sheet 1: Kategori demand
           const catRows = [["Kategori", "Populasi", "Per kapita (L/org/hari)", "Purata (m³/hari)", "Faktor puncak", "Permintaan puncak (m³/hari)"]];
           document.querySelectorAll("#results-body tr").forEach((tr) => {
             const cells = Array.from(tr.querySelectorAll("td")).map((td) =>
@@ -952,19 +1467,58 @@
           const wsCat = XLSX.utils.aoa_to_sheet(catRows);
           XLSX.utils.book_append_sheet(wb, wsCat, "Kategori");
 
-          // Sheet 2: Ringkasan
+          // Sheet 2: Ringkasan demand–supply
           const summaryRows = [
             ["Item", "Nilai (MLD)"],
             ["Jumlah permintaan purata", document.getElementById("summary-avg-mld").textContent],
             ["Jumlah permintaan puncak", document.getElementById("summary-peak-mld").textContent],
-            ["Kapasiti bekalan harian", document.getElementById("supply-avg-mld").textContent],
+            ["Bekalan sedia ada (JANS)", document.getElementById("supply-avg-mld").textContent],
+            ["Extra supply (alt sources)", document.getElementById("alt-supply-mld").textContent],
+            ["Bekalan efektif", document.getElementById("effective-supply-mld").textContent],
             ["Surplus / Defisit purata", document.getElementById("surplus-avg-mld").textContent],
-            ["Surplus / Defisit semasa puncak", document.getElementById("surplus-peak-mld").textContent],
+            ["Surplus / Defisit puncak", document.getElementById("surplus-peak-mld").textContent],
           ];
           const wsSum = XLSX.utils.aoa_to_sheet(summaryRows);
           XLSX.utils.book_append_sheet(wb, wsSum, "Ringkasan");
 
-          XLSX.writeFile(wb, "UMS_Water_Demand_Supply.xlsx");
+          // Sheet 3: CBA alternatif
+          const cbaRows = [[
+            "Sumber",
+            "Kapasiti (m³/hari)",
+            "Utilisasi (% hari)",
+            "Vol. tahunan (m³/tahun)",
+            "CAPEX (RM)",
+            "OPEX tahunan (RM/tahun)",
+            "Saving air + pembetungan (RM/tahun)",
+            "CF bersih (RM/tahun)",
+            "Payback (tahun)",
+            "NPV (RM)",
+            "BCR"
+          ]];
+          document.querySelectorAll("#alt-results-body tr").forEach((tr) => {
+            const cells = Array.from(tr.querySelectorAll("td")).map((td) =>
+              td.textContent.trim()
+            );
+            if (cells.length) cbaRows.push(cells);
+          });
+          const cbaTotalsRow = [
+            "Jumlah / Agregat",
+            document.getElementById("alt-total-capacity").textContent,
+            "",
+            document.getElementById("alt-total-volume").textContent,
+            document.getElementById("alt-total-capex").textContent,
+            document.getElementById("alt-total-opex").textContent,
+            document.getElementById("alt-total-saving").textContent,
+            document.getElementById("alt-total-netcf").textContent,
+            "",
+            document.getElementById("alt-total-npv").textContent,
+            document.getElementById("alt-total-bcr").textContent,
+          ];
+          cbaRows.push(cbaTotalsRow);
+          const wsCBA = XLSX.utils.aoa_to_sheet(cbaRows);
+          XLSX.utils.book_append_sheet(wb, wsCBA, "CBA_Alt_Sources");
+
+          XLSX.writeFile(wb, "UMS_Water_Demand_Supply_CBA.xlsx");
         } catch (e) {
           console.error(e);
           alert("Ralat semasa export Excel. Sila cuba lagi.");
