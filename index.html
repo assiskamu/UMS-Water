@@ -9,6 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (Export Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF & AutoTable (PDF Laporan) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root {
@@ -351,11 +354,11 @@
         <p>
           Anggaran demand–supply air kampus termasuk sumber alternatif
           (tangkapan air hujan, reuse, air tasik, kondensasi penghawa dingin)
-          dan analisis kos–faedah asas.
+          dan analisis kos–faedah kewangan & ekonomi.
         </p>
       </div>
       <div class="badge">
-        <span>💧</span> Planning-level water & CBA tool
+        <span>💧</span> Planning-level water & CBA tool (EPU-style)
       </div>
     </div>
   </header>
@@ -455,7 +458,7 @@
       <h2><span class="icon">💹</span> Parameter Tarif & Kewangan</h2>
       <p class="lead">
         Parameter ini digunakan untuk mengira penjimatan bil air & pembetungan
-        serta NPV, BCR dan payback bagi setiap sumber air alternatif.
+        serta NPV, BCR dan IRR bagi projek sumber air alternatif.
       </p>
 
       <div class="input-grid">
@@ -480,6 +483,73 @@
       <div class="note">
         Kebiasaannya kadar diskaun 3–7% digunakan untuk projek infrastruktur
         awam, bergantung kepada garis panduan agensi.
+      </div>
+    </section>
+
+    <!-- ANALISIS EKONOMI & ALAM SEKITAR (INPUT + OUTPUT) -->
+    <section class="card">
+      <h2><span class="icon">🌱</span> Analisis Ekonomi & Alam Sekitar</h2>
+      <p class="lead">
+        Analisis ekonomi menggunakan harga bayangan (shadow price) air serta
+        mengambil kira manfaat alam sekitar (pengurangan CO₂ dan NRW).
+      </p>
+
+      <div class="input-grid">
+        <div>
+          <label for="shadow-price">Harga bayangan air (RM/m³)</label>
+          <input type="number" id="shadow-price" value="3.50" min="0" step="0.10" />
+        </div>
+        <div>
+          <label for="econ-factor">Faktor pelarasan ekonomi (ECF)</label>
+          <input type="number" id="econ-factor" value="1.00" min="0" step="0.05" />
+        </div>
+        <div>
+          <label for="co2-factor">Faktor pelepasan air terawat (kg CO₂/m³)</label>
+          <input type="number" id="co2-factor" value="0.50" min="0" step="0.05" />
+        </div>
+        <div>
+          <label for="carbon-price">Harga karbon bayangan (RM/ton CO₂)</label>
+          <input type="number" id="carbon-price" value="100" min="0" step="10" />
+        </div>
+        <div>
+          <label for="nrw-current">NRW sedia ada (% bekalan)</label>
+          <input type="number" id="nrw-current" value="30" min="0" max="100" />
+        </div>
+        <div>
+          <label for="nrw-reduction">Sasaran pengurangan NRW (%)</label>
+          <input type="number" id="nrw-reduction" value="5" min="0" max="100" />
+        </div>
+      </div>
+
+      <div style="overflow-x:auto; margin-top:0.7rem;">
+        <table>
+          <tbody>
+            <tr>
+              <td>Faedah ekonomi tahunan (RM)</td>
+              <td id="eco-ann-benefit">–</td>
+            </tr>
+            <tr>
+              <td>NPV ekonomi (RM)</td>
+              <td id="eco-npv">–</td>
+            </tr>
+            <tr>
+              <td>BCR ekonomi</td>
+              <td id="eco-bcr">–</td>
+            </tr>
+            <tr>
+              <td>CO₂ dielakkan (tan/tahun)</td>
+              <td id="co2-saved">–</td>
+            </tr>
+            <tr>
+              <td>Nilai ekonomi karbon (RM/tahun)</td>
+              <td id="carbon-value">–</td>
+            </tr>
+            <tr>
+              <td>NRW dielakkan (m³/tahun)</td>
+              <td id="nrw-saved-vol">–</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -562,6 +632,31 @@
       </div>
     </section>
 
+    <!-- PHASING SCENARIO -->
+    <section class="card">
+      <h2><span class="icon">⏳</span> Senario Pelaksanaan Berperingkat (Phasing)</h2>
+      <p class="lead">
+        Tetapkan peratus penggunaan kapasiti penuh mengikut tahun untuk
+        analisis IRR dan NPV projek.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Tahun</th><th>% kapasiti digunakan</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Tahun 1</td><td><input type="number" class="phase-input" value="40" min="0" max="100" /></td></tr>
+          <tr><td>Tahun 2</td><td><input type="number" class="phase-input" value="60" min="0" max="100" /></td></tr>
+          <tr><td>Tahun 3</td><td><input type="number" class="phase-input" value="80" min="0" max="100" /></td></tr>
+          <tr><td>Tahun 4</td><td><input type="number" class="phase-input" value="100" min="0" max="100" /></td></tr>
+          <tr><td>Tahun 5+</td><td><input type="number" class="phase-input" value="100" min="0" max="100" /></td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        Contoh: projek dimulakan secara berperingkat dengan 40% kapasiti tahun pertama,
+        meningkat kepada 100% mulai tahun keempat.
+      </div>
+    </section>
+
     <!-- ANALISIS KATEGORI DEMAND -->
     <section class="card">
       <h2><span class="icon">📊</span> Analisis Permintaan Air Mengikut Kategori</h2>
@@ -609,7 +704,7 @@
       <div class="chip">🔹 Puncak = Purata × Faktor puncak</div>
     </section>
 
-    <!-- DEMAND VS SUPPLY + EXPORT -->
+    <!-- DEMAND VS SUPPLY + EXPORT + PDF -->
     <section class="card">
       <h2><span class="icon">⚖️</span> Ringkasan Demand–Supply (MLD)</h2>
       <div class="two-column">
@@ -664,6 +759,9 @@
           <div class="btn-row" style="margin-top: 0.8rem;">
             <button id="export-excel-btn" type="button" class="export">
               📤 Export Excel (.xlsx)
+            </button>
+            <button id="download-pdf-btn" type="button" class="secondary">
+              📄 Muat turun laporan PDF (EPU/RMK)
             </button>
           </div>
 
@@ -764,6 +862,34 @@
                 <td>BCR projek (semua sumber)</td>
                 <td id="sum-bcr">–</td>
               </tr>
+              <tr>
+                <td>IRR projek (semua sumber)</td>
+                <td id="sum-irr">–</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 style="font-size:0.96rem; margin-top:1rem;">Analisis Sensitiviti Tarif Air (±20%)</h3>
+          <table>
+            <thead>
+              <tr><th>Senario</th><th>Tarif (RM/m³)</th><th>NPV projek (RM)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Rendah (−20%)</td>
+                <td id="sens-tariff-low">–</td>
+                <td id="sens-npv-low">–</td>
+              </tr>
+              <tr>
+                <td>Asas</td>
+                <td id="sens-tariff-base">–</td>
+                <td id="sens-npv-base">–</td>
+              </tr>
+              <tr>
+                <td>Tinggi (+20%)</td>
+                <td id="sens-tariff-high">–</td>
+                <td id="sens-npv-high">–</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -800,8 +926,9 @@
             <strong>Langkah 4 – Penjimatan & CBA:</strong> Volum air alternatif
             dikalikan dengan tarif air + pembetungan untuk mendapatkan penjimatan
             tahunan, ditolak OPEX untuk mendapatkan aliran tunai bersih.
-            NPV dan BCR dikira menggunakan tempoh analisis dan kadar diskaun
-            yang ditetapkan.
+            NPV, BCR dan IRR dikira menggunakan tempoh analisis dan kadar diskaun
+            yang ditetapkan. Analisis ekonomi menggunakan harga bayangan air
+            dan manfaat alam sekitar (CO₂ & NRW).
           </li>
         </ul>
 
@@ -828,6 +955,7 @@
       const addRowBtn = document.getElementById("add-row-btn");
       const calcBtn = document.getElementById("calculate-btn");
       const exportBtn = document.getElementById("export-excel-btn");
+      const pdfBtn = document.getElementById("download-pdf-btn");
       const categoryBody = document.getElementById("category-body");
 
       const addAltRowBtn = document.getElementById("add-alt-row-btn");
@@ -872,11 +1000,37 @@
       const sumNetCFEl = document.getElementById("sum-netcf");
       const sumNPVEl = document.getElementById("sum-npv");
       const sumBCREl = document.getElementById("sum-bcr");
+      const sumIRREl = document.getElementById("sum-irr");
 
       const tariffWaterInput = document.getElementById("tariff-water");
       const tariffSewerInput = document.getElementById("tariff-sewer");
       const analysisYearsInput = document.getElementById("analysis-years");
       const discountRateInput = document.getElementById("discount-rate");
+
+      const phaseInputs = document.querySelectorAll(".phase-input");
+
+      // Economic & environment elements
+      const shadowPriceInput = document.getElementById("shadow-price");
+      const econFactorInput = document.getElementById("econ-factor");
+      const co2FactorInput = document.getElementById("co2-factor");
+      const carbonPriceInput = document.getElementById("carbon-price");
+      const nrwCurrentInput = document.getElementById("nrw-current");
+      const nrwReductionInput = document.getElementById("nrw-reduction");
+
+      const ecoAnnBenefitEl = document.getElementById("eco-ann-benefit");
+      const ecoNPVEl = document.getElementById("eco-npv");
+      const ecoBCREl = document.getElementById("eco-bcr");
+      const co2SavedEl = document.getElementById("co2-saved");
+      const carbonValueEl = document.getElementById("carbon-value");
+      const nrwSavedVolEl = document.getElementById("nrw-saved-vol");
+
+      // Sensitivity outputs
+      const sensTariffLowEl = document.getElementById("sens-tariff-low");
+      const sensTariffBaseEl = document.getElementById("sens-tariff-base");
+      const sensTariffHighEl = document.getElementById("sens-tariff-high");
+      const sensNPVLowEl = document.getElementById("sens-npv-low");
+      const sensNPVBaseEl = document.getElementById("sens-npv-base");
+      const sensNPVHighEl = document.getElementById("sens-npv-high");
 
       const categoryChartCtx = document
         .getElementById("demand-by-category-chart")
@@ -916,6 +1070,63 @@
         return `<span class="status-pill ${cls}">${
           status === "Surplus" ? "✔️" : "⚠️"
         } ${label}</span>`;
+      }
+
+      function calculateIRR(cashflows, guess = 0.1) {
+        let rate = guess;
+        for (let i = 0; i < 100; i++) {
+          let npv = 0;
+          let dnpv = 0;
+          for (let t = 0; t < cashflows.length; t++) {
+            const cf = cashflows[t];
+            const df = Math.pow(1 + rate, t);
+            npv += cf / df;
+            if (t > 0) {
+              dnpv += -t * cf / Math.pow(1 + rate, t + 1);
+            }
+          }
+          if (Math.abs(dnpv) < 1e-10) break;
+          const newRate = rate - npv / dnpv;
+          if (!isFinite(newRate)) break;
+          if (Math.abs(newRate - rate) < 1e-7) {
+            rate = newRate;
+            break;
+          }
+          rate = newRate;
+        }
+        return rate * 100;
+      }
+
+      function computeNPV_BCR_generic(annualBenefitFull, annualOpexTotal, capexTotal, analysisYears, phases, r) {
+        let npv = -capexTotal;
+        let pvB = 0;
+        let pvC = capexTotal;
+
+        for (let t = 1; t <= analysisYears; t++) {
+          const f = phases.length
+            ? (t <= phases.length ? phases[t - 1] : phases[phases.length - 1])
+            : 1;
+          const benefit = annualBenefitFull * f;
+          const opexYear = annualOpexTotal * f;
+          const df = Math.pow(1 + r, t);
+          pvB += benefit / df;
+          pvC += opexYear / df;
+          npv += (benefit - opexYear) / df;
+        }
+        return { npv, bcr: pvC > 0 ? pvB / pvC : NaN, pvB, pvC };
+      }
+
+      function buildCFSeries(annualBenefitFull, annualOpexTotal, capexTotal, analysisYears, phases) {
+        const cf = [-capexTotal];
+        for (let t = 1; t <= analysisYears; t++) {
+          const f = phases.length
+            ? (t <= phases.length ? phases[t - 1] : phases[phases.length - 1])
+            : 1;
+          const benefit = annualBenefitFull * f;
+          const opexYear = annualOpexTotal * f;
+          cf.push(benefit - opexYear);
+        }
+        return cf;
       }
 
       function calculate() {
@@ -1131,8 +1342,8 @@
         // 6. Update demand charts
         updateDemandCharts(categoryNames, avgDemands, peakDemands);
 
-        // 7. CBA for alternative sources
-        calculateAltCBA(altData);
+        // 7. CBA for alternative sources + Econ & Environment
+        calculateAltCBA(altData, altAvgM3PerDayTotal, supplyBaseMLD);
       }
 
       function updateDemandCharts(labels, avgData, peakData) {
@@ -1209,7 +1420,7 @@
         });
       }
 
-      function calculateAltCBA(altData) {
+      function calculateAltCBA(altData, altAvgM3PerDayTotal, supplyBaseMLD) {
         // Clear if no data
         altResultsBody.innerHTML = "";
         if (cbaNpvChart) cbaNpvChart.destroy();
@@ -1223,15 +1434,26 @@
         const discountRate = parseFloat(discountRateInput.value) || 0;
         const r = discountRate / 100;
 
+        const phases = Array.from(phaseInputs).map((inp) => {
+          const v = parseFloat(inp.value);
+          return isFinite(v) && v >= 0 ? v / 100 : 1;
+        });
+
+        // Economic parameters
+        const shadowPrice = parseFloat(shadowPriceInput.value) || 0;
+        const econFactor = parseFloat(econFactorInput.value) || 1;
+
+        const co2Factor = parseFloat(co2FactorInput.value) || 0;
+        const carbonPrice = parseFloat(carbonPriceInput.value) || 0;
+        const nrwCurrent = parseFloat(nrwCurrentInput.value) || 0;
+        const nrwReduction = parseFloat(nrwReductionInput.value) || 0;
+
         let totalCap = 0;
         let totalVol = 0;
         let totalCapex = 0;
         let totalOpex = 0;
         let totalSaving = 0;
         let totalNetCF = 0;
-
-        let totalPVBenefits = 0;
-        let totalPVCosts = 0;
 
         const labels = [];
         const npvData = [];
@@ -1253,6 +1475,21 @@
           sumNetCFEl.textContent = "0.00";
           sumNPVEl.textContent = "0.00";
           sumBCREl.textContent = "–";
+          sumIRREl.textContent = "–";
+
+          ecoAnnBenefitEl.textContent = "0.00";
+          ecoNPVEl.textContent = "0.00";
+          ecoBCREl.textContent = "–";
+          co2SavedEl.textContent = "0.00";
+          carbonValueEl.textContent = "0.00";
+          nrwSavedVolEl.textContent = "0.00";
+
+          sensTariffLowEl.textContent = "0.00";
+          sensTariffBaseEl.textContent = "0.00";
+          sensTariffHighEl.textContent = "0.00";
+          sensNPVLowEl.textContent = "0.00";
+          sensNPVBaseEl.textContent = "0.00";
+          sensNPVHighEl.textContent = "0.00";
 
           return;
         }
@@ -1271,7 +1508,7 @@
             payback = capex / netCF;
           }
 
-          // NPV & BCR
+          // NPV & BCR per sumber (tanpa phasing – indicative)
           const horizon = isFinite(lifeYears) && lifeYears > 0
             ? Math.min(analysisYears, Math.round(lifeYears))
             : analysisYears;
@@ -1295,9 +1532,6 @@
           totalSaving += savingAnnual;
           totalNetCF += netCF;
 
-          totalPVBenefits += pvBenefits;
-          totalPVCosts += pvCosts;
-
           labels.push(name);
           npvData.push(npv);
           paybackData.push(isFinite(payback) ? payback : null);
@@ -1319,24 +1553,103 @@
           altResultsBody.appendChild(tr);
         });
 
-        const totalNPV = totalPVBenefits - totalPVCosts;
-        const totalBCR = totalPVCosts > 0 ? totalPVBenefits / totalPVCosts : NaN;
-
         altTotalCapacityEl.textContent = formatNumber(totalCap);
         altTotalVolumeEl.textContent = formatNumber(totalVol);
         altTotalCapexEl.textContent = formatNumber(totalCapex);
         altTotalOpexEl.textContent = formatNumber(totalOpex);
         altTotalSavingEl.textContent = formatNumber(totalSaving);
         altTotalNetCFEl.textContent = formatNumber(totalNetCF);
-        altTotalNPVEl.textContent = formatNumber(totalNPV);
-        altTotalBCREl.textContent = isFinite(totalBCR) ? formatNumber(totalBCR) : "–";
 
         sumCapexEl.textContent = formatNumber(totalCapex);
         sumSavingEl.textContent = formatNumber(totalSaving);
         sumOpexEl.textContent = formatNumber(totalOpex);
         sumNetCFEl.textContent = formatNumber(totalNetCF);
-        sumNPVEl.textContent = formatNumber(totalNPV);
-        sumBCREl.textContent = isFinite(totalBCR) ? formatNumber(totalBCR) : "–";
+
+        // Project-level NPV, BCR, IRR with phasing
+        const totalVolAnnual = totalVol; // m³/year
+        const annualBenefitFinFull = totalVolAnnual * tariffTotal;
+
+        const baseRes = computeNPV_BCR_generic(
+          annualBenefitFinFull,
+          totalOpex,
+          totalCapex,
+          analysisYears,
+          phases,
+          r
+        );
+
+        const npvProject = baseRes.npv;
+        const bcrProject = baseRes.bcr;
+
+        altTotalNPVEl.textContent = formatNumber(npvProject);
+        altTotalBCREl.textContent = isFinite(bcrProject) ? formatNumber(bcrProject) : "–";
+
+        sumNPVEl.textContent = formatNumber(npvProject);
+        sumBCREl.textContent = isFinite(bcrProject) ? formatNumber(bcrProject) : "–";
+
+        const cfBase = buildCFSeries(
+          annualBenefitFinFull,
+          totalOpex,
+          totalCapex,
+          analysisYears,
+          phases
+        );
+        const irrProj = totalCapex > 0 ? calculateIRR(cfBase) : NaN;
+        sumIRREl.textContent = isFinite(irrProj) ? irrProj.toFixed(2) : "–";
+
+        // Sensitivity (±20% tarif)
+        const annualBenefitLow = annualBenefitFinFull * 0.8;
+        const annualBenefitHigh = annualBenefitFinFull * 1.2;
+
+        const lowRes = computeNPV_BCR_generic(
+          annualBenefitLow,
+          totalOpex,
+          totalCapex,
+          analysisYears,
+          phases,
+          r
+        );
+        const highRes = computeNPV_BCR_generic(
+          annualBenefitHigh,
+          totalOpex,
+          totalCapex,
+          analysisYears,
+          phases,
+          r
+        );
+
+        sensTariffLowEl.textContent = (tariffTotal * 0.8).toFixed(2);
+        sensTariffBaseEl.textContent = tariffTotal.toFixed(2);
+        sensTariffHighEl.textContent = (tariffTotal * 1.2).toFixed(2);
+
+        sensNPVLowEl.textContent = formatNumber(lowRes.npv);
+        sensNPVBaseEl.textContent = formatNumber(npvProject);
+        sensNPVHighEl.textContent = formatNumber(highRes.npv);
+
+        // Economic analysis (shadow price)
+        const annualBenefitEconFull = totalVolAnnual * shadowPrice * econFactor;
+        const econRes = computeNPV_BCR_generic(
+          annualBenefitEconFull,
+          totalOpex,
+          totalCapex,
+          analysisYears,
+          phases,
+          r
+        );
+
+        ecoAnnBenefitEl.textContent = formatNumber(annualBenefitEconFull);
+        ecoNPVEl.textContent = formatNumber(econRes.npv);
+        ecoBCREl.textContent = isFinite(econRes.bcr) ? formatNumber(econRes.bcr) : "–";
+
+        // Environmental co-benefits
+        const co2SavedTon = totalVolAnnual * co2Factor / 1000;
+        const carbonValue = co2SavedTon * carbonPrice;
+        co2SavedEl.textContent = formatNumber(co2SavedTon);
+        carbonValueEl.textContent = formatNumber(carbonValue);
+
+        const supplyBaseMLDVal = isFinite(supplyBaseMLD) ? supplyBaseMLD : 0;
+        const nrwSavedVol = supplyBaseMLDVal * 1000 * 365 * (nrwReduction / 100);
+        nrwSavedVolEl.textContent = formatNumber(nrwSavedVol);
 
         // Charts NPV & Payback
         if (labels.length) {
@@ -1522,6 +1835,85 @@
         } catch (e) {
           console.error(e);
           alert("Ralat semasa export Excel. Sila cuba lagi.");
+        }
+      });
+
+      // PDF Report (EPU/RMK-style, ringkas)
+      pdfBtn.addEventListener("click", () => {
+        try {
+          if (!window.jspdf) {
+            alert("Library PDF tidak dimuatkan.");
+            return;
+          }
+          // Pastikan nilai terkini
+          calculate();
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF("p","mm","a4");
+
+          doc.setFontSize(14);
+          doc.text("Analisis Permintaan, Penawaran & Kos–Faedah Air UMS",105,15,{align:"center"});
+          doc.setFontSize(10);
+          doc.text("1. Ringkasan Demand–Supply",14,25);
+
+          doc.autoTable({
+            startY: 29,
+            head: [["Item","Nilai"]],
+            body: [
+              ["Permintaan purata (MLD)", document.getElementById("total-avg-mld").textContent],
+              ["Permintaan puncak (MLD)", document.getElementById("total-peak-mld").textContent],
+              ["Bekalan JANS (MLD)", document.getElementById("supply-avg-mld").textContent],
+              ["Extra supply (MLD)", document.getElementById("alt-supply-mld").textContent],
+              ["Bekalan efektif (MLD)", document.getElementById("effective-supply-mld").textContent],
+              ["Surplus/Defisit purata (MLD)", document.getElementById("surplus-avg-mld").textContent],
+              ["Surplus/Defisit puncak (MLD)", document.getElementById("surplus-peak-mld").textContent],
+            ]
+          });
+
+          let y = doc.lastAutoTable.finalY + 8;
+          doc.text("2. Ringkasan Kewangan Projek",14,y);
+          doc.autoTable({
+            startY: y + 4,
+            head: [["Indikator","Nilai"]],
+            body: [
+              ["Jumlah CAPEX (RM)", sumCapexEl.textContent],
+              ["Jumlah penjimatan tahunan (RM)", sumSavingEl.textContent],
+              ["Jumlah OPEX tahunan (RM)", sumOpexEl.textContent],
+              ["Aliran tunai bersih tahunan (RM)", sumNetCFEl.textContent],
+              ["NPV kewangan (RM)", sumNPVEl.textContent],
+              ["BCR kewangan", sumBCREl.textContent],
+              ["IRR (%)", sumIRREl.textContent]
+            ]
+          });
+
+          y = doc.lastAutoTable.finalY + 8;
+          doc.text("3. Analisis Ekonomi & Alam Sekitar",14,y);
+          doc.autoTable({
+            startY: y + 4,
+            head: [["Indikator","Nilai"]],
+            body: [
+              ["Faedah ekonomi tahunan (RM)", ecoAnnBenefitEl.textContent],
+              ["NPV ekonomi (RM)", ecoNPVEl.textContent],
+              ["BCR ekonomi", ecoBCREl.textContent],
+              ["CO₂ dielakkan (tan/tahun)", co2SavedEl.textContent],
+              ["Nilai ekonomi karbon (RM/tahun)", carbonValueEl.textContent],
+              ["NRW dielakkan (m³/tahun)", nrwSavedVolEl.textContent]
+            ]
+          });
+
+          y = doc.lastAutoTable.finalY + 8;
+          doc.text("4. Penafian",14,y);
+          doc.text(
+            "Analisis ini merupakan anggaran awal (planning-level estimate) dan tertakluk kepada semakan teknikal dan kewangan terperinci oleh pihak berkuasa berkaitan.",
+            14,
+            y + 6,
+            { maxWidth: 180 }
+          );
+
+          doc.save("UMS_Water_Demand_Supply_CBA_Report.pdf");
+        } catch (e) {
+          console.error(e);
+          alert("Ralat semasa menjana PDF. Sila cuba lagi.");
         }
       });
 
