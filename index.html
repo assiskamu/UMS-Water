@@ -9,9 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (Export Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- jsPDF & AutoTable (Export PDF) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- jsPDF (PDF report) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root {
@@ -152,7 +152,8 @@
     }
 
     input[type="number"],
-    input[type="text"] {
+    input[type="text"],
+    select {
       width: 100%;
       padding: 0.4rem 0.55rem;
       border-radius: 0.5rem;
@@ -163,7 +164,8 @@
     }
 
     input[type="number"]:focus,
-    input[type="text"]:focus {
+    input[type="text"]:focus,
+    select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
       background-color: #ffffff;
@@ -339,6 +341,11 @@
       margin-top: 0.6rem;
     }
 
+    .mini {
+      font-size: 0.78rem;
+      color: #607d8b;
+    }
+
     @media (max-width: 768px) {
       header { padding: 1.15rem 1rem; }
       header h1 { font-size: 1.25rem; }
@@ -354,7 +361,7 @@
         <p>
           Anggaran demand–supply air kampus termasuk sumber alternatif
           (tangkapan air hujan, reuse, air tasik, kondensasi penghawa dingin)
-          dan analisis kos–faedah kewangan, ekonomi & alam sekitar.
+          dan analisis kos–faedah asas.
         </p>
       </div>
       <div class="badge">
@@ -458,7 +465,7 @@
       <h2><span class="icon">💹</span> Parameter Tarif & Kewangan</h2>
       <p class="lead">
         Parameter ini digunakan untuk mengira penjimatan bil air & pembetungan
-        serta NPV, BCR, payback dan IRR bagi sumber air alternatif.
+        serta NPV, BCR dan anggaran payback bagi setiap sumber air alternatif.
       </p>
 
       <div class="input-grid">
@@ -486,13 +493,13 @@
       </div>
     </section>
 
-    <!-- INPUT SUMBER AIR ALTERNATIF + PERINCIAN CAPEX/OPEX -->
+    <!-- INPUT SUMBER AIR ALTERNATIF -->
     <section class="card">
       <h2><span class="icon">💧</span> Sumber Air Alternatif (Extra Supply & CBA)</h2>
       <p class="lead">
-        Masukkan kapasiti teknikal, faktor penggunaan, CAPEX dan OPEX bagi
-        setiap sumber air alternatif. Gunakan ruangan perincian CAPEX/OPEX
-        untuk merekod komponen kos utama (tangki, pam, paip, elektrik, operator dan lain-lain).
+        Masukkan kapasiti teknikal, faktor penggunaan, CAPEX, OPEX dan nota
+        perincian kos bagi setiap sumber air alternatif. Sumber ini akan menambah
+        bekalan efektif dan digunakan dalam analisis kos–faedah.
       </p>
 
       <div style="overflow-x: auto; margin-top: 0.6rem;">
@@ -517,11 +524,11 @@
               <td><input type="number" class="alt-util" value="80" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="1200000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
-                         value="Struktur tangki, gutter, paip agihan, pam dan panel kawalan" /></td>
+                     value="Struktur tangki, gutter, paip agihan, pam dan panel kawalan" /></td>
               <td><input type="number" class="alt-opex-fixed" value="60000" min="0" /></td>
               <td><input type="number" class="alt-opex-var" value="0.10" min="0" step="0.01" /></td>
               <td><input type="text" class="alt-opex-note"
-                         value="Elektrik pam, penyelenggaraan berkala dan pembersihan tangki" /></td>
+                     value="Elektrik pam, penyelenggaraan berkala dan pembersihan tangki" /></td>
               <td><input type="number" class="alt-life" value="25" min="1" /></td>
             </tr>
             <tr class="alt-row">
@@ -530,11 +537,11 @@
               <td><input type="number" class="alt-util" value="70" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="900000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
-                         value="Pam pengambilan, paip penghantaran, sistem rawatan asas" /></td>
+                     value="Pam pengabstrakan, paip penghantaran, sistem penapisan" /></td>
               <td><input type="number" class="alt-opex-fixed" value="45000" min="0" /></td>
               <td><input type="number" class="alt-opex-var" value="0.15" min="0" step="0.01" /></td>
               <td><input type="text" class="alt-opex-note"
-                         value="Elektrik, bahan kimia rawatan, operator dan penyelenggaraan" /></td>
+                     value="Elektrik pam, bahan kimia dan penyelenggaraan penapis" /></td>
               <td><input type="number" class="alt-life" value="20" min="1" /></td>
             </tr>
             <tr class="alt-row">
@@ -543,11 +550,11 @@
               <td><input type="number" class="alt-util" value="80" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="1500000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
-                         value="Sistem rawatan, tangki imbangan, rangkaian paip dua paip" /></td>
+                     value="Unit rawatan, tangki imbangan, sistem paip dwi-saluran" /></td>
               <td><input type="number" class="alt-opex-fixed" value="90000" min="0" /></td>
               <td><input type="number" class="alt-opex-var" value="0.25" min="0" step="0.01" /></td>
               <td><input type="text" class="alt-opex-note"
-                         value="Elektrik loji, bahan kimia, alat ganti, operator" /></td>
+                     value="Bahan kimia, tenaga elektrik dan operator" /></td>
               <td><input type="number" class="alt-life" value="20" min="1" /></td>
             </tr>
             <tr class="alt-row">
@@ -556,11 +563,11 @@
               <td><input type="number" class="alt-util" value="90" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="200000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
-                         value="Pengumpulan kondensat, tangki kecil, pam edaran" /></td>
+                     value="Pengumpulan kondensat, tangki kecil dan pam pemindahan" /></td>
               <td><input type="number" class="alt-opex-fixed" value="15000" min="0" /></td>
               <td><input type="number" class="alt-opex-var" value="0.05" min="0" step="0.01" /></td>
               <td><input type="text" class="alt-opex-note"
-                         value="Elektrik pam dan penyelenggaraan ringan" /></td>
+                     value="Elektrik tambahan dan penyelenggaraan" /></td>
               <td><input type="number" class="alt-life" value="15" min="1" /></td>
             </tr>
             <tr class="alt-row">
@@ -568,10 +575,12 @@
               <td><input type="number" class="alt-capacity" min="0" /></td>
               <td><input type="number" class="alt-util" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" min="0" /></td>
-              <td><input type="text" class="alt-capex-note" placeholder="Butiran CAPEX (jika perlu)" /></td>
+              <td><input type="text" class="alt-capex-note"
+                     placeholder="Butiran CAPEX (jika ada)" /></td>
               <td><input type="number" class="alt-opex-fixed" min="0" /></td>
               <td><input type="number" class="alt-opex-var" min="0" step="0.01" /></td>
-              <td><input type="text" class="alt-opex-note" placeholder="Butiran OPEX (jika perlu)" /></td>
+              <td><input type="text" class="alt-opex-note"
+                     placeholder="Butiran OPEX (jika ada)" /></td>
               <td><input type="number" class="alt-life" min="1" /></td>
             </tr>
           </tbody>
@@ -583,6 +592,98 @@
           ➕ Tambah baris sumber alternatif
         </button>
       </div>
+      <p class="mini">
+        Nota: Butiran CAPEX dan OPEX membantu penjajaran dengan garis panduan EPU/MOF
+        (contoh pecahan kepada infrastruktur, peralatan, tenaga kerja, O&M).
+      </p>
+    </section>
+
+    <!-- PENGIRAAN TERPERINCI CAPEX & OPEX MENGIKUT ITEM -->
+    <section class="card">
+      <h2><span class="icon">🧾</span> Pengiraan Terperinci CAPEX & OPEX Mengikut Item</h2>
+      <p class="lead">
+        Jadual mini ini membolehkan pecahan CAPEX dan OPEX mengikut item
+        (contoh: tangki, pam, paip, operator, elektrik). Jumlah CAPEX dan OPEX
+        boleh dirujuk semula apabila mengisi jadual sumber air alternatif.
+      </p>
+
+      <div style="overflow-x:auto;">
+        <table id="capex-opex-items-table">
+          <thead>
+            <tr>
+              <th>Jenis</th>
+              <th>Item / Komponen</th>
+              <th>Kuantiti</th>
+              <th>Kos seunit (RM)</th>
+              <th>Jumlah kos (RM)</th>
+              <th>Catatan</th>
+            </tr>
+          </thead>
+          <tbody id="capex-opex-body">
+            <tr class="capex-opex-row">
+              <td>
+                <select class="item-type">
+                  <option value="CAPEX">CAPEX</option>
+                  <option value="OPEX">OPEX</option>
+                </select>
+              </td>
+              <td><input type="text" class="item-name" value="Tangki simpanan air hujan" /></td>
+              <td><input type="number" class="item-qty" value="2" min="0" step="0.01" /></td>
+              <td><input type="number" class="item-cost" value="150000" min="0" step="0.01" /></td>
+              <td class="item-total">0.00</td>
+              <td><input type="text" class="item-note" value="Termasuk asas konkrit dan pemasangan" /></td>
+            </tr>
+            <tr class="capex-opex-row">
+              <td>
+                <select class="item-type">
+                  <option value="CAPEX">CAPEX</option>
+                  <option value="OPEX">OPEX</option>
+                </select>
+              </td>
+              <td><input type="text" class="item-name" value="Pam dan paip agihan utama" /></td>
+              <td><input type="number" class="item-qty" value="1" min="0" step="0.01" /></td>
+              <td><input type="number" class="item-cost" value="250000" min="0" step="0.01" /></td>
+              <td class="item-total">0.00</td>
+              <td><input type="text" class="item-note" value="Termasuk panel kawalan" /></td>
+            </tr>
+            <tr class="capex-opex-row">
+              <td>
+                <select class="item-type">
+                  <option value="OPEX" selected>OPEX</option>
+                  <option value="CAPEX">CAPEX</option>
+                </select>
+              </td>
+              <td><input type="text" class="item-name" value="Elektrik pam air hujan" /></td>
+              <td><input type="number" class="item-qty" value="12" min="0" step="1" /></td>
+              <td><input type="number" class="item-cost" value="4000" min="0" step="0.01" /></td>
+              <td class="item-total">0.00</td>
+              <td><input type="text" class="item-note" value="Anggaran bil elektrik setahun" /></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4"><strong>Jumlah CAPEX (daripada jadual item)</strong></td>
+              <td id="capex-items-total">0.00</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="4"><strong>Jumlah OPEX (daripada jadual item)</strong></td>
+              <td id="opex-items-total">0.00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button id="add-capex-opex-item-btn" type="button" class="secondary">
+          ➕ Tambah baris item
+        </button>
+      </div>
+      <p class="mini">
+        Nota: Jumlah CAPEX dan OPEX di sini boleh dijadikan rujukan dan dipadankan
+        secara manual dengan CAPEX/OPEX mengikut sumber air alternatif di atas.
+      </p>
     </section>
 
     <!-- ANALISIS KATEGORI DEMAND -->
@@ -689,7 +790,7 @@
               📤 Export Excel (.xlsx)
             </button>
             <button id="export-pdf-btn" type="button" class="secondary">
-              📄 Jana Laporan PDF
+              📄 Jana Laporan PDF (EPU-style)
             </button>
           </div>
 
@@ -790,6 +891,10 @@
                 <td>BCR projek (semua sumber)</td>
                 <td id="sum-bcr">–</td>
               </tr>
+              <tr>
+                <td>Anggaran IRR projek (mengikut aliran tunai bersih)</td>
+                <td id="sum-irr">–</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -798,134 +903,6 @@
           <canvas id="cba-npv-chart" height="200" style="margin-bottom:0.8rem;"></canvas>
           <canvas id="cba-payback-chart" height="200"></canvas>
         </div>
-      </div>
-    </section>
-
-    <!-- ANALISIS EKONOMI (SHADOW PRICE) & ALAM SEKITAR -->
-    <section class="card">
-      <h2><span class="icon">🌏</span> Analisis Ekonomi (Harga Bayangan) & Manfaat Alam Sekitar</h2>
-      <p class="lead">
-        Analisis ini mengaplikasi harga bayangan air dan anggaran manfaat
-        alam sekitar (pengurangan CO₂ dan NRW) selari dengan amalan penilaian
-        projek awam.
-      </p>
-
-      <div class="input-grid">
-        <div>
-          <label for="shadow-multiplier">Faktor harga bayangan air</label>
-          <input type="number" id="shadow-multiplier" value="1.20" step="0.05" min="1" />
-          <div class="note">
-            Contoh: 1.2 bermaksud harga bayangan 20% lebih tinggi daripada tarif
-            kewangan (air + pembetungan).
-          </div>
-        </div>
-        <div>
-          <label for="co2-factor">Faktor pelepasan CO₂ air terawat (kg CO₂/m³)</label>
-          <input type="number" id="co2-factor" value="0.40" step="0.01" min="0" />
-          <div class="note">
-            Digunakan untuk anggaran pengurangan pelepasan CO₂ apabila sebahagian
-            permintaan dipenuhi oleh sumber alternatif.
-          </div>
-        </div>
-        <div>
-          <label for="carbon-price">Harga karbon (RM/tan CO₂)</label>
-          <input type="number" id="carbon-price" value="150" step="10" min="0" />
-        </div>
-        <div>
-          <label for="nrw-avoid">NRW dielakkan oleh sumber alternatif (%)</label>
-          <input type="number" id="nrw-avoid" value="10" step="1" min="0" max="100" />
-          <div class="note">
-            Anggaran peratus kehilangan bukan hasil (NRW) yang dapat dielakkan
-            apabila sebahagian bekalan diganti dengan sumber setempat.
-          </div>
-        </div>
-      </div>
-
-      <table id="econ-env-table" style="margin-top:1rem;">
-        <tbody>
-          <tr>
-            <td>Harga bayangan air (RM/m³)</td>
-            <td id="shadow-price-val">–</td>
-          </tr>
-          <tr>
-            <td>Faedah ekonomi tahunan (RM/tahun)</td>
-            <td id="eco-annual-benefit">–</td>
-          </tr>
-          <tr>
-            <td>NPV ekonomi projek (RM)</td>
-            <td id="eco-npv">–</td>
-          </tr>
-          <tr>
-            <td>BCR ekonomi projek</td>
-            <td id="eco-bcr">–</td>
-          </tr>
-          <tr>
-            <td>CO₂ dielakkan (tan/tahun)</td>
-            <td id="co2-saved">–</td>
-          </tr>
-          <tr>
-            <td>Nilai ekonomi karbon (RM/tahun)</td>
-            <td id="carbon-value">–</td>
-          </tr>
-          <tr>
-            <td>NRW dielakkan (m³/tahun)</td>
-            <td id="nrw-saved">–</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- SENARIO FASA & IRR -->
-    <section class="card">
-      <h2><span class="icon">📆</span> Senario Fasa (Tahun 1–5) & IRR Projek</h2>
-      <p class="lead">
-        Senario ini membenarkan projek dilaksanakan secara berfasa dalam tempoh
-        lima tahun pertama. IRR dikira berdasarkan aliran tunai bersih agregat
-        dengan sensitiviti ±20% tarif air.
-      </p>
-
-      <div class="input-grid">
-        <div>
-          <label for="phase-year1">Fasa Tahun 1 (0–1)</label>
-          <input type="number" id="phase-year1" class="phase-factor" value="0.40" step="0.1" min="0" max="1" />
-        </div>
-        <div>
-          <label for="phase-year2">Fasa Tahun 2 (0–1)</label>
-          <input type="number" id="phase-year2" class="phase-factor" value="0.60" step="0.1" min="0" max="1" />
-        </div>
-        <div>
-          <label for="phase-year3">Fasa Tahun 3 (0–1)</label>
-          <input type="number" id="phase-year3" class="phase-factor" value="0.80" step="0.1" min="0" max="1" />
-        </div>
-        <div>
-          <label for="phase-year4">Fasa Tahun 4 (0–1)</label>
-          <input type="number" id="phase-year4" class="phase-factor" value="1.00" step="0.1" min="0" max="1" />
-        </div>
-        <div>
-          <label for="phase-year5">Fasa Tahun 5 (0–1)</label>
-          <input type="number" id="phase-year5" class="phase-factor" value="1.00" step="0.1" min="0" max="1" />
-        </div>
-      </div>
-
-      <table id="irr-table" style="margin-top:1rem;">
-        <tbody>
-          <tr>
-            <td>IRR asas projek (%)</td>
-            <td id="irr-base">–</td>
-          </tr>
-          <tr>
-            <td>IRR sensitiviti tarif −20% (%)</td>
-            <td id="irr-low">–</td>
-          </tr>
-          <tr>
-            <td>IRR sensitiviti tarif +20% (%)</td>
-            <td id="irr-high">–</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="note" style="margin-top:0.4rem;">
-        Nota: CAPEX diandaikan ditanggung pada tahun 0, manakala faedah dan OPEX
-        ditingkatkan secara berperingkat berdasarkan faktor fasa Tahun 1–5.
       </div>
     </section>
 
@@ -954,19 +931,8 @@
             <strong>Langkah 4 – Penjimatan & CBA:</strong> Volum air alternatif
             dikalikan dengan tarif air + pembetungan untuk mendapatkan penjimatan
             tahunan, ditolak OPEX untuk mendapatkan aliran tunai bersih.
-            NPV, BCR, payback dan IRR dikira menggunakan tempoh analisis dan
-            kadar diskaun yang ditetapkan.
-          </li>
-          <li>
-            <strong>Langkah 5 – Analisis ekonomi & alam sekitar:</strong> Harga
-            bayangan air diaplikasi bagi mencerminkan nilai sosial air yang
-            lebih tinggi berbanding tarif kewangan. Manfaat alam sekitar
-            dianggarkan melalui pengurangan CO₂ dan NRW.
-          </li>
-          <li>
-            <strong>Langkah 6 – Fasa pelaksanaan:</strong> Fasa tahun 1–5
-            digunakan untuk menskalakan aliran faedah dan kos operasi mengikut
-            jadual penyerapan projek.
+            NPV dan BCR dikira menggunakan tempoh analisis dan kadar diskaun
+            yang ditetapkan.
           </li>
         </ul>
 
@@ -985,13 +951,10 @@
   </main>
 
   <footer>
-    © 2025 Assis, Fera, Sarimah, Sani RuWaS UMS. All rights reserved.
+    © 2025 Assis, Fera, Sarimah & Sani @ RuWaS UMS. All rights reserved.
   </footer>
 
   <script>
-    // Simpan sumber alternatif terakhir (untuk PDF naratif perincian CAPEX/OPEX)
-    let lastAltSources = [];
-
     window.addEventListener("DOMContentLoaded", () => {
       const addRowBtn = document.getElementById("add-row-btn");
       const calcBtn = document.getElementById("calculate-btn");
@@ -1041,38 +1004,18 @@
       const sumNetCFEl = document.getElementById("sum-netcf");
       const sumNPVEl = document.getElementById("sum-npv");
       const sumBCREl = document.getElementById("sum-bcr");
+      const sumIRREl = document.getElementById("sum-irr");
 
-      // Ekonomi & alam sekitar
-      const shadowMultiplierInput = document.getElementById("shadow-multiplier");
-      const co2FactorInput = document.getElementById("co2-factor");
-      const carbonPriceInput = document.getElementById("carbon-price");
-      const nrwAvoidInput = document.getElementById("nrw-avoid");
-
-      const shadowPriceEl = document.getElementById("shadow-price-val");
-      const ecoAnnualBenefitEl = document.getElementById("eco-annual-benefit");
-      const ecoNPVEl = document.getElementById("eco-npv");
-      const ecoBCREl = document.getElementById("eco-bcr");
-      const co2SavedEl = document.getElementById("co2-saved");
-      const carbonValueEl = document.getElementById("carbon-value");
-      const nrwSavedVolEl = document.getElementById("nrw-saved");
-
-      // IRR & fasa
-      const phaseInputs = [
-        document.getElementById("phase-year1"),
-        document.getElementById("phase-year2"),
-        document.getElementById("phase-year3"),
-        document.getElementById("phase-year4"),
-        document.getElementById("phase-year5"),
-      ];
-      const irrBaseEl = document.getElementById("irr-base");
-      const irrLowEl = document.getElementById("irr-low");
-      const irrHighEl = document.getElementById("irr-high");
-
-      // Parameter kewangan
       const tariffWaterInput = document.getElementById("tariff-water");
       const tariffSewerInput = document.getElementById("tariff-sewer");
       const analysisYearsInput = document.getElementById("analysis-years");
       const discountRateInput = document.getElementById("discount-rate");
+
+      // CAPEX/OPEX itemised
+      const capexOpexBody = document.getElementById("capex-opex-body");
+      const capexItemsTotalEl = document.getElementById("capex-items-total");
+      const opexItemsTotalEl = document.getElementById("opex-items-total");
+      const addItemBtn = document.getElementById("add-capex-opex-item-btn");
 
       const categoryChartCtx = document
         .getElementById("demand-by-category-chart")
@@ -1092,16 +1035,11 @@
       let cbaNpvChart = null;
       let cbaPaybackChart = null;
 
+      let lastAltSources = [];
+
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
         return num.toLocaleString("ms-MY", { maximumFractionDigits: 2 });
-      }
-
-      function formatPercent(num) {
-        if (!isFinite(num)) return "–";
-        return num.toLocaleString("ms-MY", {
-          maximumFractionDigits: 2,
-        }) + " %";
       }
 
       function createStatusPill(status, isPeak) {
@@ -1119,42 +1057,6 @@
         return `<span class="status-pill ${cls}">${
           status === "Surplus" ? "✔️" : "⚠️"
         } ${label}</span>`;
-      }
-
-      function computeIRR(cashflows, guess = 0.08) {
-        // Bisection method between -0.9 and 1.0
-        const npv = (rate) => {
-          let total = cashflows[0];
-          for (let t = 1; t < cashflows.length; t++) {
-            total += cashflows[t] / Math.pow(1 + rate, t);
-          }
-          return total;
-        };
-
-        let low = -0.9;
-        let high = 1.0;
-        let npvLow = npv(low);
-        let npvHigh = npv(high);
-
-        if (npvLow * npvHigh > 0) {
-          return NaN; // tiada akar jelas
-        }
-
-        for (let i = 0; i < 60; i++) {
-          const mid = (low + high) / 2;
-          const npvMid = npv(mid);
-          if (Math.abs(npvMid) < 1e-6) {
-            return mid * 100;
-          }
-          if (npvLow * npvMid < 0) {
-            high = mid;
-            npvHigh = npvMid;
-          } else {
-            low = mid;
-            npvLow = npvMid;
-          }
-        }
-        return ((low + high) / 2) * 100;
       }
 
       function calculate() {
@@ -1374,7 +1276,7 @@
         // 6. Update demand charts
         updateDemandCharts(categoryNames, avgDemands, peakDemands);
 
-        // 7. CBA for alternative sources + ekonomi & alam sekitar + IRR
+        // 7. CBA for alternative sources
         calculateAltCBA(altData);
       }
 
@@ -1452,8 +1354,43 @@
         });
       }
 
+      function computeIRR(initialCapex, netCF, years) {
+        if (!(isFinite(initialCapex) && isFinite(netCF) && initialCapex > 0 && netCF > 0 && years > 0)) {
+          return NaN;
+        }
+        let low = 0.0;
+        let high = 0.3; // 0%–30%
+        function npv(rate) {
+          let val = -initialCapex;
+          for (let t = 1; t <= years; t++) {
+            val += netCF / Math.pow(1 + rate, t);
+          }
+          return val;
+        }
+        let npvLow = npv(low);
+        let npvHigh = npv(high);
+        if (npvLow * npvHigh > 0) {
+          return NaN;
+        }
+        for (let i = 0; i < 40; i++) {
+          const mid = (low + high) / 2;
+          const npvMid = npv(mid);
+          if (Math.abs(npvMid) < 1e-3) {
+            return mid;
+          }
+          if (npvLow * npvMid < 0) {
+            high = mid;
+            npvHigh = npvMid;
+          } else {
+            low = mid;
+            npvLow = npvMid;
+          }
+        }
+        return (low + high) / 2;
+      }
+
       function calculateAltCBA(altData) {
-        // Clear jika tiada data
+        // Clear if no data
         altResultsBody.innerHTML = "";
         if (cbaNpvChart) cbaNpvChart.destroy();
         if (cbaPaybackChart) cbaPaybackChart.destroy();
@@ -1496,33 +1433,14 @@
           sumNetCFEl.textContent = "0.00";
           sumNPVEl.textContent = "0.00";
           sumBCREl.textContent = "–";
-
-          // Kosongkan ekonomi & IRR juga
-          shadowPriceEl.textContent = "–";
-          ecoAnnualBenefitEl.textContent = "–";
-          ecoNPVEl.textContent = "–";
-          ecoBCREl.textContent = "–";
-          co2SavedEl.textContent = "–";
-          carbonValueEl.textContent = "–";
-          nrwSavedVolEl.textContent = "–";
-          irrBaseEl.textContent = "–";
-          irrLowEl.textContent = "–";
-          irrHighEl.textContent = "–";
+          sumIRREl.textContent = "–";
 
           lastAltSources = [];
           return;
         }
 
         altData.forEach((s) => {
-          const {
-            name,
-            capacity,
-            utilPercent,
-            capex,
-            opexFixed,
-            opexVar,
-            lifeYears,
-          } = s;
+          const { name, capacity, utilPercent, capex, opexFixed, opexVar, lifeYears } = s;
           const volAnnual = capacity * (utilPercent / 100) * 365;
 
           const savingAnnual = volAnnual * tariffTotal;
@@ -1536,10 +1454,9 @@
           }
 
           // NPV & BCR
-          const horizon =
-            isFinite(lifeYears) && lifeYears > 0
-              ? Math.min(analysisYears, Math.round(lifeYears))
-              : analysisYears;
+          const horizon = isFinite(lifeYears) && lifeYears > 0
+            ? Math.min(analysisYears, Math.round(lifeYears))
+            : analysisYears;
 
           let pvBenefits = 0;
           let pvCosts = capex;
@@ -1603,6 +1520,13 @@
         sumNPVEl.textContent = formatNumber(totalNPV);
         sumBCREl.textContent = isFinite(totalBCR) ? formatNumber(totalBCR) : "–";
 
+        // IRR anggaran untuk projek (menggunakan totalCapex & totalNetCF)
+        const irr = computeIRR(totalCapex, totalNetCF, analysisYears);
+        sumIRREl.textContent = isFinite(irr) ? (irr * 100).toFixed(2) + " %" : "–";
+
+        // Simpan altData untuk laporan PDF (termasuk nota CAPEX/OPEX)
+        lastAltSources = altData.slice();
+
         // Charts NPV & Payback
         if (labels.length) {
           cbaNpvChart = new Chart(cbaNPVCtx, {
@@ -1658,69 +1582,60 @@
             },
           });
         }
+      }
 
-        // 8. Analisis ekonomi (shadow price) & alam sekitar (CO2 + NRW)
-        const shadowMult = parseFloat(shadowMultiplierInput.value) || 1;
-        const co2Factor = parseFloat(co2FactorInput.value) || 0;
-        const carbonPrice = parseFloat(carbonPriceInput.value) || 0;
-        const nrwAvoid = parseFloat(nrwAvoidInput.value) || 0;
+      // CAPEX/OPEX itemised calculator
+      function recalcCapexOpexItems() {
+        const rows = Array.from(document.querySelectorAll(".capex-opex-row"));
+        let capexTotal = 0;
+        let opexTotal = 0;
 
-        const shadowTariff = tariffTotal * shadowMult;
-        const econAnnualBenefit = totalVol * shadowTariff;
-
-        // Faktor anuiti untuk analisisYears
-        let annFactor = 0;
-        for (let t = 1; t <= analysisYears; t++) {
-          annFactor += 1 / Math.pow(1 + r, t);
-        }
-
-        const econPVBenefits = econAnnualBenefit * annFactor;
-        const econPVCosts = totalCapex + totalOpex * annFactor;
-        const econNPV = econPVBenefits - econPVCosts;
-        const econBCR = econPVCosts > 0 ? econPVBenefits / econPVCosts : NaN;
-
-        const co2SavedTon = (totalVol * co2Factor) / 1000;
-        const carbonValue = co2SavedTon * carbonPrice;
-        const nrwSavedVol = totalVol * (nrwAvoid / 100);
-
-        shadowPriceEl.textContent = formatNumber(shadowTariff);
-        ecoAnnualBenefitEl.textContent = formatNumber(econAnnualBenefit);
-        ecoNPVEl.textContent = formatNumber(econNPV);
-        ecoBCREl.textContent = isFinite(econBCR) ? formatNumber(econBCR) : "–";
-        co2SavedEl.textContent = formatNumber(co2SavedTon);
-        carbonValueEl.textContent = formatNumber(carbonValue);
-        nrwSavedVolEl.textContent = formatNumber(nrwSavedVol);
-
-        // 9. IRR & sensitiviti ±20% tarif air (projek agregat) dengan fasa 1–5
-        const phaseFactors = phaseInputs.map((inp) => {
-          const v = parseFloat(inp.value);
-          return isFinite(v) && v >= 0 ? v : 1;
+        rows.forEach((row) => {
+          const type = row.querySelector(".item-type").value;
+          const qty = parseFloat(row.querySelector(".item-qty").value) || 0;
+          const cost = parseFloat(row.querySelector(".item-cost").value) || 0;
+          const total = qty * cost;
+          row.querySelector(".item-total").textContent = formatNumber(total);
+          if (type === "CAPEX") {
+            capexTotal += total;
+          } else {
+            opexTotal += total;
+          }
         });
 
-        function buildFlows(fullNetPerYear) {
-          const flows = [-totalCapex];
-          for (let t = 1; t <= analysisYears; t++) {
-            const f = t <= phaseFactors.length ? phaseFactors[t - 1] : 1;
-            flows.push(fullNetPerYear * f);
-          }
-          return flows;
-        }
-
-        const fullNetBase = totalSaving - totalOpex;
-        const fullNetLow = totalSaving * 0.8 - totalOpex;
-        const fullNetHigh = totalSaving * 1.2 - totalOpex;
-
-        const irrBase = computeIRR(buildFlows(fullNetBase));
-        const irrLow = computeIRR(buildFlows(fullNetLow));
-        const irrHigh = computeIRR(buildFlows(fullNetHigh));
-
-        irrBaseEl.textContent = isFinite(irrBase) ? formatPercent(irrBase) : "–";
-        irrLowEl.textContent = isFinite(irrLow) ? formatPercent(irrLow) : "–";
-        irrHighEl.textContent = isFinite(irrHigh) ? formatPercent(irrHigh) : "–";
-
-        // Simpan sumber alternatif (termasuk catatan CAPEX/OPEX) untuk laporan PDF
-        lastAltSources = altData.slice();
+        capexItemsTotalEl.textContent = formatNumber(capexTotal);
+        opexItemsTotalEl.textContent = formatNumber(opexTotal);
       }
+
+      addItemBtn.addEventListener("click", () => {
+        const tr = document.createElement("tr");
+        tr.className = "capex-opex-row";
+        tr.innerHTML = `
+          <td>
+            <select class="item-type">
+              <option value="CAPEX">CAPEX</option>
+              <option value="OPEX">OPEX</option>
+            </select>
+          </td>
+          <td><input type="text" class="item-name" placeholder="Nama item" /></td>
+          <td><input type="number" class="item-qty" value="1" min="0" step="0.01" /></td>
+          <td><input type="number" class="item-cost" value="0" min="0" step="0.01" /></td>
+          <td class="item-total">0.00</td>
+          <td><input type="text" class="item-note" placeholder="Catatan (jika ada)" /></td>
+        `;
+        capexOpexBody.appendChild(tr);
+        recalcCapexOpexItems();
+      });
+
+      capexOpexBody.addEventListener("input", (e) => {
+        if (
+          e.target.classList.contains("item-qty") ||
+          e.target.classList.contains("item-cost") ||
+          e.target.classList.contains("item-type")
+        ) {
+          recalcCapexOpexItems();
+        }
+      });
 
       // Add rows for demand categories
       addRowBtn.addEventListener("click", () => {
@@ -1744,16 +1659,19 @@
           <td><input type="number" class="alt-capacity" min="0" /></td>
           <td><input type="number" class="alt-util" min="0" max="100" /></td>
           <td><input type="number" class="alt-capex" min="0" /></td>
-          <td><input type="text" class="alt-capex-note" placeholder="Butiran CAPEX (jika perlu)" /></td>
+          <td><input type="text" class="alt-capex-note" placeholder="Butiran CAPEX (jika ada)" /></td>
           <td><input type="number" class="alt-opex-fixed" min="0" /></td>
           <td><input type="number" class="alt-opex-var" min="0" step="0.01" /></td>
-          <td><input type="text" class="alt-opex-note" placeholder="Butiran OPEX (jika perlu)" /></td>
+          <td><input type="text" class="alt-opex-note" placeholder="Butiran OPEX (jika ada)" /></td>
           <td><input type="number" class="alt-life" min="1" /></td>
         `;
         altBody.appendChild(tr);
       });
 
-      calcBtn.addEventListener("click", calculate);
+      calcBtn.addEventListener("click", () => {
+        recalcCapexOpexItems();
+        calculate();
+      });
 
       // Export Excel
       exportBtn.addEventListener("click", () => {
@@ -1763,7 +1681,8 @@
             return;
           }
 
-          // Pastikan kiraan terkini
+          // Ensure latest calculations
+          recalcCapexOpexItems();
           calculate();
 
           const wb = XLSX.utils.book_new();
@@ -1847,6 +1766,33 @@
           const wsCBA = XLSX.utils.aoa_to_sheet(cbaRows);
           XLSX.utils.book_append_sheet(wb, wsCBA, "CBA_Alt_Sources");
 
+          // Sheet 4: Itemised CAPEX & OPEX
+          const itemRows = [[
+            "Jenis",
+            "Item / Komponen",
+            "Kuantiti",
+            "Kos seunit (RM)",
+            "Jumlah kos (RM)",
+            "Catatan"
+          ]];
+          document.querySelectorAll("#capex-opex-body tr").forEach((tr) => {
+            const type = tr.querySelector(".item-type").value || "";
+            const name = tr.querySelector(".item-name").value || "";
+            const qty = tr.querySelector(".item-qty").value || "";
+            const cost = tr.querySelector(".item-cost").value || "";
+            const total = tr.querySelector(".item-total").textContent || "";
+            const note = tr.querySelector(".item-note").value || "";
+            if (name.trim() || parseFloat(qty) > 0 || parseFloat(cost) > 0) {
+              itemRows.push([type, name, qty, cost, total, note]);
+            }
+          });
+          itemRows.push(
+            ["Jumlah CAPEX", "", "", "", document.getElementById("capex-items-total").textContent, ""],
+            ["Jumlah OPEX", "", "", "", document.getElementById("opex-items-total").textContent, ""]
+          );
+          const wsItems = XLSX.utils.aoa_to_sheet(itemRows);
+          XLSX.utils.book_append_sheet(wb, wsItems, "CAPEX_OPEX_Itemised");
+
           XLSX.writeFile(wb, "UMS_Water_Demand_Supply_CBA.xlsx");
         } catch (e) {
           console.error(e);
@@ -1854,156 +1800,256 @@
         }
       });
 
-      // Export PDF (Laporan EPU-style ringkas)
+      // Export PDF (EPU-style)
       pdfBtn.addEventListener("click", () => {
         try {
           if (!window.jspdf || !window.jspdf.jsPDF) {
             alert("Library PDF (jsPDF) tidak dimuatkan.");
             return;
           }
-
-          // Pastikan angka terkini
+          recalcCapexOpexItems();
           calculate();
 
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF("p", "mm", "a4");
+          const today = new Date().toLocaleDateString("ms-MY");
 
-          const marginLeft = 14;
-          let y = 18;
+          function addParagraph(title, text, startY) {
+            let y = startY;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(title, 14, y);
+            y += 5;
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            const lines = doc.splitTextToSize(text, 180);
+            doc.text(lines, 14, y);
+            y += lines.length * 4 + 4;
+            return y;
+          }
 
-          doc.setFont("helvetica", "bold");
+          // Muka surat 1: tajuk + naratif
           doc.setFontSize(14);
-          doc.text("LAPORAN PENILAIAN PROJEK SUMBER AIR ALTERNATIF", marginLeft, y);
+          doc.setFont("helvetica", "bold");
+          doc.text("Laporan Ringkasan Permintaan, Bekalan dan Sumber Air Alternatif UMS", 14, 16);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text("Tarikh jana: " + today, 14, 22);
+
+          let y = 30;
+
+          const latarText =
+            "Universiti Malaysia Sabah (UMS) bergantung kepada bekalan air terawat " +
+            "yang dibekalkan oleh pihak berkuasa air negeri bagi menyokong operasi " +
+            "kampus, termasuk keperluan asrama pelajar, fakulti dan pentadbiran, " +
+            "kemudahan ibadah serta sukan dan rekreasi. Pertumbuhan bilangan pelajar " +
+            "dan aktiviti kampus dari semasa ke semasa meningkatkan permintaan air, " +
+            "sekali gus menuntut perancangan bekalan yang lebih mampan dan berdaya tahan. " +
+            "Selain itu, tekanan terhadap sumber air konvensional serta keperluan " +
+            "pengurangan risiko gangguan bekalan memberi justifikasi kepada penilaian " +
+            "sumber air alternatif seperti tangkapan air hujan, reuse (greywater/RO), " +
+            "air tasik kampus dan kondensasi penghawa dingin.";
+
+          const objektifText =
+            "Objektif utama analisis ini adalah untuk: (i) menganggarkan permintaan air " +
+            "kampus UMS mengikut kategori pengguna; (ii) membandingkan permintaan purata " +
+            "dan puncak dengan kapasiti bekalan sedia ada; (iii) menilai potensi sumbangan " +
+            "sumber air alternatif terhadap bekalan efektif kampus; dan (iv) menjalankan " +
+            "analisis kos–faedah kewangan ringkas bagi sumber air alternatif, termasuk " +
+            "indikator seperti NPV, BCR, payback period dan anggaran IRR projek.";
+
+          const kaedahText =
+            "Kaedah penilaian merangkumi beberapa komponen utama. Pertama, permintaan air " +
+            "dianggarkan menggunakan pendekatan per kapita mengikut kategori pengguna " +
+            "(contoh: asrama, fakulti & pentadbiran, masjid & surau, sukan & rekreasi), " +
+            "dengan mengambil kira faktor permintaan puncak (peak factor) untuk mencerminkan " +
+            "hari dan masa penggunaan tertinggi. Kedua, kapasiti bekalan asas diambil " +
+            "berdasarkan anggaran bekalan harian daripada loji rawatan (JANS). Ketiga, " +
+            "sumber air alternatif dimodelkan melalui parameter kapasiti teknikal (m³/hari), " +
+            "faktor penggunaan tahunan, CAPEX, OPEX tetap dan OPEX berubah. Keempat, " +
+            "analisis kewangan projek dijalankan dengan mengandaikan penjimatan bil air " +
+            "dan pembetungan berkadar terus dengan volum air alternatif yang menggantikan " +
+            "air terawat. Aliran tunai bersih tahunan dikira sebagai penjimatan bil " +
+            "ditolak OPEX; NPV dan BCR dikira menggunakan tempoh analisis dan kadar diskaun " +
+            "yang ditetapkan. Selain itu, anggaran IRR projek diperoleh berdasarkan " +
+            "jumlah CAPEX dan aliran tunai bersih tahunan agregat.";
+
+          y = addParagraph("1. Latar Belakang", latarText, y);
+          y = addParagraph("2. Objektif Projek", objektifText, y);
+          y = addParagraph("3. Kaedah Penilaian", kaedahText, y);
+
+          // Muka surat 2: hasil + jadual
+          doc.addPage();
+          y = 20;
+
           doc.setFontSize(11);
-          doc.text("Universiti Malaysia Sabah (UMS)", marginLeft, y + 7);
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(9);
-          y += 16;
-
-          // 1. Latar Belakang
           doc.setFont("helvetica", "bold");
-          doc.text("1. LATAR BELAKANG", marginLeft, y);
-          doc.setFont("helvetica", "normal");
-
-          const latar =
-            "UMS bergantung kepada bekalan air terawat daripada pembekal utiliti luar kampus " +
-            "untuk menampung keperluan pelajar, staf, kemudahan akademik, asrama dan premis sokongan. " +
-            "Pertumbuhan bilangan pengguna dan pembangunan infrastruktur baharu meningkatkan tekanan " +
-            "ke atas sistem bekalan sedia ada, khususnya semasa tempoh permintaan puncak. " +
-            "Sejajar dengan agenda kecekapan sumber, kelestarian dan daya tahan kampus, " +
-            "projek ini menilai potensi sumber air alternatif seperti tangkapan air hujan, reuse, " +
-            "air tasik kampus dan kondensasi penghawa dingin untuk mengurangkan kebergantungan " +
-            "kepada bekalan konvensional.";
-
-          y += 6;
-          doc.text(latar, marginLeft, y, { maxWidth: 180 });
-          y += 30;
-
-          // 2. Objektif Projek
-          if (y > 260) { doc.addPage(); y = 20; }
-          doc.setFont("helvetica", "bold");
-          doc.text("2. OBJEKTIF PROJEK", marginLeft, y);
-          doc.setFont("helvetica", "normal");
-
-          const obj1 =
-            "i.   Menganggarkan profil permintaan air harian kampus mengikut kategori utama seperti asrama, " +
-            "fakulti/pentadbiran, kemudahan ibadah dan sukan.";
-          const obj2 =
-            "ii.  Menilai kecukupan bekalan sedia ada berbanding permintaan purata dan permintaan puncak.";
-          const obj3 =
-            "iii. Menilai potensi sumber air alternatif daripada segi volum, penjimatan bil air/pembetungan " +
-            "dan daya maju kewangan (NPV, BCR, payback dan IRR).";
-          const obj4 =
-            "iv.  Menjalankan penilaian ekonomi menggunakan harga bayangan air serta menganggarkan manfaat " +
-            "alam sekitar melalui pengurangan CO₂ dan kehilangan bukan hasil (NRW).";
-          const obj5 =
-            "v.   Menyediakan cadangan pelaksanaan berfasa bagi tempoh lima tahun pertama selaras dengan " +
-            "keutamaan pembangunan kampus.";
-
-          y += 6;
-          doc.text(obj1, marginLeft, y, { maxWidth: 180 }); y += 6;
-          doc.text(obj2, marginLeft, y, { maxWidth: 180 }); y += 6;
-          doc.text(obj3, marginLeft, y, { maxWidth: 180 }); y += 6;
-          doc.text(obj4, marginLeft, y, { maxWidth: 180 }); y += 6;
-          doc.text(obj5, marginLeft, y, { maxWidth: 180 }); y += 10;
-
-          // 3. Kaedah Penilaian
-          if (y > 260) { doc.addPage(); y = 20; }
-          doc.setFont("helvetica", "bold");
-          doc.text("3. KAEDAH PENILAIAN", marginLeft, y);
-          doc.setFont("helvetica", "normal");
-
-          const kaedah1 =
-            "a) Analisis permintaan air: Permintaan purata dikira menggunakan bilangan pengguna " +
-            "dan kadar penggunaan per kapita (L/org/hari) mengikut kategori. Permintaan puncak " +
-            "dianggarkan dengan mendarab permintaan purata dengan faktor puncak.";
-          const kaedah2 =
-            "b) Analisis bekalan dan sumber alternatif: Bekalan asas (JANS) digabungkan dengan kapasiti " +
-            "teknikal sumber alternatif (air hujan, tasik, reuse, kondensasi) dengan mengambil kira faktor " +
-            "penggunaan (% hari/tahun) untuk mendapatkan bekalan efektif.";
-          const kaedah3 =
-            "c) Analisis kewangan: Volum air alternatif didarab dengan tarif air dan pembetungan untuk " +
-            "mengira penjimatan tahunan. Setelah ditolak OPEX, aliran tunai bersih digunakan untuk " +
-            "mengira NPV, BCR, payback dan IRR bagi tempoh analisis.";
-          const kaedah4 =
-            "d) Analisis ekonomi & alam sekitar: Harga bayangan air diaplikasi ke atas volum air alternatif " +
-            "untuk mendapatkan faedah ekonomi. Pengurangan CO₂ dan NRW dianggarkan menggunakan faktor " +
-            "pelepasan dan parameter NRW dielakkan, seterusnya ditukarkan kepada nilai monetari.";
-          const kaedah5 =
-            "e) Senario fasa: Faktor fasa Tahun 1–5 digunakan untuk menskalakan aliran faedah dan " +
-            "kos operasi, bagi menggambarkan penyerapan projek secara berperingkat.";
-
-          y += 6;
-          doc.text(kaedah1, marginLeft, y, { maxWidth: 180 }); y += 10;
-          doc.text(kaedah2, marginLeft, y, { maxWidth: 180 }); y += 10;
-          doc.text(kaedah3, marginLeft, y, { maxWidth: 180 }); y += 10;
-          doc.text(kaedah4, marginLeft, y, { maxWidth: 180 }); y += 10;
-          doc.text(kaedah5, marginLeft, y, { maxWidth: 180 }); y += 8;
-
-          // 4. Hasil Analisis (jadual ringkasan)
-          if (y > 240) { doc.addPage(); y = 20; }
-          doc.setFont("helvetica", "bold");
-          doc.text("4. HASIL ANALISIS", marginLeft, y);
+          doc.text("4. Hasil Analisis Utama", 14, y);
           y += 6;
 
           // 4.1 Ringkasan demand–supply
-          doc.setFont("helvetica", "bold");
-          doc.text("4.1 Ringkasan Permintaan–Bekalan Air", marginLeft, y);
+          doc.setFontSize(9);
           doc.setFont("helvetica", "normal");
-
-          const summaryRows = [
-            ["Jumlah permintaan purata (MLD)", document.getElementById("summary-avg-mld").textContent],
-            ["Jumlah permintaan puncak (MLD)", document.getElementById("summary-peak-mld").textContent],
-            ["Bekalan sedia ada (JANS) (MLD)", document.getElementById("supply-avg-mld").textContent],
-            ["Extra supply (sumber alternatif) (MLD)", document.getElementById("alt-supply-mld").textContent],
-            ["Bekalan efektif (MLD)", document.getElementById("effective-supply-mld").textContent],
-            ["Surplus / Defisit purata (MLD)", document.getElementById("surplus-avg-mld").textContent],
-            ["Surplus / Defisit puncak (MLD)", document.getElementById("surplus-peak-mld").textContent],
-          ];
+          doc.text("4.1 Ringkasan Permintaan dan Bekalan Air (MLD)", 14, y);
+          y += 4;
 
           doc.autoTable({
-            startY: y + 4,
-            head: [["Item", "Nilai"]],
-            body: summaryRows,
+            startY: y,
+            head: [["Item", "Nilai (MLD)"]],
+            body: [
+              ["Jumlah permintaan purata", document.getElementById("summary-avg-mld").textContent],
+              ["Jumlah permintaan puncak", document.getElementById("summary-peak-mld").textContent],
+              ["Bekalan sedia ada (JANS)", document.getElementById("supply-avg-mld").textContent],
+              ["Extra supply (sumber alternatif)", document.getElementById("alt-supply-mld").textContent],
+              ["Bekalan efektif (JANS + alternatif)", document.getElementById("effective-supply-mld").textContent],
+              ["Surplus / Defisit purata", document.getElementById("surplus-avg-mld").textContent],
+              ["Surplus / Defisit puncak", document.getElementById("surplus-peak-mld").textContent]
+            ],
             styles: { fontSize: 8 },
-            headStyles: { fillColor: [13, 110, 253] },
+            headStyles: { fillColor: [13, 110, 253] }
           });
 
           y = doc.lastAutoTable.finalY + 8;
 
-          // 4.2 Ringkasan kewangan & IRR
-          if (y > 240) { doc.addPage(); y = 20; }
-          doc.setFont("helvetica", "bold");
-          doc.text("4.2 Ringkasan Analisis Kewangan", marginLeft, y);
-          doc.setFont("helvetica", "normal");
+          // 4.2 Ringkasan kewangan projek
+          doc.setFontSize(9);
+          doc.text("4.2 Ringkasan Analisis Kewangan Sumber Air Alternatif", 14, y);
+          y += 4;
 
-          const finanRows = [
-            ["Jumlah CAPEX semua sumber (RM)", document.getElementById("sum-capex").textContent],
-            ["Jumlah penjimatan air + pembetungan/tahun (RM)", document.getElementById("sum-saving").textContent],
-            ["Jumlah OPEX/tahun (RM)", document.getElementById("sum-opex").textContent],
-            ["Aliran tunai bersih tahunan (RM)", document.getElementById("sum-netcf").textContent],
-            ["NPV kewangan projek (RM)", document.getElementById("sum-npv").textContent],
-            ["BCR kewangan projek", document.getElementById("sum-bcr").textContent],
-            ["IRR asas projek (%)", document.getElementById("irr-base").textContent],
-            ["IRR sensitiviti tarif −20
+          doc.autoTable({
+            startY: y,
+            head: [["Indikator", "Nilai"]],
+            body: [
+              ["Jumlah CAPEX semua sumber (RM)", sumCapexEl.textContent],
+              ["Jumlah OPEX tahunan (RM/tahun)", sumOpexEl.textContent],
+              ["Penjimatan air + pembetungan (RM/tahun)", sumSavingEl.textContent],
+              ["Aliran tunai bersih tahunan (RM/tahun)", sumNetCFEl.textContent],
+              ["NPV projek (RM)", sumNPVEl.textContent],
+              ["BCR projek", sumBCREl.textContent],
+              ["Anggaran IRR projek", sumIRREl.textContent]
+            ],
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [0, 188, 212] }
+          });
+
+          y = doc.lastAutoTable.finalY + 8;
+
+          // 4.3 Perincian CAPEX & OPEX mengikut sumber
+          doc.setFontSize(9);
+          doc.text("4.3 Perincian CAPEX dan OPEX Mengikut Sumber Air Alternatif", 14, y);
+          y += 4;
+
+          if (lastAltSources && lastAltSources.length) {
+            const capexOpexBody = lastAltSources.map(s => ([
+              s.name || "-",
+              s.capexNote || "-",
+              s.opexNote || "-"
+            ]));
+
+            doc.autoTable({
+              startY: y,
+              head: [["Sumber", "Butiran CAPEX (ringkas)", "Butiran OPEX (ringkas)"]],
+              body: capexOpexBody,
+              styles: { fontSize: 8 },
+              headStyles: { fillColor: [63, 81, 181] }
+            });
+            y = doc.lastAutoTable.finalY + 8;
+          } else {
+            doc.setFontSize(8);
+            doc.text(
+              "Tiada perincian CAPEX dan OPEX dimasukkan pada peringkat ini.",
+              14,
+              y
+            );
+            y += 6;
+          }
+
+          // 4.4 Ringkasan pengiraan terperinci CAPEX/OPEX item
+          doc.setFontSize(9);
+          doc.text("4.4 Ringkasan Pengiraan Terperinci CAPEX dan OPEX Mengikut Item", 14, y);
+          y += 4;
+
+          doc.autoTable({
+            startY: y,
+            head: [["Jenis", "Jumlah (RM)"]],
+            body: [
+              ["CAPEX (daripada jadual item)", capexItemsTotalEl.textContent],
+              ["OPEX (daripada jadual item)", opexItemsTotalEl.textContent]
+            ],
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [76, 175, 80] }
+          });
+
+          // Muka surat 3: cadangan & penafian
+          doc.addPage();
+          y = 20;
+
+          const hasilText =
+            "Secara keseluruhan, analisis menunjukkan bahawa jumlah permintaan purata " +
+            "kampus adalah pada orde yang ditunjukkan dalam Jadual 4.1, manakala " +
+            "permintaan puncak lebih tinggi mengikut faktor puncak yang digunakan. " +
+            "Apabila hanya bekalan sedia ada (JANS) diambil kira, wujud risiko surplus " +
+            "atau defisit bergantung kepada kombinasi permintaan purata dan puncak. " +
+            "Dengan memasukkan sumber air alternatif, bekalan efektif kampus meningkat " +
+            "dan jurang antara permintaan dan bekalan dapat dikurangkan, sekali gus " +
+            "mengurangkan kebergantungan tunggal kepada air terawat sedia ada.\n\n" +
+            "Daripada perspektif kewangan, jumlah CAPEX projek adalah pada magnitud " +
+            sumCapexEl.textContent +
+            ", manakala OPEX tahunan dianggarkan sekitar " +
+            sumOpexEl.textContent +
+            ". Penjimatan bil air dan pembetungan tahunan sekitar " +
+            sumSavingEl.textContent +
+            " menghasilkan aliran tunai bersih tahunan sebanyak " +
+            sumNetCFEl.textContent +
+            ". NPV projek sebanyak " +
+            sumNPVEl.textContent +
+            " dan BCR sekitar " +
+            sumBCREl.textContent +
+            " menunjukkan bahawa projek ini berpotensi " +
+            "memberi pulangan kewangan yang munasabah, dengan anggaran IRR " +
+            sumIRREl.textContent +
+            " bergantung kepada andaian tarif dan tempoh analisis.";
+
+          const cadanganText =
+            "Berdasarkan dapatan ini, beberapa cadangan boleh dipertimbangkan:\n" +
+            "(i) Memfasa pelaksanaan sumber air alternatif mengikut keutamaan kos dan impak, " +
+            "contohnya memulakan dengan tangkapan air hujan dan kondensasi penghawa dingin " +
+            "yang lazimnya memerlukan CAPEX yang lebih sederhana.\n" +
+            "(ii) Menjalankan analisis teknikal terperinci di peringkat bangunan/zon bagi " +
+            "memastikan infrastruktur paip, tangki dan sistem kawalan bersesuaian dengan " +
+            "pola permintaan sebenar.\n" +
+            "(iii) Mengemas kini parameter kewangan (tarif, OPEX, jangka hayat) berdasarkan " +
+            "data terkini daripada agensi berkaitan dan pembekal teknologi.\n" +
+            "(iv) Menggabungkan dimensi alam sekitar seperti pengurangan pelepasan karbon " +
+            "dan penjimatan sumber air konvensional dalam penilaian projek, khususnya " +
+            "apabila laporan dikemukakan untuk kelulusan peringkat lebih tinggi.\n" +
+            "(v) Menyepadukan sistem pemantauan penggunaan air (metering dan data logger) " +
+            "bagi membolehkan pengesahan dan kalibrasi model permintaan–bekalan dari semasa ke semasa.";
+
+          const penafianText =
+            "Laporan ini dijana secara automatik menggunakan kalkulator permintaan–bekalan " +
+            "air UMS berasaskan input dan andaian pengguna. Nilai dan indikator kewangan " +
+            "yang dipaparkan adalah anggaran untuk tujuan perancangan awal dan tidak " +
+            "boleh dianggap sebagai angka muktamad. Sebarang keputusan pelaburan, reka bentuk " +
+            "kejuruteraan atau komitmen kewangan hendaklah disokong dengan kajian teknikal " +
+            "terperinci, data meter sebenar serta pengesahan oleh pihak berkuasa dan " +
+            "pihak berkepentingan rasmi.";
+
+          y = addParagraph("5. Hasil Analisis Utama (Rumusan Naratif)", hasilText, y);
+          y = addParagraph("6. Cadangan dan Langkah Seterusnya", cadanganText, y);
+          y = addParagraph("7. Penafian", penafianText, y);
+
+          doc.save("Laporan_UMS_Water_Demand_Supply.pdf");
+        } catch (e) {
+          console.error(e);
+          alert("Ralat semasa jana PDF. Sila cuba lagi.");
+        }
+      });
+
+      // Kiraan awal dengan nilai contoh
+      recalcCapexOpexItems();
+      calculate();
+    });
+  </script>
+</body>
+</html>
