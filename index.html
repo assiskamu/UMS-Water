@@ -1488,6 +1488,36 @@
         return umsLogoDataUrl;
       }
 
+      function waitForNextFrame() {
+        return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      }
+
+      function wait(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      function waitForImages(container) {
+        const imgs = Array.from(container.querySelectorAll("img"));
+        const pending = imgs.filter((img) => !img.complete || img.naturalWidth === 0);
+        if (!pending.length) return Promise.resolve();
+        return Promise.allSettled(
+          pending.map(
+            (img) =>
+              new Promise((resolve) => {
+                img.addEventListener("load", resolve, { once: true });
+                img.addEventListener("error", resolve, { once: true });
+              })
+          )
+        );
+      }
+
+      function waitForFonts() {
+        if (document.fonts && document.fonts.ready) {
+          return document.fonts.ready.catch(() => undefined);
+        }
+        return Promise.resolve();
+      }
+
       function calculate() {
         // 1. Demand by category
         const rows = Array.from(document.querySelectorAll(".category-row"));
@@ -2887,11 +2917,40 @@
           reportRoot.classList.add("rendering");
           reportRoot.setAttribute("aria-hidden", "false");
 
+          // Pastikan browser sempat melukis kandungan laporan sebelum ditangkap oleh html2pdf
+          await waitForNextFrame();
+          await waitForImages(reportRoot);
+          await waitForNextFrame();
+          await wait(80);
+          await waitForFonts();
+
+          if (!reportRoot.querySelector(".report-page")) {
+            alert("Laporan tidak dapat dijana (tiada kandungan). Sila cuba lagi.");
+            return;
+          }
+
+          const viewportWidth = Math.max(
+            reportRoot.scrollWidth,
+            reportRoot.clientWidth,
+            document.documentElement.clientWidth
+          );
+          const viewportHeight = Math.max(
+            reportRoot.scrollHeight,
+            reportRoot.clientHeight,
+            document.documentElement.clientHeight
+          );
+
           const opt = {
             margin: [0, 0, 0, 0],
             filename: `Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: "#ffffff",
+              windowWidth: viewportWidth,
+              windowHeight: viewportHeight,
+            },
             jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
             pagebreak: { mode: ["css", "legacy"] },
           };
