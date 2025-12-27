@@ -1004,6 +1004,89 @@
       header h1 { font-size: 1.25rem; }
       .two-column { grid-template-columns: 1fr; }
     }
+
+    /* Wizard overlay */
+    .wizard-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 32, 69, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 999;
+      backdrop-filter: blur(2px);
+    }
+
+    .wizard-overlay.active { display: flex; }
+
+    .wizard-dialog {
+      background: #ffffff;
+      border-radius: 1rem;
+      width: min(900px, 100%);
+      max-height: 90vh;
+      overflow: hidden;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #d6e6f7;
+    }
+
+    .wizard-header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, var(--primary-dark), #0c74d4);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .wizard-title { margin: 0; font-size: 1.1rem; }
+
+    .wizard-body { padding: 1rem 1.25rem 0.5rem; overflow-y: auto; }
+
+    .wizard-steps { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.8rem; padding: 0; list-style: none; }
+    .wizard-steps li {
+      padding: 0.45rem 0.65rem;
+      border-radius: 0.65rem;
+      border: 1px solid #d7e5f6;
+      background: #f6f9ff;
+      color: #1f3e64;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .wizard-steps li.active { border-color: var(--primary); box-shadow: 0 6px 14px rgba(13, 110, 253, 0.12); }
+    .wizard-steps li .idx { background: var(--primary); color: #fff; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-weight: 700; }
+
+    .wizard-panel { background: #f9fbff; border: 1px solid #e1ecfa; border-radius: 0.85rem; padding: 0.9rem 1rem; margin-bottom: 0.75rem; }
+    .wizard-panel h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .wizard-panel p { margin: 0.2rem 0 0.3rem; color: #3e5874; }
+    .wizard-panel ul { margin: 0.35rem 0 0.35rem 1.1rem; color: #3b5573; }
+    .wizard-hint { font-size: 0.9rem; color: #345; margin: 0.2rem 0; display: flex; gap: 0.35rem; align-items: center; }
+    .wizard-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.75rem 1rem 1rem; border-top: 1px solid #e7edf5; background: #fff; }
+    .wizard-actions .left { display: flex; gap: 0.5rem; align-items: center; }
+    .wizard-actions .right { display: flex; gap: 0.5rem; align-items: center; }
+    .wizard-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.45rem; border-radius: 0.5rem; background: #eef4ff; color: #1a3b63; font-size: 0.85rem; }
+    .wizard-warning { color: #b3261e; font-weight: 600; }
+    .wizard-success { color: #0d6efd; font-weight: 600; }
+    .wizard-step-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .wizard-helper { font-size: 0.88rem; color: #48607a; margin-top: 0.3rem; }
+
+    .wizard-pointer { outline: 2px dashed var(--primary); outline-offset: 4px; border-radius: 6px; animation: pulse 1.6s ease-in-out infinite; }
+
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.35);} 70% { box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);} 100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);} }
+
+    .report-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .report-options .mini-input { margin-top: 0.25rem; }
   </style>
 </head>
 <body>
@@ -1024,6 +1107,37 @@
   </header>
 
   <main>
+    <div class="toolbar" style="justify-content:flex-end; margin-bottom:0.5rem;">
+      <button type="button" class="primary" id="btn-open-wizard">🚀 MULA DI SINI (Wizard)</button>
+    </div>
+
+    <div class="wizard-overlay" id="wizard-overlay" aria-hidden="true">
+      <div class="wizard-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+        <div class="wizard-header">
+          <div>
+            <p class="wizard-badge">Panduan langkah demi langkah</p>
+            <h2 class="wizard-title" id="wizard-title">Wizard Kalkulator Air UMS</h2>
+            <p style="margin:0; font-size:0.9rem; opacity:0.9;">Ikut 8 langkah mudah untuk set data dan jana laporan.</p>
+          </div>
+          <button type="button" class="secondary" id="btn-close-wizard">✖ Tutup</button>
+        </div>
+        <div class="wizard-body">
+          <ul class="wizard-steps" id="wizard-step-list"></ul>
+          <div id="wizard-content"></div>
+        </div>
+        <div class="wizard-actions">
+          <div class="left">
+            <button type="button" class="secondary" id="wizard-back">⬅️ Kembali</button>
+            <span id="wizard-status" class="wizard-helper"></span>
+          </div>
+          <div class="right">
+            <button type="button" class="secondary" id="wizard-skip">Langkau</button>
+            <button type="button" class="primary" id="wizard-next">Seterusnya ➡️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <section class="card">
       <h2><span class="icon">🎛️</span> Pemilih Mod & Senario</h2>
       <div class="toolbar">
@@ -1047,13 +1161,6 @@
         <button type="button" class="secondary" id="btn-fix-inputs">
           🛠️ Baiki input
         </button>
-        <div class="mini-input">
-          <label for="pdf-scope">Laporan PDF:</label>
-          <select id="pdf-scope">
-            <option value="active">Senario aktif sahaja</option>
-            <option value="all">Semua senario</option>
-          </select>
-        </div>
       </div>
       <p class="mode-note" id="mode-note">
         Quick Estimate: isi populasi atau permintaan harian + faktor puncak & bekalan asas. Mod ini memaparkan ringkasan pantas serta NPV/BCR/payback jika CAPEX/OPEX diisi.
@@ -1607,6 +1714,27 @@
             </tbody>
           </table>
 
+          <div class="report-options" style="margin:0.8rem 0;">
+            <div class="mini-input">
+              <label for="pdf-scope">Laporan untuk:</label>
+              <select id="pdf-scope">
+                <option value="active">Senario terpilih sahaja</option>
+                <option value="all">Semua senario (A–C)</option>
+              </select>
+            </div>
+            <div class="mini-input">
+              <label for="pdf-level">Tahap laporan:</label>
+              <select id="pdf-level">
+                <option value="ringkas">Ringkas (Top Mgmt)</option>
+                <option value="penuh">Penuh (Teknikal + Lampiran)</option>
+              </select>
+            </div>
+            <div class="mini-input">
+              <label for="prepared-by">Disediakan oleh (opsyenal)</label>
+              <input type="text" id="prepared-by" placeholder="Nama penyedia laporan" />
+            </div>
+          </div>
+
           <div class="btn-row" style="margin-top: 0.8rem;">
             <button id="export-excel-btn" type="button" class="export">
               📤 Eksport Excel (.xlsx)
@@ -1786,6 +1914,17 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
+      // Wizard elements
+      const wizardOverlay = document.getElementById("wizard-overlay");
+      const wizardContent = document.getElementById("wizard-content");
+      const wizardStepList = document.getElementById("wizard-step-list");
+      const wizardOpenBtn = document.getElementById("btn-open-wizard");
+      const wizardCloseBtn = document.getElementById("btn-close-wizard");
+      const wizardNextBtn = document.getElementById("wizard-next");
+      const wizardBackBtn = document.getElementById("wizard-back");
+      const wizardSkipBtn = document.getElementById("wizard-skip");
+      const wizardStatus = document.getElementById("wizard-status");
+
       const addRowBtn = document.getElementById("add-row-btn");
       const calcBtn = document.getElementById("calculate-btn");
       const exportBtn = document.getElementById("export-excel-btn");
@@ -1798,6 +1937,8 @@
       const fixInputBtn = document.getElementById("btn-fix-inputs");
       const autofillBtn = document.getElementById("btn-autofill");
       const pdfScopeSelect = document.getElementById("pdf-scope");
+      const pdfLevelSelect = document.getElementById("pdf-level");
+      const preparedByInput = document.getElementById("prepared-by");
       const reportRoot = document.getElementById("reportRoot");
       const categoryBody = document.getElementById("category-body");
 
@@ -1930,6 +2071,29 @@
         scenarios: {},
       };
 
+      const WIZARD_STORAGE_KEY = "ums-water-wizard-seen";
+      let wizardSeen = localStorage.getItem(WIZARD_STORAGE_KEY) === "1";
+      let wizardStep = 0;
+      const WIZ_SELECTORS = {
+        mode: ["#mode-selector .pill[data-mode]"],
+        scenarioA: [".btn-load-scenario[data-id='A']", "#scenario-list .scenario-card", "text:Senario A", "text:Muat & kira"],
+        duplicateScenario: ["#btn-duplicate-scenario"],
+        peakFactor: ["#quick-peak", "input[id*='peak']", "input.cat-peak", "label:faktor puncak"],
+        quickDemand: ["#quick-demand", "label:permintaan harian"],
+        categoryTable: ["#category-input-table", ".category-row", "label:Kategori"],
+        baseSupply: ["#quick-base-supply", "#supply-mld", "label:Bekalan asas"],
+        jansSupply: ["#supply-mld", "label:Bekalan JANS"],
+        tariffWater: ["#tariff-water", "label:Tarif air"],
+        tariffSewer: ["#tariff-sewer", "label:Tarif pembetungan"],
+        horizon: ["#analysis-years", "label:Tempoh analisis"],
+        discount: ["#discount-rate", "label:Kadar diskaun"],
+        alternatives: ["#alt-body", "#alt-results-table", "label:Sumber alternatif"],
+        calcBtn: ["#calculate-btn", "text:Kira"],
+        summary: ["#summary-table", "#summary-text"],
+        exportExcel: ["#export-excel-btn", "text:Eksport"],
+        exportPdf: ["#btn-generate-report", "text:Jana Laporan"],
+      };
+
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
         return num.toLocaleString("ms-MY", { maximumFractionDigits: 2 });
@@ -1963,6 +2127,59 @@
           }
         }
         return getCanvasDataURL(fallbackId);
+      }
+
+      function findElement(selectorArr) {
+        for (const sel of selectorArr || []) {
+          if (!sel) continue;
+          if (sel.startsWith("label:")) {
+            const candidate = findByLabelText(sel.replace("label:", ""));
+            if (candidate) return candidate;
+            continue;
+          }
+          if (sel.startsWith("text:")) {
+            const candidate = findByButtonText(sel.replace("text:", ""));
+            if (candidate) return candidate;
+            continue;
+          }
+          try {
+            const el = document.querySelector(sel);
+            if (el) return el;
+          } catch (e) {
+            // ignore invalid selectors
+          }
+        }
+        return null;
+      }
+
+      function addPointer(el) {
+        if (!el) return () => {};
+        el.classList.add("wizard-pointer");
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        return () => el.classList.remove("wizard-pointer");
+      }
+
+      function findByLabelText(text) {
+        if (!text) return null;
+        const labels = Array.from(document.querySelectorAll("label"));
+        const target = labels.find((lbl) =>
+          lbl.textContent.toLowerCase().includes(text.toLowerCase())
+        );
+        if (target) {
+          if (target.htmlFor) {
+            return document.getElementById(target.htmlFor);
+          }
+          const input = target.querySelector("input, select, textarea");
+          if (input) return input;
+        }
+        return null;
+      }
+
+      function findByButtonText(text) {
+        const candidates = Array.from(document.querySelectorAll("button, input[type='button'], input[type='submit']"));
+        return candidates.find((btn) =>
+          (btn.textContent || btn.value || "").toLowerCase().includes(text.toLowerCase())
+        );
       }
 
       function buildBarChartImage({ title, labels, datasets }) {
@@ -2036,6 +2253,171 @@
         });
       }
 
+      function wizardStepsConfig() {
+        return [
+          {
+            title: "Langkah 1: Pilih mod",
+            desc: "Pilih Quick/Operational/Full. Wizard akan set Quick secara automatik.",
+            validator: () => ({
+              valid: !!appState.mode,
+              message: appState.mode ? "Mod telah dipilih." : "Sila pilih mod.",
+            }),
+            handler: () => {
+              const quickBtn = Array.from(document.querySelectorAll("#mode-selector .pill"))
+                .find((btn) => btn.dataset.mode === "quick");
+              if (quickBtn) quickBtn.click();
+              const cleanup = addPointer(quickBtn || findElement(WIZ_SELECTORS.mode));
+              return {
+                valid: !!quickBtn,
+                message: quickBtn ? "Mod diset ke Quick." : "Butang mod tidak ditemui (boleh teruskan manual).",
+                cleanup,
+              };
+            },
+          },
+          {
+            title: "Langkah 2: Pilih Senario A (asas)",
+            desc: "Aktifkan senario A sebagai baseline. Gandakan ke B jika perlu.",
+            validator: () => ({
+              valid: !!activeScenario(),
+              message: activeScenario() ? `Senario aktif: ${activeScenario().name}` : "Tiada senario aktif.",
+            }),
+            handler: () => {
+              const aBtn = findElement(WIZ_SELECTORS.scenarioA);
+              if (aBtn) aBtn.click();
+              const cleanA = addPointer(aBtn);
+              const dupBtn = findElement(WIZ_SELECTORS.duplicateScenario);
+              const cleanDup = addPointer(dupBtn);
+              return {
+                valid: true,
+                message: aBtn ? "Senario A aktif." : "Senario A tidak ditemui, teruskan manual.",
+                cleanup: () => { cleanA(); cleanDup(); },
+              };
+            },
+          },
+          {
+            title: "Langkah 3: Permintaan minimum",
+            desc: "Isi faktor puncak (1.2–1.5 disaran) dan masukkan permintaan: sama ada jumlah harian atau sekurang-kurangnya satu baris kategori.",
+            validator: () => {
+              const peakEl = findElement(WIZ_SELECTORS.peakFactor);
+              if (!peakEl && !findElement(WIZ_SELECTORS.quickDemand)) {
+                return { valid: true, message: "Input permintaan tidak ditemui (teruskan manual)." };
+              }
+              const peak = parseFloat(peakEl?.value || 0);
+              const hasPeak = isFinite(peak) && peak > 0;
+              const peakWarn = hasPeak && (peak < 1.2 || peak > 1.5);
+              const quickDemand = parseFloat(findElement(WIZ_SELECTORS.quickDemand)?.value || 0);
+              const hasQuick = isFinite(quickDemand) && quickDemand > 0;
+              const hasCategory = Array.from(document.querySelectorAll(".category-row input"))
+                .some((el) => (el.type === "text" && el.value.trim()) || parseFloat(el.value || 0) > 0);
+              return {
+                valid: hasPeak && (hasQuick || hasCategory),
+                message: !hasPeak
+                  ? "Isi faktor puncak"
+                  : (hasQuick || hasCategory ? (peakWarn ? "Julat disaran 1.2–1.5 (boleh diteruskan)" : "OK") : "Isi demand (jumlah atau kategori)"),
+              };
+            },
+            handler: () => {
+              const peakEl = findElement(WIZ_SELECTORS.peakFactor);
+              const cleanPeak = addPointer(peakEl);
+              const demandEl = findElement(["#quick-demand", "#category-input-table"]);
+              const cleanDemand = addPointer(demandEl);
+              return {
+                valid: true,
+                message: "Pastikan nilai diisi.",
+                cleanup: () => { cleanPeak(); cleanDemand(); },
+              };
+            },
+          },
+          {
+            title: "Langkah 4: Bekalan asas (JANS)",
+            desc: "Masukkan bekalan sedia ada (MLD).",
+            validator: () => {
+              const supplyEl = findElement(WIZ_SELECTORS.jansSupply);
+              if (!supplyEl) return { valid: true, message: "Input bekalan tidak ditemui (teruskan manual)." };
+              const val = parseFloat(supplyEl.value || 0);
+              return { valid: val > 0, message: val > 0 ? "OK" : "Isi bekalan asas" };
+            },
+            handler: () => {
+              const el = findElement(WIZ_SELECTORS.jansSupply) || findElement(WIZ_SELECTORS.baseSupply);
+              const clean = addPointer(el);
+              return { valid: !!el, message: el ? "Isi nilai bekalan." : "Input bekalan tidak ditemui.", cleanup: clean };
+            },
+          },
+          {
+            title: "Langkah 5: Parameter kewangan",
+            desc: "Isi tarif air, tarif pembetungan, tempoh analisis, dan kadar diskaun.",
+            validator: () => {
+              const waterEl = findElement(WIZ_SELECTORS.tariffWater);
+              const sewerEl = findElement(WIZ_SELECTORS.tariffSewer);
+              const yearsEl = findElement(WIZ_SELECTORS.horizon);
+              const discEl = findElement(WIZ_SELECTORS.discount);
+              if (!waterEl && !sewerEl && !yearsEl && !discEl) {
+                return { valid: true, message: "Input kewangan tidak ditemui (teruskan manual)." };
+              }
+              const water = parseFloat(waterEl?.value || 0);
+              const sewer = parseFloat(sewerEl?.value || 0);
+              const years = parseFloat(yearsEl?.value || 0);
+              const disc = parseFloat(discEl?.value || 0);
+              return { valid: water > 0 && sewer >= 0 && years > 0 && disc >= 0, message: "Pastikan semua parameter kewangan terisi." };
+            },
+            handler: () => {
+              const candidates = [
+                findElement(WIZ_SELECTORS.tariffWater),
+                findElement(WIZ_SELECTORS.tariffSewer),
+                findElement(WIZ_SELECTORS.horizon),
+                findElement(WIZ_SELECTORS.discount),
+              ].filter(Boolean);
+              const cleanups = candidates.map(addPointer);
+              return {
+                valid: candidates.length > 0,
+                message: candidates.length ? "Isi tarif & kadar." : "Input kewangan tidak ditemui.",
+                cleanup: () => cleanups.forEach((fn) => fn && fn()),
+              };
+            },
+          },
+          {
+            title: "Langkah 6: Sumber alternatif (opsyenal)",
+            desc: "Tambah sumber alternatif jika ada. Anda boleh langkau.",
+            optional: true,
+            handler: () => {
+              const altEl = findElement(WIZ_SELECTORS.alternatives);
+              const clean = addPointer(altEl);
+              altEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+              return { valid: true, message: "Tambah sekurang-kurangnya satu sumber jika perlu.", cleanup: clean };
+            },
+          },
+          {
+            title: "Langkah 7: Jalankan kiraan",
+            desc: "Tekan butang Kira untuk kemas kini ringkasan.",
+            handler: () => {
+              const btn = findElement(WIZ_SELECTORS.calcBtn);
+              const clean = addPointer(btn);
+              btn?.click();
+              const summaryEl = findElement(WIZ_SELECTORS.summary);
+              summaryEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+              return { valid: !!btn, message: btn ? "Kiraan dijalankan." : "Butang kira tidak ditemui.", cleanup: clean };
+            },
+          },
+          {
+            title: "Langkah 8: Eksport",
+            desc: "Pilih eksport Excel atau jana PDF selepas kiraan.",
+            handler: () => {
+              const excel = findElement(WIZ_SELECTORS.exportExcel);
+              const pdf = findElement(WIZ_SELECTORS.exportPdf);
+              const cleanExcel = addPointer(excel);
+              const cleanPdf = addPointer(pdf);
+              const summaryEl = findElement(WIZ_SELECTORS.summary);
+              summaryEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+              return {
+                valid: true,
+                message: "Klik Eksport Excel atau Jana Laporan untuk muat turun.",
+                cleanup: () => { cleanExcel(); cleanPdf(); },
+              };
+            },
+          },
+        ];
+      }
+
       function formatStatusLabel(status, isPeak) {
         if (!status) return "–";
         if (status === "Surplus") {
@@ -2045,6 +2427,104 @@
           return isPeak ? "Defisit (Puncak)" : "Defisit (Purata)";
         }
         return status;
+      }
+
+      function renderWizardStepIndicators() {
+        const steps = wizardStepsConfig();
+        wizardStepList.innerHTML = steps
+          .map(
+            (s, idx) => `
+              <li class="${idx === wizardStep ? "active" : ""}">
+                <span class="idx">${idx + 1}</span>
+                <span>${s.title}</span>
+              </li>
+            `
+          )
+          .join("");
+      }
+
+      function renderWizardContent() {
+        const steps = wizardStepsConfig();
+        const step = steps[wizardStep];
+        if (!step) return;
+        wizardContent.innerHTML = `
+          <div class="wizard-panel">
+            <h3>${step.title}</h3>
+            <p>${step.desc}</p>
+            ${step.optional ? '<p class="wizard-helper">Langkah ini opsyenal. Anda boleh langkau.</p>' : ""}
+            <div class="wizard-step-actions">
+              <button type="button" class="secondary" id="wizard-run-handler">Sorot & bantu</button>
+            </div>
+          </div>
+          <div class="wizard-panel">
+            <h3>Status</h3>
+            <p id="wizard-validation-text">Semak keperluan sebelum meneruskan.</p>
+          </div>
+        `;
+
+        const handlerBtn = document.getElementById("wizard-run-handler");
+        let cleanup = () => {};
+        handlerBtn?.addEventListener("click", () => {
+          cleanup();
+          try {
+            const res = step.handler ? step.handler() : { valid: true, message: "OK" };
+            cleanup = res.cleanup || (() => {});
+            wizardStatus.textContent = res.message || "";
+          } catch (e) {
+            console.warn(e);
+            wizardStatus.textContent = "Tidak dapat menjalankan langkah ini.";
+          }
+        });
+      }
+
+      function validateWizardStep() {
+        const steps = wizardStepsConfig();
+        const step = steps[wizardStep];
+        if (!step) return;
+        let valid = true;
+        let message = "OK";
+        try {
+          if (typeof step.validator === "function") {
+            const res = step.validator();
+            valid = !!res.valid;
+            message = res.message || message;
+          }
+        } catch (e) {
+          console.warn("Wizard validator error", e);
+        }
+        wizardNextBtn.disabled = !valid && !step.optional;
+        wizardStatus.textContent = message;
+        if (!valid && step.title?.toLowerCase().includes("puncak")) {
+          wizardStatus.innerHTML = `${message} <span class="wizard-warning">Disyorkan 1.2–1.5</span>`;
+        }
+      }
+
+      function updateWizardNav() {
+        const steps = wizardStepsConfig();
+        wizardBackBtn.disabled = wizardStep === 0;
+        wizardNextBtn.textContent = wizardStep === steps.length - 1 ? "Selesai" : "Seterusnya ➡️";
+        renderWizardStepIndicators();
+        renderWizardContent();
+        validateWizardStep();
+      }
+
+      function openWizard(auto) {
+        wizardOverlay.classList.add("active");
+        wizardOverlay.setAttribute("aria-hidden", "false");
+        wizardStep = 0;
+        updateWizardNav();
+        if (auto) {
+          const steps = wizardStepsConfig();
+          steps[0]?.handler?.();
+          steps[1]?.handler?.();
+        }
+      }
+
+      function closeWizard() {
+        wizardOverlay.classList.remove("active");
+        wizardOverlay.setAttribute("aria-hidden", "true");
+        localStorage.setItem(WIZARD_STORAGE_KEY, "1");
+        wizardSeen = true;
       }
 
       function normalizeNumber(val, fallback = 0) {
@@ -3307,6 +3787,8 @@
         const now = new Date();
         const generatedDate = now.toLocaleDateString("ms-MY");
         const fileDate = now.toISOString().slice(0, 10);
+        const reportLevel = pdfLevelSelect?.value || "ringkas";
+        const preparedBy = (preparedByInput?.value || "").trim();
 
         const summary = {
           avgMLD: parseNumberFromText(summaryAvgMLDEl.textContent),
@@ -3493,6 +3975,10 @@
           assumptions,
           mode: appState.mode,
           scenarioScope: pdfScopeSelect.value,
+          reportLevel,
+          preparedBy,
+          activeScenarioName: activeScenario()?.name || "",
+          activeScenarioId: activeScenario()?.id || appState.activeScenarioId || "A",
           scenariosForReport,
           sensitivity,
           charts,
@@ -3506,17 +3992,17 @@
       function renderReportHTML(data) {
         const statusAvg = formatStatusLabel(data.summary.status.avg, false);
         const statusPeak = formatStatusLabel(data.summary.status.peak, true);
+        const hasValue = (val) => {
+          const cleaned = String(val || "").replace(/[^0-9.-]/g, "");
+          if (!cleaned) return false;
+          const num = parseFloat(cleaned);
+          return isFinite(num);
+        };
 
-        const tocItems = [
-          { id: "exec-summary", label: "A. Ringkasan Eksekutif" },
-          { id: "background", label: "B. Latar Belakang & Objektif" },
-          { id: "method", label: "C. Kaedah & Andaian" },
-          { id: "inputs", label: "D. Input Pengguna" },
-          { id: "results", label: "E. Hasil & Jadual" },
-          { id: "visuals", label: "F. Graf & Visual" },
-          { id: "interpretation", label: "G. Tafsiran & Cadangan" },
-          { id: "appendix", label: "H. Had, Penafian & Lampiran" },
-        ];
+        const hasFinance =
+          hasValue(data.financeSummary.npv) ||
+          hasValue(data.financeSummary.bcr) ||
+          hasValue(data.financeSummary.netcf);
 
         const demandRows = data.demandByCategory.length
           ? data.demandByCategory
@@ -3597,17 +4083,6 @@
               .join("")
           : `<tr><td colspan="6">Belum ada pecahan CAPEX/OPEX item dimasukkan.</td></tr>`;
 
-        const tocList = tocItems
-          .map(
-            (item) => `
-              <li>
-                <span class="label">${item.label}</span>
-                <span class="page" data-page-ref="${item.id}">—</span>
-              </li>
-            `
-          )
-          .join("");
-
         const footerLabel = data.confidential
           ? "Sulit/Untuk Kegunaan Dalaman"
           : "&nbsp;";
@@ -3623,10 +4098,13 @@
             </div>
             <div>
               <div class="kicker" style="color:#0c2d57;">Kalkulator Permintaan &amp; Bekalan Air</div>
-              <h1>LAPORAN PERMINTAAN, BEKALAN DAN SUMBER AIR ALTERNATIF<br/>UNIVERSITI MALAYSIA SABAH</h1>
-              <p class="meta">Tarikh jana: ${data.generatedDate}</p>
-              <p class="meta">Disediakan oleh: Prof. Madya Dr. Assis Kamu (Ketua); Dr. Fera @ Nony Cleophas; Dr. Sarimah Surianshah; Prof. Madya Ts. Dr. Mohd Sani Sarjadi</p>
-              <p class="tagline">Dokumen rasmi untuk rujukan pengurusan, perancangan bekalan air kampus dan pembentangan dalaman.</p>
+              <h1>LAPORAN ANALISIS PERMINTAAN &amp; BEKALAN AIR UMS</h1>
+              <p class="meta">Senario: ${data.activeScenarioName || "Senario aktif"} (${data.activeScenarioId || "A"}) | Mod: ${data.mode}</p>
+              <p class="meta">Tarikh & masa jana: ${data.generatedDate}</p>
+              <p class="meta">Versi kalkulator: v${SCHEMA_VERSION}</p>
+              <p class="meta">Tahap laporan: ${data.reportLevel === "penuh" ? "Penuh (Teknikal + Lampiran)" : "Ringkas (Top Mgmt)"}</p>
+              <p class="meta">Disediakan oleh: ${data.preparedBy || "Auto-jana Kalkulator Permintaan & Bekalan Air UMS"}</p>
+              <p class="tagline">Untuk semakan pengurusan, penentuan strategi bekalan & peruntukan bajet.</p>
             </div>
           </section>
         `;
@@ -3650,161 +4128,67 @@
           </section>
         `;
 
-        const execPage = pageShell(
+        const execSummary = pageShell(
           "exec-summary",
-          "A. Ringkasan Eksekutif",
-          "Sorotan Utama",
+          "Ringkasan Eksekutif",
+          "Sorotan 1 halaman",
           `
             <p class="justified">
-              Permintaan purata kampus dianggarkan <strong>${data.summary.text.avg} MLD</strong> dan permintaan puncak <strong>${data.summary.text.peak} MLD</strong>.
-              Bekalan asas (JANS) sebanyak <strong>${data.summary.text.supply} MLD</strong> digabungkan dengan sumber alternatif <strong>${data.summary.text.alt} MLD</strong> menghasilkan bekalan efektif <strong>${data.summary.text.effective} MLD</strong>.
-              Status semasa: <strong>${statusAvg}</strong> untuk purata dan <strong>${statusPeak}</strong> untuk puncak.
-            </p>
-            <p class="justified">
-              Mod analisis: <strong>${data.mode}</strong>. Skop laporan PDF: <strong>${data.scenarioScope === "all" ? "Semua senario" : "Senario aktif"}</strong>.
+              Objektif: menilai jurang permintaan–bekalan air kampus dan pilihan alternatif untuk menutup defisit.
+              Permintaan purata <strong>${data.summary.text.avg} MLD</strong>, puncak <strong>${data.summary.text.peak} MLD</strong>.
+              Bekalan asas (JANS) <strong>${data.summary.text.supply} MLD</strong>; sumber alternatif <strong>${data.summary.text.alt} MLD</strong>; bekalan efektif <strong>${data.summary.text.effective} MLD</strong>.
+              Status: <strong>${statusAvg}</strong> (purata) dan <strong>${statusPeak}</strong> (puncak).
+              Skop laporan: ${data.scenarioScope === "all" ? "Semua senario (A–C)" : "Senario terpilih"} | Tahap: ${data.reportLevel === "penuh" ? "Penuh" : "Ringkas"}.
             </p>
             <div class="page-grid">
               <div class="page-card">
-                <h4>Impak bekalan</h4>
-                <p class="justified">Surplus/defisit purata: ${data.summary.text.surplusAvg} MLD. Surplus/defisit puncak: ${data.summary.text.surplusPeak} MLD.</p>
+                <h4>Jurang bekalan</h4>
+                <p class="justified">Surplus/defisit purata: ${data.summary.text.surplusAvg}; puncak: ${data.summary.text.surplusPeak}. Fokus segera pada hari puncak jika defisit.</p>
               </div>
               <div class="page-card">
                 <h4>Sorotan kewangan</h4>
-                <p class="justified">CAPEX: ${data.financeSummary.capex}; OPEX tahunan: ${data.financeSummary.opex}; Penjimatan tahunan: ${data.financeSummary.saving}; NPV: ${data.financeSummary.npv}; BCR: ${data.financeSummary.bcr}; IRR anggaran: ${data.financeSummary.irr}.</p>
+                <p class="justified">
+                  ${hasFinance ? `CAPEX: ${data.financeSummary.capex}; OPEX: ${data.financeSummary.opex}; Penjimatan: ${data.financeSummary.saving}; NPV: ${data.financeSummary.npv}; BCR: ${data.financeSummary.bcr}; IRR: ${data.financeSummary.irr}.`
+                  : "Analisis kewangan tidak dijana kerana CAPEX/OPEX/tarif tidak lengkap."}
+                </p>
               </div>
             </div>
-            <p class="justified">
-              Laporan ini menambah naratif pengurusan air, memaparkan jadual terperinci dan graf resolusi tinggi supaya sesuai dicetak.
-              Seksyen berikut menerangkan latar belakang, kaedah, input pengguna, tafsiran jurang, cadangan fasa pelaksanaan serta lampiran.
-            </p>
+            <div class="page-card">
+              <h4>Cadangan cepat</h4>
+              <ul class="list-tight">
+                <li>Pastikan faktor puncak dalam julat 1.2–1.5 dan kemas kini permintaan mengikut kategori utama.</li>
+                <li>Utamakan sumber alternatif dengan payback terpendek dan BCR tertinggi.</li>
+                <li>Benamkan keputusan ke dalam bajet tahunan dan pelan kesinambungan operasi.</li>
+              </ul>
+            </div>
           `
         );
 
-        const backgroundPage = pageShell(
-          "background",
-          "B. Latar Belakang & Objektif",
-          "Mengapa laporan ini penting",
-          `
-            <p class="justified">
-              UMS perlu mengimbangi permintaan air yang meningkat dengan bekalan yang stabil. Aktiviti akademik, asrama, ibadah dan sukan memerlukan perancangan rapi supaya bekalan asas tidak terganggu.
-              Sumber alternatif seperti air hujan, reuse, air tasik dan kondensasi penghawa dingin dapat menutup jurang bekalan sekaligus menjimatkan kos utiliti.
-            </p>
-            <p class="justified">
-              Objektif laporan ialah menganggarkan permintaan purata dan puncak, membandingkannya dengan bekalan asas, menilai sumbangan alternatif serta menyediakan pelan tindakan yang boleh dicetak untuk pihak pengurusan.
-            </p>
-            <ul class="list-tight">
-              <li>Menyediakan gambaran cepat jurang permintaan–bekalan.</li>
-              <li>Menyeragamkan naratif kewangan (CAPEX, OPEX, penjimatan, NPV, BCR, IRR).</li>
-              <li>Menyusun cadangan mengikut fasa pelaksanaan.</li>
-              <li>Merekod had analisis untuk rujukan audit data meter.</li>
-            </ul>
-          `
-        );
-
-        const methodPage = pageShell(
+        const methodology = pageShell(
           "method",
-          "C. Kaedah & Andaian",
-          "Pendekatan pengiraan",
+          "Metodologi & Andaian",
+          "Definisi & pendekatan",
           `
-            <p class="justified">
-              Pengiraan menggunakan kadar per kapita, faktor puncak dan bekalan asas yang dimasukkan pengguna. Sumber alternatif dimodelkan dengan kapasiti teknikal, utiliti harian, CAPEX, OPEX dan jangka hayat.
-              Penjimatan kewangan dikira menggunakan tarif air + pembetungan serta kadar diskaun analisis.
-            </p>
-            <p class="justified">
-              Semua input dinormalisasi kepada unit m³/hari dan m³/tahun bagi memudahkan perbandingan. Kadar diskaun diterapkan secara konsisten ke atas manfaat dan kos bagi mengelakkan percanggahan antara projek, manakala payback dikemukakan sebagai indikator pantas untuk keputusan awal.
-            </p>
-            <div class="page-grid">
-              <div class="page-card">
-                <h4>Permintaan</h4>
-                <ul class="list-tight">
-                  <li>Populasi × per kapita (L/org/hari) → m³/hari.</li>
-                  <li>Faktor puncak melaraskan variasi harian tertinggi.</li>
-                  <li>Jadual kategori memastikan kesan setiap segmen jelas.</li>
-                </ul>
-              </div>
-              <div class="page-card">
-                <h4>Bekalan</h4>
-                <ul class="list-tight">
-                  <li>Bekalan asas (JANS) sebagai rujukan utama.</li>
-                  <li>Sumber alternatif: kapasiti × utiliti (% hari) → m³/hari berkesan.</li>
-                  <li>Campuran bekalan membentuk bekalan efektif.</li>
-                </ul>
-              </div>
-              <div class="page-card">
-                <h4>Ekonomi</h4>
-                <ul class="list-tight">
-                  <li>Penjimatan tahunan = volum alternatif × (tarif air + pembetungan).</li>
-                  <li>NPV dan BCR menggunakan kadar diskaun & tempoh analisis.</li>
-                  <li>Tempoh pulangan modal = CAPEX / aliran tunai bersih tahunan.</li>
-                </ul>
-              </div>
-            </div>
-            <p class="justified">
-              Data yang dimasukkan perlu disemak bersama rekod meter, log operasi pam dan rekod penyelenggaraan supaya model sentiasa dikemas kini. Pengguna digalakkan menjalankan semakan sensitiviti (contoh: +/–10% populasi atau per kapita) bagi memahami julat risiko bekalan.
-            </p>
-            <p class="justified">
-              Kajian ini disediakan untuk kegunaan dalaman dan memerlukan semakan semula apabila data meter baharu tersedia atau tarif dikemas kini. Jadual andaian boleh dijadikan lampiran mesyuarat untuk memudahkan semakan silang dengan pihak teknikal dan kewangan.
-            </p>
-          `
-        );
-
-        const inputsPage = pageShell(
-          "inputs",
-          "D. Input Pengguna",
-          "Andaian dan parameter dikira",
-          `
+            <p class="justified">Unit: m³/hari, MLD, RM. Permintaan dikira melalui populasi × per kapita atau input jumlah harian. Permintaan puncak = purata × faktor puncak. Bekalan alternatif = kapasiti × utiliti (% hari) × kebolehpercayaan (%).</p>
+            <p class="justified">Kewangan: penjimatan = volum alternatif × (tarif air + pembetungan). NPV/BCR menggunakan kadar diskaun dan tempoh analisis. Payback = CAPEX / aliran tunai bersih tahunan.</p>
             <div class="inline-table">
-              <div class="box">
-                <div class="label">Bekalan asas (JANS)</div>
-                <div><strong>${data.assumptions.supply || "–"} MLD</strong></div>
-              </div>
-              <div class="box">
-                <div class="label">Tarif air (RM/m³)</div>
-                <div>${data.assumptions.tariffWater || "–"}</div>
-              </div>
-              <div class="box">
-                <div class="label">Tarif pembetungan (RM/m³)</div>
-                <div>${data.assumptions.tariffSewer || "–"}</div>
-              </div>
-              <div class="box">
-                <div class="label">Tempoh analisis (tahun)</div>
-                <div>${data.assumptions.years || "–"}</div>
-              </div>
-              <div class="box">
-                <div class="label">Kadar diskaun (%)</div>
-                <div>${data.assumptions.discount || "–"}</div>
-              </div>
+              <div class="box"><div class="label">Bekalan asas (JANS)</div><div><strong>${data.assumptions.supply || "–"} MLD</strong></div></div>
+              <div class="box"><div class="label">Tarif air (RM/m³)</div><div>${data.assumptions.tariffWater || "–"}</div></div>
+              <div class="box"><div class="label">Tarif pembetungan (RM/m³)</div><div>${data.assumptions.tariffSewer || "–"}</div></div>
+              <div class="box"><div class="label">Tempoh analisis (tahun)</div><div>${data.assumptions.years || "–"}</div></div>
+              <div class="box"><div class="label">Kadar diskaun (%)</div><div>${data.assumptions.discount || "–"}</div></div>
             </div>
-            <p class="justified">Jadual di bawah menyenaraikan input kategori pengguna yang dimasukkan.</p>
-            <table class="report-table zebra wide-table">
-              <thead>
-                <tr>
-                  <th>Kategori</th>
-                  <th>Populasi</th>
-                  <th>Per kapita (L/org/hari)</th>
-                  <th>Purata (m³/hari)</th>
-                  <th>Faktor puncak</th>
-                  <th>Permintaan puncak (m³/hari)</th>
-                </tr>
-              </thead>
-              <tbody>${demandRows}</tbody>
-            </table>
+            <p class="wizard-helper">Nota: Nilai di atas diambil terus daripada input kalkulator semasa laporan dijana.</p>
           `
         );
 
-        const resultsPage = pageShell(
+        const demandSupply = pageShell(
           "results",
-          "E. Hasil & Jadual",
-          "Permintaan, bekalan dan alternatif",
+          "Analisis Permintaan & Bekalan",
+          "Permintaan purata/puncak, bekalan efektif",
           `
             <table class="report-table zebra wide-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Nilai</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Item</th><th>Nilai</th><th>Status</th></tr></thead>
               <tbody>
                 <tr><td>Permintaan purata</td><td>${data.summary.text.avg}</td><td>${statusAvg}</td></tr>
                 <tr><td>Permintaan puncak</td><td>${data.summary.text.peak}</td><td>${statusPeak}</td></tr>
@@ -3815,59 +4199,19 @@
                 <tr><td>Lebihan / Defisit puncak</td><td>${data.summary.text.surplusPeak}</td><td>—</td></tr>
               </tbody>
             </table>
-            ${
-              scenarioRows
-                ? `<p class="justified">Perbandingan semua senario (dipilih untuk laporan):</p>
+            <p class="justified">Jadual permintaan mengikut kategori (jika dimasukkan):</p>
             <table class="report-table zebra wide-table">
               <thead>
                 <tr>
-                  <th>Senario</th>
-                  <th>Permintaan purata (MLD)</th>
-                  <th>Permintaan puncak (MLD)</th>
-                  <th>Bekalan efektif (MLD)</th>
-                  <th>Lebihan/Defisit purata</th>
-                  <th>NPV (RM)</th>
-                  <th>BCR</th>
-                  <th>IRR (%)</th>
-                  <th>Payback (tahun)</th>
+                  <th>Kategori</th><th>Populasi</th><th>Per kapita (L/org/hari)</th><th>Purata (m³/hari)</th><th>Faktor puncak</th><th>Permintaan puncak (m³/hari)</th>
                 </tr>
               </thead>
-              <tbody>${scenarioRows}</tbody>
-            </table>`
-                : ""
-            }
-            <p class="justified">Ringkasan kewangan projek:</p>
-            <div class="inline-table">
-              <div class="box"><div class="label">CAPEX</div><div>${data.financeSummary.capex}</div></div>
-              <div class="box"><div class="label">OPEX tahunan</div><div>${data.financeSummary.opex}</div></div>
-              <div class="box"><div class="label">Penjimatan tahunan</div><div>${data.financeSummary.saving}</div></div>
-              <div class="box"><div class="label">Aliran tunai bersih</div><div>${data.financeSummary.netcf}</div></div>
-              <div class="box"><div class="label">NPV</div><div>${data.financeSummary.npv}</div></div>
-              <div class="box"><div class="label">BCR</div><div>${data.financeSummary.bcr}</div></div>
-              <div class="box"><div class="label">IRR anggaran</div><div>${data.financeSummary.irr}</div></div>
-            </div>
-            <p class="justified">
-              Jadual permintaan dan bekalan menunjukkan bagaimana bekalan alternatif menutup jurang. Jika nilai surplus puncak negatif, tindakan segera perlu difokuskan kepada sumber berpayback pendek seperti tangkapan air hujan atau pengurangan kebocoran dalaman supaya bekalan asas tidak tertekan.
-            </p>
-            <p class="justified">
-              Nilai kewangan menggambarkan kebolehlaksanaan awal. NPV positif dan BCR melebihi 1 menandakan projek wajar diteruskan; sekiranya NPV negatif, pelarasan kos atau fasa pelaksanaan berperingkat perlu dipertimbangkan sebelum pembentangan kepada pengurusan.
-            </p>
-            <p class="justified">Jadual sumber air alternatif:</p>
+              <tbody>${demandRows}</tbody>
+            </table>
+            <p class="justified">Sumber alternatif:</p>
             <table class="report-table zebra wide-table">
               <thead>
-                <tr>
-                  <th>Sumber</th>
-                  <th>Kapasiti (m³/hari)</th>
-                  <th>Utilisasi (% hari)</th>
-                  <th>Vol. tahunan (m³/tahun)</th>
-                  <th>CAPEX (RM)</th>
-                  <th>OPEX (RM/tahun)</th>
-                  <th>Saving (RM/tahun)</th>
-                  <th>CF bersih (RM/tahun)</th>
-                  <th>Tempoh pulangan modal (tahun)</th>
-                  <th>NPV (RM)</th>
-                  <th>BCR</th>
-                </tr>
+                <tr><th>Sumber</th><th>Kapasiti (m³/hari)</th><th>Utilisasi (% hari)</th><th>Vol. tahunan (m³/tahun)</th><th>CAPEX (RM)</th><th>OPEX (RM/tahun)</th><th>Saving (RM/tahun)</th><th>CF bersih (RM/tahun)</th><th>Payback (tahun)</th><th>NPV (RM)</th><th>BCR</th></tr>
               </thead>
               <tbody>${altRowsHtml}</tbody>
               <tfoot>
@@ -3886,176 +4230,145 @@
                 </tr>
               </tfoot>
             </table>
+            <p class="page-note">Nota: Nilai payback/NPV/BCR hanya dipaparkan jika CAPEX/OPEX dan tarif diisi.</p>
           `
         );
+
+        const financeSection = pageShell(
+          "finance",
+          "Analisis Kewangan",
+          "Sorotan NPV/BCR/IRR/Payback",
+          `
+            ${
+              hasFinance
+                ? `
+                  <div class="inline-table">
+                    <div class="box"><div class="label">CAPEX</div><div>${data.financeSummary.capex}</div></div>
+                    <div class="box"><div class="label">OPEX tahunan</div><div>${data.financeSummary.opex}</div></div>
+                    <div class="box"><div class="label">Penjimatan tahunan</div><div>${data.financeSummary.saving}</div></div>
+                    <div class="box"><div class="label">Aliran tunai bersih</div><div>${data.financeSummary.netcf}</div></div>
+                    <div class="box"><div class="label">NPV</div><div>${data.financeSummary.npv}</div></div>
+                    <div class="box"><div class="label">BCR</div><div>${data.financeSummary.bcr}</div></div>
+                    <div class="box"><div class="label">IRR anggaran</div><div>${data.financeSummary.irr}</div></div>
+                  </div>
+                  <p class="justified"><strong>Interpretasi:</strong> NPV positif dan BCR > 1 menunjukkan projek wajar diteruskan. Payback pendek sesuai untuk keputusan pantas.</p>
+                `
+                : `<p class="wizard-warning">Analisis kewangan tidak dijana kerana CAPEX/OPEX/tarif tidak lengkap.</p>`
+            }
+            <p class="justified"><strong>Assumptions used:</strong> Faktor puncak, tarif air/pembetungan, kadar diskaun ${data.assumptions.discount || "-"}%, tempoh ${data.assumptions.years || "-"} tahun, serta faktor utiliti sumber alternatif semasa laporan dijana.</p>
+            <p class="page-note">Data & Limitations: Keputusan bergantung pada ketepatan input (populasi, per kapita, tarif, CAPEX/OPEX, utiliti sumber alternatif). Sahkan dengan rekod meter, kontrak kos, dan audit teknikal sebelum keputusan akhir.</p>
+          `
+        );
+
+        const scenarioCompare = data.scenarioScope === "all" && scenarioRows
+          ? pageShell(
+              "scenario-compare",
+              "Perbandingan Senario A–C",
+              "Bandingan KPI utama",
+              `
+                <p class="justified">Jadual berikut memaparkan permintaan, bekalan dan KPI kewangan bagi setiap senario yang disimpan.</p>
+                <table class="report-table zebra wide-table">
+                  <thead>
+                    <tr>
+                      <th>Senario</th><th>Permintaan purata (MLD)</th><th>Permintaan puncak (MLD)</th><th>Bekalan efektif (MLD)</th><th>Lebihan/Defisit purata</th><th>NPV (RM)</th><th>BCR</th><th>IRR (%)</th><th>Payback (tahun)</th>
+                    </tr>
+                  </thead>
+                  <tbody>${scenarioRows}</tbody>
+                </table>
+                <p class="justified">Peraturan pantas: pilih senario yang memenuhi permintaan puncak dengan BCR tertinggi/NPV tertinggi. Jika tiada yang positif, pertimbangkan fasa pelaksanaan atau pelarasan kos.</p>
+              `
+            )
+          : "";
 
         const visualsPage = pageShell(
           "visuals",
-          "F. Graf & Visual",
-          "Graf sokongan",
+          "Graf & Visual",
+          "Paparan sokongan",
           `
-            ${data.charts.supplyDemand ? `<div class="captioned-image"><img src="${data.charts.supplyDemand}" alt="Permintaan vs bekalan" /><div class="caption">Rajah 1: Permintaan purata & puncak berbanding bekalan efektif.</div></div>` : ""}
-            ${data.charts.altComposition ? `<div class="captioned-image"><img src="${data.charts.altComposition}" alt="Komposisi sumber alternatif" /><div class="caption">Rajah 2: Komposisi bekalan berkesan sumber air alternatif.</div></div>` : ""}
-            ${data.charts.demandByCategory ? `<div class="captioned-image"><img src="${data.charts.demandByCategory}" alt="Permintaan mengikut kategori" /><div class="caption">Rajah 3: Permintaan purata dan puncak mengikut kategori.</div></div>` : ""}
-            ${data.charts.demandShare ? `<div class="captioned-image"><img src="${data.charts.demandShare}" alt="Agihan permintaan" /><div class="caption">Rajah 4: Agihan permintaan (%) mengikut kategori.</div></div>` : ""}
-            ${data.charts.cbaNPV ? `<div class="captioned-image"><img src="${data.charts.cbaNPV}" alt="NPV sumber alternatif" /><div class="caption">Rajah 5: NPV mengikut sumber alternatif.</div></div>` : ""}
-            ${data.charts.cbaPayback ? `<div class="captioned-image"><img src="${data.charts.cbaPayback}" alt="Pulangan modal sumber alternatif" /><div class="caption">Rajah 6: Tempoh pulangan modal mengikut sumber alternatif.</div></div>` : ""}
-            <p class="page-note">Graf diambil terus daripada Chart.js menggunakan toBase64Image untuk mengelak ikon rosak dan menjaga resolusi cetakan.</p>
+            ${data.charts.supplyDemand ? `<div class="captioned-image"><img src="${data.charts.supplyDemand}" alt="Permintaan vs bekalan" /><div class="caption">Rajah: Permintaan purata & puncak berbanding bekalan efektif.</div></div>` : ""}
+            ${data.charts.altComposition ? `<div class="captioned-image"><img src="${data.charts.altComposition}" alt="Komposisi sumber alternatif" /><div class="caption">Rajah: Komposisi bekalan berkesan sumber alternatif.</div></div>` : ""}
+            ${data.charts.demandByCategory ? `<div class="captioned-image"><img src="${data.charts.demandByCategory}" alt="Permintaan mengikut kategori" /><div class="caption">Rajah: Permintaan purata dan puncak mengikut kategori.</div></div>` : ""}
+            ${data.charts.demandShare ? `<div class="captioned-image"><img src="${data.charts.demandShare}" alt="Agihan permintaan" /><div class="caption">Rajah: Agihan permintaan (%) mengikut kategori.</div></div>` : ""}
+            ${data.charts.cbaNPV ? `<div class="captioned-image"><img src="${data.charts.cbaNPV}" alt="NPV sumber alternatif" /><div class="caption">Rajah: NPV mengikut sumber alternatif.</div></div>` : ""}
+            ${data.charts.cbaPayback ? `<div class="captioned-image"><img src="${data.charts.cbaPayback}" alt="Pulangan modal sumber alternatif" /><div class="caption">Rajah: Tempoh pulangan modal mengikut sumber alternatif.</div></div>` : ""}
+            <p class="page-note">Graf diambil terus daripada Chart.js (base64) bagi menjamin kualiti cetakan.</p>
           `
         );
 
-        const interpretationPage = pageShell(
-          "interpretation",
-          "G. Tafsiran & Cadangan",
-          "Implikasi permintaan–bekalan & roadmap",
+        const recommendations = pageShell(
+          "recommendations",
+          "Cadangan & Tindakan",
+          "Untuk kelulusan pengurusan",
           `
-            <p class="justified">
-              Jurang bekalan ditentukan oleh perbezaan antara permintaan puncak dan bekalan efektif.
-              Sekiranya defisit kekal, risiko gangguan operasi meningkat. Intervensi pengurusan permintaan
-              (audit kebocoran, retrofit peralatan, kempen kesedaran) perlu dilaksanakan serentak dengan projek alternatif.
-            </p>
-            <p class="justified">
-              Setiap cadangan perlu disandarkan kepada jadual CAPEX/OPEX supaya implikasi bajet jelas. Untuk projek dengan payback lebih panjang, pendekatan berfasa membolehkan universiti memaksimumkan penjimatan jangka pendek sambil merancang infrastruktur jangka panjang.
-            </p>
             <div class="page-grid">
               <div class="page-card">
-                <h4>Risiko operasi</h4>
+                <h4>Perlu lulus</h4>
                 <ul class="list-tight">
-                  <li>Defisit puncak boleh menjejaskan asrama dan makmal.</li>
-                  <li>Kadar per kapita tinggi menunjukkan keperluan retrofit segera.</li>
-                  <li>Kekurangan bekalan penimbal meningkatkan kebergantungan kepada JANS.</li>
+                  <li>Peruntukan untuk sumber alternatif berpayback &lt; 5 tahun.</li>
+                  <li>Pemasangan meter sub-zon bagi memantau faktor puncak sebenar.</li>
+                  <li>Penyelarasan tarif/andaian kewangan setiap 12 bulan.</li>
                 </ul>
               </div>
               <div class="page-card">
-                <h4>Impak kewangan</h4>
+                <h4>Perlu kaji lanjut</h4>
                 <ul class="list-tight">
-                  <li>Tempoh pulangan modal yang pendek membantu meyakinkan pembuat keputusan.</li>
-                  <li>NPV negatif perlu dikaji semula dengan data kos sebenar.</li>
-                  <li>BCR &gt; 1 menunjukkan projek wajar diteruskan.</li>
+                  <li>Analisis kesan variasi hujan terhadap bekalan alternatif.</li>
+                  <li>Opsyen reuse air kelabu/tasik jika defisit puncak kekal.</li>
+                  <li>Strategi pembiayaan berfasa sekiranya NPV negatif.</li>
+                </ul>
+              </div>
+              <div class="page-card">
+                <h4>Data tambahan</h4>
+                <ul class="list-tight">
+                  <li>Data meter terkini mengikut blok/asrama.</li>
+                  <li>Kos OPEX sebenar (penyelenggaraan, tenaga, kimia).</li>
+                  <li>Profil beban harian untuk menala faktor puncak.</li>
                 </ul>
               </div>
             </div>
-            <p class="justified">
-              Data sebenar meter air, log operasi dan rekod OPEX perlu digunakan untuk menala semula model.
-              Laporan ini menyediakan rangka bercetak untuk dikongsi dengan pengurusan dan perunding.
-            </p>
-            <p class="justified">
-              Hasil analisis juga boleh digunakan sebagai asas permohonan bajet atau geran. Nyatakan keutamaan berdasarkan risiko dan manfaat, serta tunjukkan kesan kepada kesinambungan operasi kampus bagi memperkukuh justifikasi projek.
-            </p>
-            <div class="phase-grid">
-              <div class="phase-card">
-                <h4>Fasa 1: Quick Wins (0–6 bulan)</h4>
-                <ul class="list-tight">
-                  <li>Tangkapan air hujan berskala kecil di bangunan tumpuan.</li>
-                  <li>Pengumpulan kondensasi penghawa dingin untuk landskap.</li>
-                  <li>Audit kebocoran dalaman dan pemasangan meter sub-zon.</li>
-                </ul>
-              </div>
-              <div class="phase-card">
-                <h4>Fasa 2: Pengukuhan (6–18 bulan)</h4>
-                <ul class="list-tight">
-                  <li>Sistem reuse untuk tandas/pembersihan dan sambungan tangki penimbal.</li>
-                  <li>Kemas kini tarif &amp; OPEX berdasarkan kontrak sebenar.</li>
-                  <li>Latihan operasi dan SOP kecemasan bekalan.</li>
-                </ul>
-              </div>
-              <div class="phase-card">
-                <h4>Fasa 3: Skala Penuh (18–36 bulan)</h4>
-                <ul class="list-tight">
-                  <li>Pembangunan sumber air tasik atau kolam rawatan awal.</li>
-                  <li>Integrasi SCADA/IoT untuk pemantauan dan pengoptimuman.</li>
-                  <li>Pelan campuran sumber untuk memaksimumkan BCR/NPV.</li>
-                </ul>
-              </div>
-            </div>
-            <p class="page-note">Keutamaan boleh dilaras mengikut bajet dan risiko operasi semasa kampus.</p>
+            <p class="justified">Keutamaan: tutup defisit puncak, pastikan bekalan berdaya tahan dan aliran tunai positif. Gunakan lampiran untuk semakan teknikal terperinci.</p>
           `
         );
 
-        const appendixPage = pageShell(
-          "appendix",
-          "I. Had, Penafian & Lampiran",
-          "Catatan tambahan",
-          `
-            <div class="risk-grid">
-              <div class="risk-card">
-                <strong>Had data</strong>
-                <p class="justified">Populasi dan kadar per kapita mungkin berubah mengikut semester; kemas kini diperlukan.</p>
-              </div>
-              <div class="risk-card">
-                <strong>Variasi iklim</strong>
-                <p class="justified">Sumber air hujan bergantung kepada corak hujan; gunakan data tempatan yang terkini.</p>
-              </div>
-              <div class="risk-card">
-                <strong>Ketidakpastian kos</strong>
-                <p class="justified">Tarif dan OPEX sebenar perlu disahkan bagi mengelak over/under-estimate penjimatan.</p>
-              </div>
-              <div class="risk-card">
-                <strong>Integrasi teknikal</strong>
-                <p class="justified">Sambungan ke tangki, pam dan paip sedia ada memerlukan semakan teknikal terperinci.</p>
-              </div>
-            </div>
-            <p class="justified">
-              Had ini perlu dibaca bersama hasil analisis supaya pembuat keputusan memahami ketidakpastian. Ujian tekanan terhadap variasi hujan, gangguan tenaga dan penutupan loji rawatan akan membantu merancang kapasiti simpanan dan laluan pengagihan alternatif.
-            </p>
-            <p class="justified">
-              <strong>Penafian:</strong> ${data.disclaimerText} Perincian tambahan hendaklah dilampirkan apabila data baharu diterima untuk memastikan angka terkini dan konsisten dengan audit dalaman.
-            </p>
-            <p class="justified">
-              Ringkasan CAPEX/OPEX terperinci di bawah memudahkan semakan pantas oleh pihak kewangan dan teknikal. Item kosong boleh diisi kemudian tanpa menjejaskan format laporan.
-            </p>
-            <p class="justified"><strong>Analisis sensitiviti (+/−10%):</strong></p>
-            <table class="report-table zebra">
-              <thead>
-                <tr>
-                  <th>Senario sensitiviti</th>
-                  <th>NPV (RM)</th>
-                  <th>BCR</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Asas</td><td>${formatNumber(data.sensitivity.base.npv)}</td><td>${isFinite(data.sensitivity.base.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"}</td></tr>
-                <tr><td>CAPEX +10%</td><td>${formatNumber(data.sensitivity.capex.npv)}</td><td>${isFinite(data.sensitivity.capex.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"}</td></tr>
-                <tr><td>OPEX +10%</td><td>${formatNumber(data.sensitivity.opex.npv)}</td><td>${isFinite(data.sensitivity.opex.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"}</td></tr>
-                <tr><td>Manfaat +10%</td><td>${formatNumber(data.sensitivity.benefit.npv)}</td><td>${isFinite(data.sensitivity.benefit.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"}</td></tr>
-              </tbody>
-            </table>
-            <table class="report-table zebra">
-              <thead>
-                <tr>
-                  <th>Jenis</th>
-                  <th>Item / Komponen</th>
-                  <th>Kuantiti</th>
-                  <th>Kos seunit (RM)</th>
-                  <th>Jumlah kos (RM)</th>
-                  <th>Catatan</th>
-                </tr>
-              </thead>
-              <tbody>${capexOpexRows}</tbody>
-            </table>
-          `
-        );
+        const appendix =
+          data.reportLevel === "penuh"
+            ? pageShell(
+                "appendix",
+                "Lampiran & Had Data",
+                "Butiran teknikal",
+                `
+                  <p class="justified"><strong>Analisis sensitiviti (+/−10%):</strong></p>
+                  <table class="report-table zebra">
+                    <thead><tr><th>Senario sensitiviti</th><th>NPV (RM)</th><th>BCR</th></tr></thead>
+                    <tbody>
+                      <tr><td>Asas</td><td>${formatNumber(data.sensitivity.base.npv)}</td><td>${isFinite(data.sensitivity.base.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"}</td></tr>
+                      <tr><td>CAPEX +10%</td><td>${formatNumber(data.sensitivity.capex.npv)}</td><td>${isFinite(data.sensitivity.capex.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"}</td></tr>
+                      <tr><td>OPEX +10%</td><td>${formatNumber(data.sensitivity.opex.npv)}</td><td>${isFinite(data.sensitivity.opex.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"}</td></tr>
+                      <tr><td>Manfaat +10%</td><td>${formatNumber(data.sensitivity.benefit.npv)}</td><td>${isFinite(data.sensitivity.benefit.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"}</td></tr>
+                    </tbody>
+                  </table>
+                  <p class="justified">Pecahan CAPEX/OPEX item:</p>
+                  <table class="report-table zebra">
+                    <thead><tr><th>Jenis</th><th>Item / Komponen</th><th>Kuantiti</th><th>Kos seunit (RM)</th><th>Jumlah kos (RM)</th><th>Catatan</th></tr></thead>
+                    <tbody>${capexOpexRows}</tbody>
+                  </table>
+                  <p class="justified"><strong>Had & Penafian:</strong> ${data.disclaimerText} Hasil bergantung pada faktor puncak, tarif, kadar diskaun, utiliti sumber alternatif, serta data CAPEX/OPEX yang dimasukkan.</p>
+                  <p class="wizard-helper">Data & Limitations: nilai bergantung pada andaian semasa; kemas kini data meter, kos sebenar dan kadar penggunaan akan mengubah keputusan.</p>
+                `
+              )
+            : "";
 
         return [
           cover,
-          pageShell(
-            "toc",
-          "Isi Kandungan",
-          "Senarai kandungan laporan",
-          `
-              <p class="justified">Senarai kandungan di bawah disusun mengikut urutan halaman laporan yang dijana.</p>
-              <ol class="toc-list">${tocList}</ol>
-            `
-          ),
-          execPage,
-          backgroundPage,
-          methodPage,
-          inputsPage,
-          resultsPage,
+          execSummary,
+          methodology,
+          demandSupply,
+          financeSection,
+          scenarioCompare,
           visualsPage,
-          interpretationPage,
-          appendixPage,
-        ].join("");
+          recommendations,
+          appendix,
+        ].filter(Boolean).join("");
       }
 
       function applyPageNumbers(container) {
@@ -4112,7 +4425,8 @@
         }
 
         reportRoot.classList.add("hidden");
-        doc.save(`Laporan_UMS_Water_${data.fileDate}.pdf`);
+        const safeScenario = (data.activeScenarioId || "Aktif").replace(/\\W+/g, "_");
+        doc.save(`Laporan_UMS_Water_${safeScenario}_${data.fileDate}.pdf`);
       }
       // END REPORT UPDATE
 
@@ -4315,6 +4629,27 @@
         generateReportPDF();
       });
 
+      function goWizard(delta) {
+        const steps = wizardStepsConfig();
+        wizardStep = Math.min(Math.max(wizardStep + delta, 0), steps.length - 1);
+        updateWizardNav();
+      }
+
+      wizardOpenBtn.addEventListener("click", () => openWizard(false));
+      wizardCloseBtn.addEventListener("click", closeWizard);
+      wizardBackBtn.addEventListener("click", () => goWizard(-1));
+      wizardNextBtn.addEventListener("click", () => {
+        const steps = wizardStepsConfig();
+        if (wizardStep >= steps.length - 1) {
+          closeWizard();
+        } else {
+          goWizard(1);
+        }
+      });
+      wizardSkipBtn.addEventListener("click", () => goWizard(1));
+      document.addEventListener("input", () => validateWizardStep());
+      document.addEventListener("change", () => validateWizardStep());
+
       modeSelector.addEventListener("click", (e) => {
         const pill = e.target.closest(".pill");
         if (!pill) return;
@@ -4374,6 +4709,9 @@
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       calculate();
+      if (!wizardSeen) {
+        setTimeout(() => openWizard(true), 500);
+      }
     });
   </script>
 </body>
