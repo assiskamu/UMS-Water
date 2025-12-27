@@ -1488,6 +1488,10 @@
         return umsLogoDataUrl;
       }
 
+      function waitForNextFrame() {
+        return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      }
+
       function calculate() {
         // 1. Demand by category
         const rows = Array.from(document.querySelectorAll(".category-row"));
@@ -2886,6 +2890,9 @@
           reportRoot.classList.remove("offscreen");
           reportRoot.classList.add("rendering");
           reportRoot.setAttribute("aria-hidden", "false");
+
+          // Pastikan browser sempat melukis kandungan laporan sebelum ditangkap oleh html2pdf
+          await waitForNextFrame();
 
           const opt = {
             margin: [0, 0, 0, 0],
