@@ -349,13 +349,15 @@
 
     /* Jadikan kontena laporan kelihatan (tetapi tidak mengganggu) semasa pdf digenerate */
     #reportRoot.rendering {
-      position: fixed;
-      inset: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
       margin: 0 auto;
       /* Biarkan elemen benar-benar kelihatan supaya html2pdf boleh menangkap kandungan dengan jelas */
       opacity: 1;
       pointer-events: none;
-      overflow: auto;
+      overflow: visible;
       background: #ffffff;
       z-index: 999;
     }
@@ -2929,6 +2931,21 @@
             return;
           }
 
+          const contentWidth = Math.max(
+            reportRoot.scrollWidth,
+            reportRoot.clientWidth,
+            900
+          );
+          const contentHeight = Math.max(
+            reportRoot.scrollHeight,
+            reportRoot.clientHeight
+          );
+
+          if (!contentHeight || contentHeight < 50) {
+            alert("Laporan tidak dapat dijana kerana kandungan kosong atau gagal dipaparkan.");
+            return;
+          }
+
           const viewportWidth = Math.max(
             reportRoot.scrollWidth,
             reportRoot.clientWidth,
@@ -2948,8 +2965,8 @@
               scale: 2,
               useCORS: true,
               backgroundColor: "#ffffff",
-              windowWidth: viewportWidth,
-              windowHeight: viewportHeight,
+              windowWidth: Math.max(viewportWidth, contentWidth),
+              windowHeight: Math.max(viewportHeight, contentHeight) + 40,
             },
             jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
             pagebreak: { mode: ["css", "legacy"] },
