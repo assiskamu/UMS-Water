@@ -1492,6 +1492,10 @@
         return new Promise((resolve) => requestAnimationFrame(() => resolve()));
       }
 
+      function wait(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
       function waitForImages(container) {
         const imgs = Array.from(container.querySelectorAll("img"));
         const pending = imgs.filter((img) => !img.complete || img.naturalWidth === 0);
@@ -2910,6 +2914,12 @@
           await waitForNextFrame();
           await waitForImages(reportRoot);
           await waitForNextFrame();
+          await wait(80);
+
+          if (!reportRoot.querySelector(".report-page")) {
+            alert("Laporan tidak dapat dijana (tiada kandungan). Sila cuba lagi.");
+            return;
+          }
 
           const opt = {
             margin: [0, 0, 0, 0],
