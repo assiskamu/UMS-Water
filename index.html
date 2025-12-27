@@ -99,6 +99,161 @@
 
     .badge span { font-size: 1.1rem; }
 
+    .pill-group {
+      display: inline-flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid #c5d9ec;
+      background: #f7fbff;
+      font-weight: 700;
+      color: #1e3f63;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .pill.active {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, var(--primary-light), #ffffff);
+      box-shadow: 0 6px 16px rgba(13, 110, 253, 0.15);
+    }
+
+    .pill small { display: block; font-weight: 500; color: #4c6480; }
+
+    .mode-note {
+      font-size: 0.85rem;
+      color: #4f6a86;
+      margin-top: 0.4rem;
+    }
+
+    .inline-alert {
+      border-radius: 0.75rem;
+      padding: 0.75rem 0.9rem;
+      background: #fff4f4;
+      color: #b3261e;
+      border: 1px solid rgba(255, 23, 68, 0.25);
+      margin-top: 0.7rem;
+      font-size: 0.86rem;
+    }
+
+    .inline-alert ul { margin: 0.35rem 0 0 1rem; padding: 0; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .scenario-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.7rem;
+    }
+
+    .scenario-card {
+      border: 1px solid #cfe1f5;
+      border-radius: 0.9rem;
+      padding: 0.75rem 0.8rem;
+      background: #f9fcff;
+      position: relative;
+    }
+
+    .scenario-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 6px 16px rgba(13, 110, 253, 0.12);
+      background: linear-gradient(135deg, #f3f8ff, #ffffff);
+    }
+
+    .scenario-title {
+      margin: 0;
+      font-weight: 700;
+      color: #12324a;
+    }
+
+    .scenario-meta {
+      font-size: 0.82rem;
+      color: #4d6a87;
+      margin: 0.2rem 0 0.4rem;
+    }
+
+    .scenario-actions {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .scenario-actions button {
+      border-radius: 0.55rem;
+      padding: 0.32rem 0.6rem;
+      font-size: 0.82rem;
+    }
+
+    .mini-input {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid #cfe1f5;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.65rem;
+      background: #f7fbff;
+    }
+
+    .stacked {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .pill-badge {
+      display: inline-block;
+      padding: 0.18rem 0.5rem;
+      border-radius: 0.6rem;
+      background: #e8f2ff;
+      color: #1d3a57;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .compare-grid {
+      overflow-x: auto;
+    }
+
+    .accordion {
+      border: 1px solid #cfe1f5;
+      border-radius: 0.9rem;
+      overflow: hidden;
+    }
+
+    .accordion summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(135deg, #f3f8ff, #ffffff);
+      font-weight: 700;
+      color: #12324a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .accordion summary::-webkit-details-marker { display: none; }
+
+    .accordion .content {
+      padding: 0.8rem 1rem 1rem;
+      background: #ffffff;
+    }
+
+    .tagline {
+      font-size: 0.82rem;
+      color: #5b7693;
+      margin-top: 0.15rem;
+    }
+
     main {
       max-width: 1100px;
       margin: 1.5rem auto 2.5rem;
@@ -350,6 +505,17 @@
     }
 
     .hidden { display: none !important; }
+    .invalid {
+      border-color: #d32f2f !important;
+      box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
+      background: #fff7f7;
+    }
+
+    .error-text {
+      color: #b3261e;
+      font-size: 0.82rem;
+      margin-top: 0.15rem;
+    }
 
     .confidential-toggle {
       display: inline-flex;
@@ -858,8 +1024,171 @@
   </header>
 
   <main>
-    <!-- INPUT KATEGORI DEMAND -->
     <section class="card">
+      <h2><span class="icon">🎛️</span> Pemilih Mod & Senario</h2>
+      <div class="toolbar">
+        <div class="pill-group" role="group" aria-label="Pemilih mod" id="mode-selector">
+          <div class="pill active" data-mode="quick">
+            Quick Estimate
+            <small>1–2 min</small>
+          </div>
+          <div class="pill" data-mode="operational">
+            Operational Planning
+            <small>10–15 min</small>
+          </div>
+          <div class="pill" data-mode="full">
+            Full CBA (Advanced)
+            <small>30–60 min</small>
+          </div>
+        </div>
+        <button type="button" class="secondary" id="btn-autofill">
+          ⚡ Auto-fill nilai contoh
+        </button>
+        <button type="button" class="secondary" id="btn-fix-inputs">
+          🛠️ Baiki input
+        </button>
+        <div class="mini-input">
+          <label for="pdf-scope">Laporan PDF:</label>
+          <select id="pdf-scope">
+            <option value="active">Senario aktif sahaja</option>
+            <option value="all">Semua senario</option>
+          </select>
+        </div>
+      </div>
+      <p class="mode-note" id="mode-note">
+        Quick Estimate: isi populasi atau permintaan harian + faktor puncak & bekalan asas. Mod ini memaparkan ringkasan pantas serta NPV/BCR/payback jika CAPEX/OPEX diisi.
+      </p>
+      <div class="inline-alert hidden" id="validation-box">
+        <strong>Semak input diperlukan:</strong>
+        <ul id="validation-list"></ul>
+      </div>
+    </section>
+
+    <section class="card mode-block" data-modes="full,operational,quick">
+      <h2><span class="icon">🧪</span> Analisis Sensitiviti (+/−10%)</h2>
+      <p class="lead">Lihat kesan perubahan kos/manfaat terhadap NPV & BCR projek alternatif.</p>
+      <div class="input-grid">
+        <div>
+          <div class="label">Senario asas</div>
+          <div id="sens-base" class="pill-badge">NPV: –, BCR: –</div>
+        </div>
+        <div>
+          <div class="label">CAPEX +10%</div>
+          <div id="sens-capex" class="pill-badge">NPV: –, BCR: –</div>
+        </div>
+        <div>
+          <div class="label">OPEX +10%</div>
+          <div id="sens-opex" class="pill-badge">NPV: –, BCR: –</div>
+        </div>
+        <div>
+          <div class="label">Manfaat/penjimatan +10%</div>
+          <div id="sens-benefit" class="pill-badge">NPV: –, BCR: –</div>
+        </div>
+      </div>
+      <div class="tagline">Analisis sensitiviti menggunakan PV manfaat & kos terkira semasa.</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="icon">🧮</span> Perbandingan Senario A/B/C</h2>
+      <p class="lead">Bandingkan metrik utama (permintaan, bekalan, defisit, NPV, BCR, IRR, Payback) untuk senario yang disimpan.</p>
+      <div class="compare-grid">
+        <table id="scenario-compare-table">
+          <thead>
+            <tr>
+              <th>Metrik</th>
+              <th>Senario A</th>
+              <th>Senario B</th>
+              <th>Senario C</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Permintaan purata (MLD)</td><td class="sc-a-avg">–</td><td class="sc-b-avg">–</td><td class="sc-c-avg">–</td></tr>
+            <tr><td>Permintaan puncak (MLD)</td><td class="sc-a-peak">–</td><td class="sc-b-peak">–</td><td class="sc-c-peak">–</td></tr>
+            <tr><td>Bekalan efektif (MLD)</td><td class="sc-a-supply">–</td><td class="sc-b-supply">–</td><td class="sc-c-supply">–</td></tr>
+            <tr><td>Lebihan/Defisit purata</td><td class="sc-a-surplus">–</td><td class="sc-b-surplus">–</td><td class="sc-c-surplus">–</td></tr>
+            <tr><td>NPV (RM)</td><td class="sc-a-npv">–</td><td class="sc-b-npv">–</td><td class="sc-c-npv">–</td></tr>
+            <tr><td>BCR</td><td class="sc-a-bcr">–</td><td class="sc-b-bcr">–</td><td class="sc-c-bcr">–</td></tr>
+            <tr><td>IRR (%)</td><td class="sc-a-irr">–</td><td class="sc-b-irr">–</td><td class="sc-c-irr">–</td></tr>
+            <tr><td>Payback (tahun)</td><td class="sc-a-payback">–</td><td class="sc-b-payback">–</td><td class="sc-c-payback">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card mode-block" data-modes="quick">
+      <h2><span class="icon">⏱️</span> Input Pantas (Quick Estimate)</h2>
+      <div class="input-grid">
+        <div>
+          <label for="quick-pop">Jumlah populasi / headcount</label>
+          <input type="number" id="quick-pop" min="0" placeholder="cth: 15000" />
+          <div class="tagline">Boleh kosong jika anda masukkan permintaan harian terus.</div>
+        </div>
+        <div>
+          <label for="quick-percap">Kadar per kapita (L/org/hari)</label>
+          <input type="number" id="quick-percap" min="0" step="0.1" placeholder="cth: 150" />
+        </div>
+        <div>
+          <label for="quick-demand">Jumlah permintaan harian (m³/hari)</label>
+          <input type="number" id="quick-demand" min="0" step="0.01" placeholder="cth: 2000" />
+          <div class="tagline">Jika diisi, kalkulator abaikan populasi × per kapita.</div>
+        </div>
+        <div>
+          <label for="quick-peak">Faktor puncak (disyorkan 1.2–1.5)</label>
+          <input type="number" id="quick-peak" min="1" step="0.05" value="1.3" />
+        </div>
+        <div>
+          <label for="quick-base-supply">Bekalan asas (MLD)</label>
+          <input type="number" id="quick-base-supply" min="0" step="0.1" placeholder="cth: 5" />
+          <div class="tagline">Nilai ini akan disalin ke bekalan JANS di bahagian utama.</div>
+        </div>
+      </div>
+      <div class="accordion" style="margin-top:0.8rem;">
+        <details open>
+          <summary>Opsyen sumber alternatif ringkas</summary>
+          <div class="content">
+            <div class="input-grid">
+              <div>
+                <label for="quick-alt-name">Nama sumber</label>
+                <input type="text" id="quick-alt-name" placeholder="cth: Tangkapan air hujan mini" />
+              </div>
+              <div>
+                <label for="quick-alt-capacity">Kapasiti (m³/hari)</label>
+                <input type="number" id="quick-alt-capacity" min="0" step="0.1" />
+              </div>
+              <div>
+                <label for="quick-alt-util">Faktor penggunaan (% hari/tahun)</label>
+                <input type="number" id="quick-alt-util" min="0" max="100" step="1" />
+              </div>
+              <div>
+                <label for="quick-alt-capex">CAPEX kasar (RM)</label>
+                <input type="number" id="quick-alt-capex" min="0" step="1000" />
+              </div>
+              <div>
+                <label for="quick-alt-opex">OPEX tahunan kasar (RM/tahun)</label>
+                <input type="number" id="quick-alt-opex" min="0" step="100" />
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="icon">🗂️</span> Pengurus Senario (A/B/C)</h2>
+      <div class="toolbar stacked">
+        <div class="scenario-actions">
+          <button type="button" class="secondary" id="btn-add-scenario">➕ Senario baharu</button>
+          <button type="button" class="secondary" id="btn-duplicate-scenario">📑 Gandakan</button>
+          <button type="button" class="secondary" id="btn-rename-scenario">✏️ Namakan semula</button>
+          <button type="button" class="secondary" id="btn-delete-scenario">🗑️ Padam</button>
+          <button type="button" class="primary" id="btn-save-scenario">💾 Simpan senario</button>
+        </div>
+        <div class="scenario-list" id="scenario-list"></div>
+      </div>
+      <p class="mode-note">Setiap senario menyimpan input & output (permintaan, bekalan, NPV/BCR, payback). Data kekal dalam pelayar melalui localStorage.</p>
+    </section>
+    <!-- INPUT KATEGORI DEMAND -->
+    <section class="card mode-block" data-modes="operational,full">
       <h2><span class="icon">📥</span> Input Permintaan Air Mengikut Kategori</h2>
       <p class="lead">
         Tetapkan kategori (contoh: Asrama, Fakulti & Pentadbiran, Masjid, Sukan)
@@ -981,7 +1310,7 @@
     </section>
 
     <!-- INPUT SUMBER AIR ALTERNATIF -->
-    <section class="card">
+    <section class="card mode-block" data-modes="operational,full">
       <h2><span class="icon">💧</span> Sumber Air Alternatif (Extra Supply & CBA)</h2>
       <p class="lead">
         Masukkan kapasiti teknikal, faktor penggunaan, CAPEX, OPEX dan nota
@@ -996,6 +1325,7 @@
               <th>Sumber</th>
               <th>Kapasiti (m³/hari)</th>
               <th>Faktor penggunaan (% hari/tahun)</th>
+              <th>Kebolehpercayaan operasi (%)</th>
               <th>CAPEX (RM)</th>
               <th>Butiran CAPEX (ringkas)</th>
               <th>OPEX tetap (RM/tahun)</th>
@@ -1009,6 +1339,7 @@
               <td><input type="text" class="alt-name" value="Tangkapan air hujan" /></td>
               <td><input type="number" class="alt-capacity" value="300" min="0" /></td>
               <td><input type="number" class="alt-util" value="80" min="0" max="100" /></td>
+              <td><input type="number" class="alt-reliability" value="90" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="1200000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
                      value="Struktur tangki, gutter, paip agihan, pam dan panel kawalan" /></td>
@@ -1022,6 +1353,7 @@
               <td><input type="text" class="alt-name" value="Air tasik / tasik kampus" /></td>
               <td><input type="number" class="alt-capacity" value="200" min="0" /></td>
               <td><input type="number" class="alt-util" value="70" min="0" max="100" /></td>
+              <td><input type="number" class="alt-reliability" value="90" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="900000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
                      value="Pam pengabstrakan, paip penghantaran, sistem penapisan" /></td>
@@ -1035,6 +1367,7 @@
               <td><input type="text" class="alt-name" value="Reuse (greywater / RO)" /></td>
               <td><input type="number" class="alt-capacity" value="250" min="0" /></td>
               <td><input type="number" class="alt-util" value="80" min="0" max="100" /></td>
+              <td><input type="number" class="alt-reliability" value="85" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="1500000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
                      value="Unit rawatan, tangki imbangan, sistem paip dwi-saluran" /></td>
@@ -1048,6 +1381,7 @@
               <td><input type="text" class="alt-name" value="Kondensasi penghawa dingin" /></td>
               <td><input type="number" class="alt-capacity" value="50" min="0" /></td>
               <td><input type="number" class="alt-util" value="90" min="0" max="100" /></td>
+              <td><input type="number" class="alt-reliability" value="95" min="0" max="100" /></td>
               <td><input type="number" class="alt-capex" value="200000" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
                      value="Pengumpulan kondensat, tangki kecil dan pam pemindahan" /></td>
@@ -1061,6 +1395,7 @@
               <td><input type="text" class="alt-name" placeholder="Sumber tambahan" /></td>
               <td><input type="number" class="alt-capacity" min="0" /></td>
               <td><input type="number" class="alt-util" min="0" max="100" /></td>
+              <td><input type="number" class="alt-reliability" min="0" max="100" value="90" /></td>
               <td><input type="number" class="alt-capex" min="0" /></td>
               <td><input type="text" class="alt-capex-note"
                      placeholder="Butiran CAPEX (jika ada)" /></td>
@@ -1086,7 +1421,7 @@
     </section>
 
     <!-- PENGIRAAN TERPERINCI CAPEX & OPEX MENGIKUT ITEM -->
-    <section class="card">
+    <section class="card mode-block" data-modes="full">
       <h2><span class="icon">🧾</span> Pengiraan Terperinci CAPEX & OPEX Mengikut Item</h2>
       <p class="lead">
         Jadual mini ini membolehkan pecahan CAPEX dan OPEX mengikut item
@@ -1322,6 +1657,7 @@
               <th>Sumber</th>
               <th>Kapasiti (m³/hari)</th>
               <th>Utilisasi (% hari)</th>
+              <th>Kebolehpercayaan (%)</th>
               <th>Vol. tahunan (m³/tahun)</th>
               <th>CAPEX (RM)</th>
               <th>OPEX tahunan (RM/tahun)</th>
@@ -1339,6 +1675,7 @@
             <tr>
               <td>Jumlah / Agregat</td>
               <td id="alt-total-capacity">–</td>
+              <td>–</td>
               <td>–</td>
               <td id="alt-total-volume">–</td>
               <td id="alt-total-capex">–</td>
@@ -1454,11 +1791,32 @@
       const exportBtn = document.getElementById("export-excel-btn");
       const generateReportBtn = document.getElementById("btn-generate-report");
       const confidentialToggle = document.getElementById("confidential-toggle");
+      const modeSelector = document.getElementById("mode-selector");
+      const modeNote = document.getElementById("mode-note");
+      const validationBox = document.getElementById("validation-box");
+      const validationList = document.getElementById("validation-list");
+      const fixInputBtn = document.getElementById("btn-fix-inputs");
+      const autofillBtn = document.getElementById("btn-autofill");
+      const pdfScopeSelect = document.getElementById("pdf-scope");
       const reportRoot = document.getElementById("reportRoot");
       const categoryBody = document.getElementById("category-body");
 
       const addAltRowBtn = document.getElementById("add-alt-row-btn");
       const altBody = document.getElementById("alt-body");
+      const quickAltInputs = {
+        name: document.getElementById("quick-alt-name"),
+        capacity: document.getElementById("quick-alt-capacity"),
+        util: document.getElementById("quick-alt-util"),
+        capex: document.getElementById("quick-alt-capex"),
+        opex: document.getElementById("quick-alt-opex"),
+      };
+      const quickInputs = {
+        pop: document.getElementById("quick-pop"),
+        percap: document.getElementById("quick-percap"),
+        demand: document.getElementById("quick-demand"),
+        peak: document.getElementById("quick-peak"),
+        baseSupply: document.getElementById("quick-base-supply"),
+      };
 
       const resultsBody = document.getElementById("results-body");
       const totalPopEl = document.getElementById("total-pop");
@@ -1511,6 +1869,12 @@
       const capexItemsTotalEl = document.getElementById("capex-items-total");
       const opexItemsTotalEl = document.getElementById("opex-items-total");
       const addItemBtn = document.getElementById("add-capex-opex-item-btn");
+      const scenarioListEl = document.getElementById("scenario-list");
+      const addScenarioBtn = document.getElementById("btn-add-scenario");
+      const duplicateScenarioBtn = document.getElementById("btn-duplicate-scenario");
+      const renameScenarioBtn = document.getElementById("btn-rename-scenario");
+      const deleteScenarioBtn = document.getElementById("btn-delete-scenario");
+      const saveScenarioBtn = document.getElementById("btn-save-scenario");
 
       const categoryChartCtx = document
         .getElementById("demand-by-category-chart")
@@ -1524,6 +1888,13 @@
       const cbaPaybackCtx = document
         .getElementById("cba-payback-chart")
         .getContext("2d");
+      const scenarioCompareTable = document.getElementById("scenario-compare-table");
+      const sensitivityLabels = {
+        base: document.getElementById("sens-base"),
+        capex: document.getElementById("sens-capex"),
+        opex: document.getElementById("sens-opex"),
+        benefit: document.getElementById("sens-benefit"),
+      };
 
       if (window.Chart && Chart.defaults) {
         Chart.defaults.animation = false;
@@ -1541,6 +1912,23 @@
       let cbaPaybackChart = null;
 
       let lastAltSources = [];
+      let lastAltSummary = {
+        totalPVBenefits: 0,
+        totalPVCosts: 0,
+        pvCapex: 0,
+        pvOpex: 0,
+        payback: NaN,
+      };
+
+      const STORAGE_KEY = "ums-water-calculator-v2";
+      const LEGACY_KEY = "ums-water-calculator";
+      const SCHEMA_VERSION = 2;
+      let appState = {
+        version: SCHEMA_VERSION,
+        mode: "quick",
+        activeScenarioId: "A",
+        scenarios: {},
+      };
 
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
@@ -1631,7 +2019,9 @@
         if (!altSources || !altSources.length) return "";
         const labels = altSources.map((s) => s.name || "Sumber");
         const data = altSources.map((s) =>
-          (parseFloat(s.capacity) || 0) * ((parseFloat(s.utilPercent) || 0) / 100)
+          (parseFloat(s.capacity) || 0) *
+          ((parseFloat(s.utilPercent) || 0) / 100) *
+          ((parseFloat(s.reliabilityPercent) || 100) / 100)
         );
         return buildBarChartImage({
           title: "Komposisi Sumber Air Alternatif (m³/hari berkesan)",
@@ -1655,6 +2045,524 @@
           return isPeak ? "Defisit (Puncak)" : "Defisit (Purata)";
         }
         return status;
+      }
+
+      function normalizeNumber(val, fallback = 0) {
+        const num = parseFloat(val);
+        return isFinite(num) ? num : fallback;
+      }
+
+      function createEmptyScenario(id = "A", name = `Senario ${id}`) {
+        return {
+          id,
+          name,
+          mode: "quick",
+          inputs: {},
+          outputs: {},
+          updatedAt: Date.now(),
+        };
+      }
+
+      function migrateLegacy(payload) {
+        if (!payload || typeof payload !== "object") return null;
+        // Legacy payload assumed flat; keep minimal fields.
+        const scenario = createEmptyScenario("A", "Senario A (Legacy)");
+        scenario.mode = payload.mode || "operational";
+        scenario.inputs = {
+          supply: payload.supply || "",
+          tariffWater: payload.tariffWater || "",
+          tariffSewer: payload.tariffSewer || "",
+          analysisYears: payload.analysisYears || "",
+          discount: payload.discount || "",
+          categories: payload.categories || [],
+          altRows: payload.altRows || [],
+          capexRows: payload.capexRows || [],
+          quick: payload.quick || {},
+        };
+        return {
+          version: SCHEMA_VERSION,
+          mode: scenario.mode,
+          activeScenarioId: "A",
+          scenarios: { A: scenario },
+        };
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.version === SCHEMA_VERSION) {
+              appState = parsed;
+              return;
+            }
+          }
+          const legacyRaw = localStorage.getItem(LEGACY_KEY);
+          if (legacyRaw) {
+            const migrated = migrateLegacy(JSON.parse(legacyRaw));
+            if (migrated) {
+              appState = migrated;
+              persistState();
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn("Gagal memuat state:", err);
+        }
+        appState = {
+          version: SCHEMA_VERSION,
+          mode: "quick",
+          activeScenarioId: "A",
+          scenarios: { A: createEmptyScenario("A", "Senario A") },
+        };
+      }
+
+      function persistState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        } catch (err) {
+          console.warn("Gagal simpan state:", err);
+        }
+      }
+
+      function activeScenario() {
+        return appState.scenarios[appState.activeScenarioId];
+      }
+
+      function toggleModeBlocks(mode) {
+        document.querySelectorAll(".mode-block").forEach((section) => {
+          const allowed = (section.dataset.modes || "").split(",").map((m) => m.trim());
+          if (allowed.includes(mode)) {
+            section.classList.remove("hidden");
+          } else {
+            section.classList.add("hidden");
+          }
+        });
+      }
+
+      function setMode(mode) {
+        appState.mode = mode;
+        modeSelector.querySelectorAll(".pill").forEach((pill) => {
+          pill.classList.toggle("active", pill.dataset.mode === mode);
+        });
+        const noteText =
+          mode === "quick"
+            ? "Quick Estimate: isi populasi atau permintaan harian + faktor puncak & bekalan asas. Output: ringkasan permintaan-bekalan pantas dan NPV/BCR jika CAPEX/OPEX diisi."
+            : mode === "operational"
+            ? "Operational Planning: buka jadual kategori, sumber alternatif berganda dengan faktor utiliti & kebolehpercayaan. Gunakan untuk perancangan 10–15 minit."
+            : "Full CBA (Advanced): kekalkan pecahan CAPEX/OPEX, kitaran penggantian, penjimatan terperinci dan sensitiviti +/-10%.";
+        modeNote.textContent = noteText;
+        toggleModeBlocks(mode);
+        persistState();
+      }
+
+      function clearElement(el) {
+        while (el.firstChild) el.removeChild(el.firstChild);
+      }
+
+      function createCategoryRow(data = {}) {
+        const tr = document.createElement("tr");
+        tr.className = "category-row";
+        tr.innerHTML = `
+          <td><input type="text" class="cat-name" value="${data.name || ""}" placeholder="Nama kategori" /></td>
+          <td><input type="number" class="cat-pop" value="${data.pop || ""}" min="0" /></td>
+          <td><input type="number" class="cat-percap" value="${data.percap || ""}" min="0" /></td>
+          <td><input type="number" class="cat-peak" value="${data.peak || "1.3"}" min="1" step="0.05" /></td>
+        `;
+        return tr;
+      }
+
+      function setCategoryRows(rows) {
+        clearElement(categoryBody);
+        if (!rows || !rows.length) {
+          ["Asrama", "Fakulti & Pentadbiran", "Masjid & Surau"].forEach((name) => {
+            categoryBody.appendChild(
+              createCategoryRow({ name, pop: "", percap: "", peak: 1.3 })
+            );
+          });
+        } else {
+          rows.forEach((r) => categoryBody.appendChild(createCategoryRow(r)));
+        }
+      }
+
+      function createAltRow(data = {}) {
+        const tr = document.createElement("tr");
+        tr.className = "alt-row";
+        tr.innerHTML = `
+          <td><input type="text" class="alt-name" placeholder="Nama sumber" value="${data.name || ""}" /></td>
+          <td><input type="number" class="alt-capacity" min="0" value="${data.capacity || ""}" /></td>
+          <td><input type="number" class="alt-util" min="0" max="100" value="${data.util || ""}" /></td>
+          <td><input type="number" class="alt-capex" min="0" value="${data.capex || ""}" /></td>
+          <td><input type="text" class="alt-capex-note" placeholder="Butiran CAPEX (jika ada)" value="${data.capexNote || ""}" /></td>
+          <td><input type="number" class="alt-opex-fixed" min="0" value="${data.opexFixed || ""}" /></td>
+          <td><input type="number" class="alt-opex-var" min="0" step="0.01" value="${data.opexVar || ""}" /></td>
+          <td><input type="text" class="alt-opex-note" placeholder="Butiran OPEX (jika ada)" value="${data.opexNote || ""}" /></td>
+          <td><input type="number" class="alt-life" min="1" value="${data.life || ""}" /></td>
+        `;
+        return tr;
+      }
+
+      function setAltRows(rows) {
+        clearElement(altBody);
+        if (!rows || !rows.length) {
+          ["Tangkapan air hujan", "Air tasik / tasik kampus"].forEach((name) => {
+            altBody.appendChild(createAltRow({ name }));
+          });
+          altBody.appendChild(createAltRow());
+        } else {
+          rows.forEach((r) => altBody.appendChild(createAltRow(r)));
+        }
+      }
+
+      function createCapexOpexRow(data = {}) {
+        const tr = document.createElement("tr");
+        tr.className = "capex-opex-row";
+        tr.innerHTML = `
+          <td>
+            <select class="item-type">
+              <option value="CAPEX" ${data.type === "OPEX" ? "" : "selected"}>CAPEX</option>
+              <option value="OPEX" ${data.type === "OPEX" ? "selected" : ""}>OPEX</option>
+            </select>
+          </td>
+          <td><input type="text" class="item-name" value="${data.name || ""}" placeholder="Nama item" /></td>
+          <td><input type="number" class="item-qty" value="${data.qty || 1}" min="0" step="0.01" /></td>
+          <td><input type="number" class="item-cost" value="${data.cost || 0}" min="0" step="0.01" /></td>
+          <td class="item-total">0.00</td>
+          <td><input type="text" class="item-note" value="${data.note || ""}" placeholder="Catatan (jika ada)" /></td>
+        `;
+        return tr;
+      }
+
+      function setCapexRows(rows) {
+        clearElement(capexOpexBody);
+        if (!rows || !rows.length) {
+          capexOpexBody.appendChild(createCapexOpexRow());
+        } else {
+          rows.forEach((r) => capexOpexBody.appendChild(createCapexOpexRow(r)));
+        }
+        recalcCapexOpexItems();
+      }
+
+      function captureScenarioInputs() {
+        const categories = Array.from(document.querySelectorAll(".category-row")).map(
+          (row) => ({
+            name: row.querySelector(".cat-name")?.value || "",
+            pop: row.querySelector(".cat-pop")?.value || "",
+            percap: row.querySelector(".cat-percap")?.value || "",
+            peak: row.querySelector(".cat-peak")?.value || "",
+          })
+        );
+        const altRows = Array.from(document.querySelectorAll(".alt-row")).map(
+          (row) => ({
+            name: row.querySelector(".alt-name")?.value || "",
+            capacity: row.querySelector(".alt-capacity")?.value || "",
+            util: row.querySelector(".alt-util")?.value || "",
+            capex: row.querySelector(".alt-capex")?.value || "",
+            capexNote: row.querySelector(".alt-capex-note")?.value || "",
+            opexFixed: row.querySelector(".alt-opex-fixed")?.value || "",
+            opexVar: row.querySelector(".alt-opex-var")?.value || "",
+            opexNote: row.querySelector(".alt-opex-note")?.value || "",
+            life: row.querySelector(".alt-life")?.value || "",
+          })
+        );
+        const capexRows = Array.from(document.querySelectorAll(".capex-opex-row")).map(
+          (row) => ({
+            type: row.querySelector(".item-type")?.value || "CAPEX",
+            name: row.querySelector(".item-name")?.value || "",
+            qty: row.querySelector(".item-qty")?.value || 1,
+            cost: row.querySelector(".item-cost")?.value || 0,
+            note: row.querySelector(".item-note")?.value || "",
+          })
+        );
+        return {
+          mode: appState.mode,
+          quick: {
+            pop: quickInputs.pop.value,
+            percap: quickInputs.percap.value,
+            demand: quickInputs.demand.value,
+            peak: quickInputs.peak.value,
+            baseSupply: quickInputs.baseSupply.value,
+            alt: {
+              name: quickAltInputs.name.value,
+              capacity: quickAltInputs.capacity.value,
+              util: quickAltInputs.util.value,
+              capex: quickAltInputs.capex.value,
+              opex: quickAltInputs.opex.value,
+            },
+          },
+          supply: supplyInput.value,
+          tariffWater: tariffWaterInput.value,
+          tariffSewer: tariffSewerInput.value,
+          analysisYears: analysisYearsInput.value,
+          discount: discountRateInput.value,
+          categories,
+          altRows,
+          capexRows,
+        };
+      }
+
+      function applyScenarioInputs(data) {
+        if (!data) return;
+        setMode(data.mode || "quick");
+        quickInputs.pop.value = data.quick?.pop || "";
+        quickInputs.percap.value = data.quick?.percap || "";
+        quickInputs.demand.value = data.quick?.demand || "";
+        quickInputs.peak.value = data.quick?.peak || "1.3";
+        quickInputs.baseSupply.value = data.quick?.baseSupply || "";
+
+        quickAltInputs.name.value = data.quick?.alt?.name || "";
+        quickAltInputs.capacity.value = data.quick?.alt?.capacity || "";
+        quickAltInputs.util.value = data.quick?.alt?.util || "";
+        quickAltInputs.capex.value = data.quick?.alt?.capex || "";
+        quickAltInputs.opex.value = data.quick?.alt?.opex || "";
+
+        supplyInput.value = data.supply || supplyInput.value;
+        tariffWaterInput.value = data.tariffWater || tariffWaterInput.value;
+        tariffSewerInput.value = data.tariffSewer || tariffSewerInput.value;
+        analysisYearsInput.value = data.analysisYears || analysisYearsInput.value;
+        discountRateInput.value = data.discount || discountRateInput.value;
+
+        setCategoryRows(data.categories || []);
+        setAltRows(data.altRows || []);
+        setCapexRows(data.capexRows || []);
+      }
+
+      function renderScenarioList() {
+        clearElement(scenarioListEl);
+        Object.values(appState.scenarios).forEach((sc) => {
+          const card = document.createElement("div");
+          card.className = "scenario-card" + (sc.id === appState.activeScenarioId ? " active" : "");
+          card.dataset.id = sc.id;
+          card.innerHTML = `
+            <p class="scenario-title">${sc.name}</p>
+            <p class="scenario-meta">Mod: ${sc.mode || "quick"} · Dikemas kini: ${new Date(
+              sc.updatedAt || Date.now()
+            ).toLocaleDateString("ms-MY")}</p>
+            <div class="scenario-actions">
+              <button type="button" class="secondary btn-load-scenario" data-id="${sc.id}">Muat & kira</button>
+            </div>
+          `;
+          scenarioListEl.appendChild(card);
+        });
+      }
+
+      function updateScenarioOutputs(summary, finance) {
+        const sc = activeScenario();
+        if (!sc) return;
+        sc.mode = appState.mode;
+        sc.outputs = {
+          summary,
+          finance,
+        };
+        sc.updatedAt = Date.now();
+      }
+
+      function updateCompareTable() {
+        const cells = {
+          A: appState.scenarios.A,
+          B: appState.scenarios.B,
+          C: appState.scenarios.C,
+        };
+        ["avg", "peak", "supply", "surplus", "npv", "bcr", "irr", "payback"].forEach((k) => {
+          ["A", "B", "C"].forEach((id) => {
+            const cls = `sc-${id.toLowerCase()}-${k}`;
+            const td = scenarioCompareTable.querySelector(`.${cls}`);
+            const sc = cells[id];
+            if (!td) return;
+            if (sc?.outputs?.summary && sc?.outputs?.finance) {
+              const sum = sc.outputs.summary;
+              const fin = sc.outputs.finance;
+              const mapping = {
+                avg: sum.avgMLD,
+                peak: sum.peakMLD,
+                supply: sum.effectiveMLD,
+                surplus: sum.surplusAvg,
+                npv: fin.npv,
+                bcr: fin.bcr,
+                irr: fin.irr,
+                payback: fin.payback,
+              };
+              td.textContent = isFinite(mapping[k]) ? formatNumber(mapping[k]) : mapping[k] || "–";
+            } else {
+              td.textContent = "–";
+            }
+          });
+        });
+      }
+
+      function setActiveScenario(id) {
+        if (!appState.scenarios[id]) return;
+        appState.activeScenarioId = id;
+        applyScenarioInputs(appState.scenarios[id].inputs || {});
+        renderScenarioList();
+        persistState();
+        calculate();
+      }
+
+      function addScenario() {
+        const letters = ["A", "B", "C"];
+        const available = letters.find((l) => !appState.scenarios[l]);
+        if (!available) {
+          alert("Hanya tiga senario (A/B/C) disokong. Padam satu sebelum menambah.");
+          return;
+        }
+        appState.scenarios[available] = createEmptyScenario(available, `Senario ${available}`);
+        appState.activeScenarioId = available;
+        renderScenarioList();
+        persistState();
+        applyScenarioInputs(appState.scenarios[available].inputs);
+      }
+
+      function duplicateScenario() {
+        const letters = ["A", "B", "C"];
+        const available = letters.find((l) => !appState.scenarios[l]);
+        if (!available) {
+          alert("Hanya tiga senario (A/B/C) disokong.");
+          return;
+        }
+        const current = activeScenario();
+        if (!current) return;
+        appState.scenarios[available] = {
+          ...JSON.parse(JSON.stringify(current)),
+          id: available,
+          name: `${current.name} (Salinan)`,
+          updatedAt: Date.now(),
+        };
+        appState.activeScenarioId = available;
+        renderScenarioList();
+        persistState();
+      }
+
+      function renameScenario() {
+        const sc = activeScenario();
+        if (!sc) return;
+        const name = prompt("Nama baharu senario:", sc.name);
+        if (name) {
+          sc.name = name;
+          sc.updatedAt = Date.now();
+          renderScenarioList();
+          persistState();
+        }
+      }
+
+      function deleteScenario() {
+        if (Object.keys(appState.scenarios).length <= 1) {
+          alert("Sekurang-kurangnya satu senario mesti wujud.");
+          return;
+        }
+        const id = appState.activeScenarioId;
+        delete appState.scenarios[id];
+        appState.activeScenarioId = Object.keys(appState.scenarios)[0];
+        renderScenarioList();
+        persistState();
+        applyScenarioInputs(activeScenario().inputs);
+      }
+
+      function saveActiveScenario() {
+        const sc = activeScenario();
+        if (!sc) return;
+        sc.inputs = captureScenarioInputs();
+        sc.mode = appState.mode;
+        sc.updatedAt = Date.now();
+        persistState();
+        renderScenarioList();
+      }
+
+      function updateSensitivityUI() {
+        const { totalPVBenefits, totalPVCosts, pvCapex, pvOpex } = lastAltSummary;
+        const baseNPV = totalPVBenefits - totalPVCosts;
+        const baseBCR = totalPVCosts > 0 ? totalPVBenefits / totalPVCosts : NaN;
+        const scenarios = {
+          base: { npv: baseNPV, bcr: baseBCR },
+          capex: {
+            npv: totalPVBenefits - (pvCapex * 1.1 + pvOpex),
+            bcr: (totalPVBenefits) / (pvCapex * 1.1 + pvOpex || 1),
+          },
+          opex: {
+            npv: totalPVBenefits - (pvCapex + pvOpex * 1.1),
+            bcr: (totalPVBenefits) / (pvCapex + pvOpex * 1.1 || 1),
+          },
+          benefit: {
+            npv: totalPVBenefits * 1.1 - totalPVCosts,
+            bcr: totalPVCosts > 0 ? (totalPVBenefits * 1.1) / totalPVCosts : NaN,
+          },
+        };
+        Object.entries(scenarios).forEach(([key, val]) => {
+          const el = sensitivityLabels[key];
+          if (!el) return;
+          el.textContent = `NPV: ${formatNumber(val.npv)} | BCR: ${isFinite(val.bcr) ? formatNumber(val.bcr) : "–"}`;
+        });
+      }
+
+      function showValidation(messages) {
+        if (!messages.length) {
+          validationBox.classList.add("hidden");
+          validationList.innerHTML = "";
+          return;
+        }
+        validationList.innerHTML = messages.map((m) => `<li>${m}</li>`).join("");
+        validationBox.classList.remove("hidden");
+      }
+
+      function validateInputs(mode) {
+        const errors = [];
+        const markInvalid = (el) => el && el.classList.add("invalid");
+        const clearInvalid = (el) => el && el.classList.remove("invalid");
+
+        [...document.querySelectorAll("input")].forEach(clearInvalid);
+
+        if (mode === "quick") {
+          const pop = normalizeNumber(quickInputs.pop.value);
+          const percap = normalizeNumber(quickInputs.percap.value);
+          const demand = normalizeNumber(quickInputs.demand.value);
+          const peak = normalizeNumber(quickInputs.peak.value);
+          if (!(demand > 0 || (pop > 0 && percap > 0))) {
+            errors.push("Isi sama ada jumlah permintaan harian atau populasi + per kapita untuk Quick Estimate.");
+            markInvalid(quickInputs.demand);
+            markInvalid(quickInputs.pop);
+            markInvalid(quickInputs.percap);
+          }
+          if (peak <= 0) {
+            errors.push("Faktor puncak mesti melebihi 0.");
+            markInvalid(quickInputs.peak);
+          } else if (peak < 1.2 || peak > 1.5) {
+            errors.push("Amaran: faktor puncak disyorkan antara 1.2–1.5 (dibolehkan jika sengaja).");
+          }
+        } else {
+          const rows = Array.from(document.querySelectorAll(".category-row"));
+          const validRow = rows.some((r) => normalizeNumber(r.querySelector(".cat-pop").value) > 0 && normalizeNumber(r.querySelector(".cat-percap").value) > 0);
+          if (!validRow) {
+            errors.push("Isi sekurang-kurangnya satu baris kategori dengan populasi & kadar per kapita.");
+            rows.forEach((r) => {
+              markInvalid(r.querySelector(".cat-pop"));
+              markInvalid(r.querySelector(".cat-percap"));
+            });
+          }
+          rows.forEach((r) => {
+            const peak = normalizeNumber(r.querySelector(".cat-peak").value);
+            if (peak < 1.2 || peak > 1.5) {
+              errors.push("Amaran: faktor puncak biasa 1.2–1.5. Semak baris kategori jika perlu.");
+            }
+          });
+        }
+
+        if (normalizeNumber(supplyInput.value) < 0) {
+          errors.push("Bekalan asas tidak boleh negatif.");
+          markInvalid(supplyInput);
+        }
+        [tariffWaterInput, tariffSewerInput, analysisYearsInput, discountRateInput].forEach((el) => {
+          if (normalizeNumber(el.value) < 0) {
+            errors.push("Nilai tarif/parameter kewangan tidak boleh negatif.");
+            markInvalid(el);
+          }
+        });
+
+        const invalidEls = document.querySelectorAll(".invalid");
+        return {
+          ok: !errors.some((e) => !e.startsWith("Amaran")),
+          errors,
+          firstInvalid: invalidEls.length ? invalidEls[0] : null,
+        };
       }
 
       function blobToDataURL(blob) {
@@ -1711,52 +2619,95 @@
       }
 
       function calculate() {
-        // 1. Demand by category
-        const rows = Array.from(document.querySelectorAll(".category-row"));
+        const validation = validateInputs(appState.mode);
+        showValidation(validation.errors);
+        if (!validation.ok) {
+          if (validation.firstInvalid) {
+            validation.firstInvalid.focus();
+          }
+          return;
+        }
+
+        const demandRows = [];
         const categoryNames = [];
         const peakDemands = [];
         const avgDemands = [];
-
         let totalPop = 0;
         let totalAvgM3 = 0;
         let totalPeakM3 = 0;
 
         resultsBody.innerHTML = "";
 
-        rows.forEach((row) => {
-          const nameInput = row.querySelector(".cat-name");
-          const popInput = row.querySelector(".cat-pop");
-          const perCapInput = row.querySelector(".cat-percap");
-          const peakInput = row.querySelector(".cat-peak");
-
-          const name = (nameInput.value || "").trim();
-          const pop = parseFloat(popInput.value);
-          const perCap = parseFloat(perCapInput.value);
-          const peak = parseFloat(peakInput.value);
-
-          if (!name || !isFinite(pop) || pop <= 0 || !isFinite(perCap)) {
-            return;
-          }
-
-          const avgM3 = (pop * perCap) / 1000;
-          const peakM3 = avgM3 * (isFinite(peak) && peak > 0 ? peak : 1);
-
-          totalPop += pop;
-          totalAvgM3 += avgM3;
-          totalPeakM3 += peakM3;
-
-          categoryNames.push(name);
+        if (appState.mode === "quick") {
+          const pop = normalizeNumber(quickInputs.pop.value);
+          const percap = normalizeNumber(quickInputs.percap.value);
+          const demand = normalizeNumber(quickInputs.demand.value);
+          const peak = normalizeNumber(quickInputs.peak.value) || 1.3;
+          let avgM3 = demand > 0 ? demand : (pop * percap) / 1000;
+          avgM3 = isFinite(avgM3) ? avgM3 : 0;
+          const peakM3 = avgM3 * peak;
+          totalPop = pop;
+          totalAvgM3 = avgM3;
+          totalPeakM3 = peakM3;
+          demandRows.push({
+            name: "Anggaran pantas",
+            pop,
+            percap,
+            avgM3,
+            peakFactor: peak,
+            peakM3,
+          });
+          categoryNames.push("Anggaran pantas");
           avgDemands.push(avgM3);
           peakDemands.push(peakM3);
+        } else {
+          const rows = Array.from(document.querySelectorAll(".category-row"));
+          rows.forEach((row) => {
+            const nameInput = row.querySelector(".cat-name");
+            const popInput = row.querySelector(".cat-pop");
+            const perCapInput = row.querySelector(".cat-percap");
+            const peakInput = row.querySelector(".cat-peak");
 
+            const name = (nameInput.value || "").trim();
+            const pop = parseFloat(popInput.value);
+            const perCap = parseFloat(perCapInput.value);
+            const peak = parseFloat(peakInput.value);
+
+            if (!name || !isFinite(pop) || pop <= 0 || !isFinite(perCap)) {
+              return;
+            }
+
+            const avgM3 = (pop * perCap) / 1000;
+            const peakM3 = avgM3 * (isFinite(peak) && peak > 0 ? peak : 1);
+
+            totalPop += pop;
+            totalAvgM3 += avgM3;
+            totalPeakM3 += peakM3;
+
+            categoryNames.push(name);
+            avgDemands.push(avgM3);
+            peakDemands.push(peakM3);
+
+            demandRows.push({
+              name,
+              pop,
+              percap,
+              avgM3,
+              peakFactor: peak,
+              peakM3,
+            });
+          });
+        }
+
+        demandRows.forEach((row) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${name}</td>
-            <td>${formatNumber(pop)}</td>
-            <td>${formatNumber(perCap)}</td>
-            <td>${formatNumber(avgM3)}</td>
-            <td>${isFinite(peak) ? formatNumber(peak) : "–"}</td>
-            <td>${formatNumber(peakM3)}</td>
+            <td>${row.name}</td>
+            <td>${formatNumber(row.pop)}</td>
+            <td>${formatNumber(row.percap)}</td>
+            <td>${formatNumber(row.avgM3)}</td>
+            <td>${isFinite(row.peakFactor) ? formatNumber(row.peakFactor) : "–"}</td>
+            <td>${formatNumber(row.peakM3)}</td>
           `;
           resultsBody.appendChild(tr);
         });
@@ -1770,6 +2721,10 @@
         totalAvgMLDEl.textContent = formatNumber(totalAvgMLD);
         totalPeakMLDEl.textContent = formatNumber(totalPeakMLD);
 
+        if (appState.mode === "quick" && quickInputs.baseSupply.value) {
+          supplyInput.value = quickInputs.baseSupply.value;
+        }
+
         // 2. Baseline supply (JANS)
         const supplyBaseMLD = parseFloat(supplyInput.value);
         const supplyValid = isFinite(supplyBaseMLD) && supplyBaseMLD >= 0;
@@ -1779,44 +2734,69 @@
           : "–";
 
         // 3. Alternative supply + build altData for CBA
-        const altRows = Array.from(document.querySelectorAll(".alt-row"));
-        let altAvgM3PerDayTotal = 0;
         const altData = [];
-
-        altRows.forEach((row) => {
-          const name = (row.querySelector(".alt-name").value || "").trim();
-          const cap = parseFloat(row.querySelector(".alt-capacity").value);
-          const util = parseFloat(row.querySelector(".alt-util").value);
-          const capex = parseFloat(row.querySelector(".alt-capex").value);
-          const capexNote = (row.querySelector(".alt-capex-note")?.value || "").trim();
-          const opexFixed = parseFloat(
-            row.querySelector(".alt-opex-fixed").value
-          );
-          const opexVar = parseFloat(
-            row.querySelector(".alt-opex-var").value
-          );
-          const opexNote = (row.querySelector(".alt-opex-note")?.value || "").trim();
-          const lifeYears = parseFloat(row.querySelector(".alt-life").value);
-
-          if (!name || !isFinite(cap) || cap <= 0 || !isFinite(util) || util <= 0) {
-            return;
+        let altAvgM3PerDayTotal = 0;
+        if (appState.mode === "quick") {
+          const name = (quickAltInputs.name.value || "").trim();
+          const cap = normalizeNumber(quickAltInputs.capacity.value);
+          const util = normalizeNumber(quickAltInputs.util.value);
+          if (name && cap > 0 && util > 0) {
+            const capex = normalizeNumber(quickAltInputs.capex.value);
+            const opex = normalizeNumber(quickAltInputs.opex.value);
+            const avgM3PerDayEff = cap * (util / 100);
+            altAvgM3PerDayTotal += avgM3PerDayEff;
+            altData.push({
+              name,
+              capacity: cap,
+              utilPercent: util,
+              reliabilityPercent: 100,
+              capex,
+              capexNote: "",
+              opexFixed: opex,
+              opexVar: 0,
+              opexNote: "",
+              lifeYears: NaN,
+            });
           }
+        } else {
+          const altRows = Array.from(document.querySelectorAll(".alt-row"));
+          altRows.forEach((row) => {
+            const name = (row.querySelector(".alt-name").value || "").trim();
+            const cap = parseFloat(row.querySelector(".alt-capacity").value);
+            const util = parseFloat(row.querySelector(".alt-util").value);
+            const reliability = parseFloat(row.querySelector(".alt-reliability").value) || 100;
+            const capex = parseFloat(row.querySelector(".alt-capex").value);
+            const capexNote = (row.querySelector(".alt-capex-note")?.value || "").trim();
+            const opexFixed = parseFloat(
+              row.querySelector(".alt-opex-fixed").value
+            );
+            const opexVar = parseFloat(
+              row.querySelector(".alt-opex-var").value
+            );
+            const opexNote = (row.querySelector(".alt-opex-note")?.value || "").trim();
+            const lifeYears = parseFloat(row.querySelector(".alt-life").value);
 
-          const avgM3PerDayEff = cap * (util / 100);
-          altAvgM3PerDayTotal += avgM3PerDayEff;
+            if (!name || !isFinite(cap) || cap <= 0 || !isFinite(util) || util <= 0) {
+              return;
+            }
 
-          altData.push({
-            name,
-            capacity: cap,
-            utilPercent: util,
-            capex: isFinite(capex) ? capex : 0,
-            capexNote,
-            opexFixed: isFinite(opexFixed) ? opexFixed : 0,
-            opexVar: isFinite(opexVar) ? opexVar : 0,
-            opexNote,
-            lifeYears: isFinite(lifeYears) ? lifeYears : NaN,
+            const avgM3PerDayEff = cap * (util / 100) * (reliability / 100);
+            altAvgM3PerDayTotal += avgM3PerDayEff;
+
+            altData.push({
+              name,
+              capacity: cap,
+              utilPercent: util,
+              reliabilityPercent: reliability,
+              capex: isFinite(capex) ? capex : 0,
+              capexNote,
+              opexFixed: isFinite(opexFixed) ? opexFixed : 0,
+              opexVar: isFinite(opexVar) ? opexVar : 0,
+              opexNote,
+              lifeYears: isFinite(lifeYears) ? lifeYears : NaN,
+            });
           });
-        });
+        }
 
         const altSupplyMLD = altAvgM3PerDayTotal / 1000;
         altSupplyMLDEl.textContent = altData.length
@@ -1928,7 +2908,20 @@
         updateDemandCharts(categoryNames, avgDemands, peakDemands);
 
         // 7. CBA for alternative sources
-        calculateAltCBA(altData);
+        const finance = calculateAltCBA(altData) || {};
+
+        // 8. Simpan ke senario & jadual perbandingan
+        const summaryOut = {
+          avgMLD: totalAvgMLD,
+          peakMLD: totalPeakMLD,
+          effectiveMLD: effectiveSupplyMLD,
+          surplusAvg,
+          surplusPeak,
+        };
+        updateScenarioOutputs(summaryOut, finance);
+        saveActiveScenario();
+        updateCompareTable();
+        updateSensitivityUI();
       }
 
       function updateDemandCharts(labels, avgData, peakData) {
@@ -2065,6 +3058,8 @@
 
         let totalPVBenefits = 0;
         let totalPVCosts = 0;
+        let pvCapexTotal = 0;
+        let pvOpexTotal = 0;
 
         const labels = [];
         const npvData = [];
@@ -2089,12 +3084,28 @@
           sumIRREl.textContent = "–";
 
           lastAltSources = [];
-          return;
+          lastAltSummary = {
+            totalPVBenefits: 0,
+            totalPVCosts: 0,
+            pvCapex: 0,
+            pvOpex: 0,
+            payback: NaN,
+          };
+          return {
+            capex: 0,
+            saving: 0,
+            opex: 0,
+            netcf: 0,
+            npv: 0,
+            bcr: NaN,
+            irr: NaN,
+            payback: NaN,
+          };
         }
 
         altData.forEach((s) => {
-          const { name, capacity, utilPercent, capex, opexFixed, opexVar, lifeYears } = s;
-          const volAnnual = capacity * (utilPercent / 100) * 365;
+          const { name, capacity, utilPercent, reliabilityPercent = 100, capex, opexFixed, opexVar, lifeYears } = s;
+          const volAnnual = capacity * (utilPercent / 100) * (reliabilityPercent / 100) * 365;
 
           const savingAnnual = volAnnual * tariffTotal;
           const opexAnnual = opexFixed + opexVar * volAnnual;
@@ -2113,11 +3124,14 @@
 
           let pvBenefits = 0;
           let pvCosts = capex;
+          let pvOpex = 0;
 
           for (let t = 1; t <= horizon; t++) {
             const df = Math.pow(1 + r, t);
             pvBenefits += savingAnnual / df;
-            pvCosts += opexAnnual / df;
+            const opexPV = opexAnnual / df;
+            pvCosts += opexPV;
+            pvOpex += opexPV;
           }
 
           const npv = pvBenefits - pvCosts;
@@ -2132,6 +3146,8 @@
 
           totalPVBenefits += pvBenefits;
           totalPVCosts += pvCosts;
+          pvCapexTotal += capex;
+          pvOpexTotal += pvOpex;
 
           labels.push(name);
           npvData.push(npv);
@@ -2142,6 +3158,7 @@
             <td>${name}</td>
             <td>${formatNumber(capacity)}</td>
             <td>${formatNumber(utilPercent)}</td>
+            <td>${formatNumber(reliabilityPercent)}</td>
             <td>${formatNumber(volAnnual)}</td>
             <td>${formatNumber(capex)}</td>
             <td>${formatNumber(opexAnnual)}</td>
@@ -2156,6 +3173,7 @@
 
         const totalNPV = totalPVBenefits - totalPVCosts;
         const totalBCR = totalPVCosts > 0 ? totalPVBenefits / totalPVCosts : NaN;
+        const totalPayback = totalNetCF > 0 && totalCapex > 0 ? totalCapex / totalNetCF : NaN;
 
         altTotalCapacityEl.textContent = formatNumber(totalCap);
         altTotalVolumeEl.textContent = formatNumber(totalVol);
@@ -2179,6 +3197,13 @@
 
         // Simpan altData untuk laporan PDF (termasuk nota CAPEX/OPEX)
         lastAltSources = altData.slice();
+        lastAltSummary = {
+          totalPVBenefits,
+          totalPVCosts,
+          pvCapex: pvCapexTotal,
+          pvOpex: pvOpexTotal,
+          payback: totalPayback,
+        };
 
         // Graf NPV & tempoh pulangan modal
         if (labels.length) {
@@ -2237,6 +3262,17 @@
             },
           });
         }
+
+        return {
+          capex: totalCapex,
+          saving: totalSaving,
+          opex: totalOpex,
+          netcf: totalNetCF,
+          npv: totalNPV,
+          bcr: totalBCR,
+          irr: isFinite(irr) ? irr * 100 : NaN,
+          payback: totalPayback,
+        };
       }
 
       // CAPEX/OPEX itemised calculator
@@ -2394,6 +3430,39 @@
           discount: discountRateInput.value || "",
         };
 
+        const scenariosForReport = Object.values(appState.scenarios || {}).map((s) => ({
+          name: s.name,
+          id: s.id,
+          mode: s.mode,
+          summary: s.outputs?.summary || {},
+          finance: s.outputs?.finance || {},
+        }));
+
+        const sensitivity = {
+          base: {
+            npv: lastAltSummary.totalPVBenefits - lastAltSummary.totalPVCosts,
+            bcr: lastAltSummary.totalPVCosts > 0 ? lastAltSummary.totalPVBenefits / lastAltSummary.totalPVCosts : NaN,
+          },
+          capex: {
+            npv: lastAltSummary.totalPVBenefits - (lastAltSummary.pvCapex * 1.1 + lastAltSummary.pvOpex),
+            bcr: lastAltSummary.pvCapex * 1.1 + lastAltSummary.pvOpex > 0
+              ? lastAltSummary.totalPVBenefits / (lastAltSummary.pvCapex * 1.1 + lastAltSummary.pvOpex)
+              : NaN,
+          },
+          opex: {
+            npv: lastAltSummary.totalPVBenefits - (lastAltSummary.pvCapex + lastAltSummary.pvOpex * 1.1),
+            bcr: lastAltSummary.pvCapex + lastAltSummary.pvOpex * 1.1 > 0
+              ? lastAltSummary.totalPVBenefits / (lastAltSummary.pvCapex + lastAltSummary.pvOpex * 1.1)
+              : NaN,
+          },
+          benefit: {
+            npv: lastAltSummary.totalPVBenefits * 1.1 - lastAltSummary.totalPVCosts,
+            bcr: lastAltSummary.totalPVCosts > 0
+              ? (lastAltSummary.totalPVBenefits * 1.1) / lastAltSummary.totalPVCosts
+              : NaN,
+          },
+        };
+
         const charts = {
           demandByCategory: chartToImage(categoryChart, "demand-by-category-chart"),
           demandShare: chartToImage(shareChart, "demand-share-chart"),
@@ -2422,6 +3491,10 @@
           financeSummary,
           capexOpexItems,
           assumptions,
+          mode: appState.mode,
+          scenarioScope: pdfScopeSelect.value,
+          scenariosForReport,
+          sensitivity,
           charts,
           disclaimerText,
           logoDataUrl: umsLogoDataUrl,
@@ -2483,6 +3556,29 @@
               )
               .join("")
           : `<tr><td colspan="11">Tiada sumber alternatif dimasukkan.</td></tr>`;
+
+        const scenarioRows =
+          data.scenarioScope === "all" && data.scenariosForReport.length
+            ? data.scenariosForReport
+                .map((s) => {
+                  const sum = s.summary || {};
+                  const fin = s.finance || {};
+                  return `
+                    <tr>
+                      <td>${s.name} (${s.mode || "-"})</td>
+                      <td>${formatNumber(sum.avgMLD)}</td>
+                      <td>${formatNumber(sum.peakMLD)}</td>
+                      <td>${formatNumber(sum.effectiveMLD)}</td>
+                      <td>${formatNumber(sum.surplusAvg)}</td>
+                      <td>${formatNumber(fin.npv)}</td>
+                      <td>${isFinite(fin.bcr) ? formatNumber(fin.bcr) : "–"}</td>
+                      <td>${isFinite(fin.irr) ? formatNumber(fin.irr) : "–"}</td>
+                      <td>${isFinite(fin.payback) ? formatNumber(fin.payback) : "–"}</td>
+                    </tr>
+                  `;
+                })
+                .join("")
+            : "";
 
         const capexOpexRows = data.capexOpexItems.length
           ? data.capexOpexItems
@@ -2563,6 +3659,9 @@
               Permintaan purata kampus dianggarkan <strong>${data.summary.text.avg} MLD</strong> dan permintaan puncak <strong>${data.summary.text.peak} MLD</strong>.
               Bekalan asas (JANS) sebanyak <strong>${data.summary.text.supply} MLD</strong> digabungkan dengan sumber alternatif <strong>${data.summary.text.alt} MLD</strong> menghasilkan bekalan efektif <strong>${data.summary.text.effective} MLD</strong>.
               Status semasa: <strong>${statusAvg}</strong> untuk purata dan <strong>${statusPeak}</strong> untuk puncak.
+            </p>
+            <p class="justified">
+              Mod analisis: <strong>${data.mode}</strong>. Skop laporan PDF: <strong>${data.scenarioScope === "all" ? "Semua senario" : "Senario aktif"}</strong>.
             </p>
             <div class="page-grid">
               <div class="page-card">
@@ -2716,6 +3815,27 @@
                 <tr><td>Lebihan / Defisit puncak</td><td>${data.summary.text.surplusPeak}</td><td>—</td></tr>
               </tbody>
             </table>
+            ${
+              scenarioRows
+                ? `<p class="justified">Perbandingan semua senario (dipilih untuk laporan):</p>
+            <table class="report-table zebra wide-table">
+              <thead>
+                <tr>
+                  <th>Senario</th>
+                  <th>Permintaan purata (MLD)</th>
+                  <th>Permintaan puncak (MLD)</th>
+                  <th>Bekalan efektif (MLD)</th>
+                  <th>Lebihan/Defisit purata</th>
+                  <th>NPV (RM)</th>
+                  <th>BCR</th>
+                  <th>IRR (%)</th>
+                  <th>Payback (tahun)</th>
+                </tr>
+              </thead>
+              <tbody>${scenarioRows}</tbody>
+            </table>`
+                : ""
+            }
             <p class="justified">Ringkasan kewangan projek:</p>
             <div class="inline-table">
               <div class="box"><div class="label">CAPEX</div><div>${data.financeSummary.capex}</div></div>
@@ -2884,6 +4004,22 @@
             <p class="justified">
               Ringkasan CAPEX/OPEX terperinci di bawah memudahkan semakan pantas oleh pihak kewangan dan teknikal. Item kosong boleh diisi kemudian tanpa menjejaskan format laporan.
             </p>
+            <p class="justified"><strong>Analisis sensitiviti (+/−10%):</strong></p>
+            <table class="report-table zebra">
+              <thead>
+                <tr>
+                  <th>Senario sensitiviti</th>
+                  <th>NPV (RM)</th>
+                  <th>BCR</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Asas</td><td>${formatNumber(data.sensitivity.base.npv)}</td><td>${isFinite(data.sensitivity.base.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"}</td></tr>
+                <tr><td>CAPEX +10%</td><td>${formatNumber(data.sensitivity.capex.npv)}</td><td>${isFinite(data.sensitivity.capex.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"}</td></tr>
+                <tr><td>OPEX +10%</td><td>${formatNumber(data.sensitivity.opex.npv)}</td><td>${isFinite(data.sensitivity.opex.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"}</td></tr>
+                <tr><td>Manfaat +10%</td><td>${formatNumber(data.sensitivity.benefit.npv)}</td><td>${isFinite(data.sensitivity.benefit.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"}</td></tr>
+              </tbody>
+            </table>
             <table class="report-table zebra">
               <thead>
                 <tr>
@@ -2981,21 +4117,7 @@
       // END REPORT UPDATE
 
       addItemBtn.addEventListener("click", () => {
-        const tr = document.createElement("tr");
-        tr.className = "capex-opex-row";
-        tr.innerHTML = `
-          <td>
-            <select class="item-type">
-              <option value="CAPEX">CAPEX</option>
-              <option value="OPEX">OPEX</option>
-            </select>
-          </td>
-          <td><input type="text" class="item-name" placeholder="Nama item" /></td>
-          <td><input type="number" class="item-qty" value="1" min="0" step="0.01" /></td>
-          <td><input type="number" class="item-cost" value="0" min="0" step="0.01" /></td>
-          <td class="item-total">0.00</td>
-          <td><input type="text" class="item-note" placeholder="Catatan (jika ada)" /></td>
-        `;
+        const tr = createCapexOpexRow();
         capexOpexBody.appendChild(tr);
         recalcCapexOpexItems();
       });
@@ -3012,32 +4134,13 @@
 
       // Add rows for demand categories
       addRowBtn.addEventListener("click", () => {
-        const tr = document.createElement("tr");
-        tr.className = "category-row";
-        tr.innerHTML = `
-          <td><input type="text" class="cat-name" placeholder="Nama kategori" /></td>
-          <td><input type="number" class="cat-pop" min="0" /></td>
-          <td><input type="number" class="cat-percap" min="0" /></td>
-          <td><input type="number" class="cat-peak" value="1.3" min="1" step="0.05" /></td>
-        `;
+        const tr = createCategoryRow();
         categoryBody.appendChild(tr);
       });
 
       // Add rows for alternative sources
       addAltRowBtn.addEventListener("click", () => {
-        const tr = document.createElement("tr");
-        tr.className = "alt-row";
-        tr.innerHTML = `
-          <td><input type="text" class="alt-name" placeholder="Nama sumber" /></td>
-          <td><input type="number" class="alt-capacity" min="0" /></td>
-          <td><input type="number" class="alt-util" min="0" max="100" /></td>
-          <td><input type="number" class="alt-capex" min="0" /></td>
-          <td><input type="text" class="alt-capex-note" placeholder="Butiran CAPEX (jika ada)" /></td>
-          <td><input type="number" class="alt-opex-fixed" min="0" /></td>
-          <td><input type="number" class="alt-opex-var" min="0" step="0.01" /></td>
-          <td><input type="text" class="alt-opex-note" placeholder="Butiran OPEX (jika ada)" /></td>
-          <td><input type="number" class="alt-life" min="1" /></td>
-        `;
+        const tr = createAltRow();
         altBody.appendChild(tr);
       });
 
@@ -3059,6 +4162,39 @@
           calculate();
 
           const wb = XLSX.utils.book_new();
+
+          // Sheet 0: Mod & Senario
+          const metaRows = [
+            ["Mod dipilih", appState.mode],
+            ["Senario aktif", activeScenario()?.name || ""],
+            ["Skop laporan PDF", pdfScopeSelect.value === "all" ? "Semua senario" : "Senario aktif"],
+            ["Bekalan asas (MLD)", supplyInput.value],
+            ["Tarif air (RM/m³)", tariffWaterInput.value],
+            ["Tarif pembetungan (RM/m³)", tariffSewerInput.value],
+            ["Tempoh analisis (tahun)", analysisYearsInput.value],
+            ["Kadar diskaun (%)", discountRateInput.value],
+          ];
+          const scenarioRows = [
+            ["Senario", "Mod", "Permintaan purata (MLD)", "Permintaan puncak (MLD)", "Bekalan efektif (MLD)", "Lebihan/Defisit purata", "NPV", "BCR", "IRR (%)", "Payback (tahun)"],
+          ];
+          Object.values(appState.scenarios).forEach((sc) => {
+            const sum = sc.outputs?.summary || {};
+            const fin = sc.outputs?.finance || {};
+            scenarioRows.push([
+              sc.name,
+              sc.mode,
+              formatNumber(sum.avgMLD),
+              formatNumber(sum.peakMLD),
+              formatNumber(sum.effectiveMLD),
+              formatNumber(sum.surplusAvg),
+              formatNumber(fin.npv),
+              isFinite(fin.bcr) ? formatNumber(fin.bcr) : "–",
+              isFinite(fin.irr) ? formatNumber(fin.irr) : "–",
+              isFinite(fin.payback) ? formatNumber(fin.payback) : "–",
+            ]);
+          });
+          const wsMeta = XLSX.utils.aoa_to_sheet(metaRows.concat([[]], scenarioRows));
+          XLSX.utils.book_append_sheet(wb, wsMeta, "Mod_Senario");
 
           // Sheet 1: Kategori demand
           const catRows = [["Kategori", "Populasi", "Per kapita (L/org/hari)", "Purata (m³/hari)", "Faktor puncak", "Permintaan puncak (m³/hari)"]];
@@ -3107,6 +4243,7 @@
             "Sumber",
             "Kapasiti (m³/hari)",
             "Utilisasi (% hari)",
+            "Kebolehpercayaan (%)",
             "Vol. tahunan (m³/tahun)",
             "CAPEX (RM)",
             "OPEX tahunan (RM/tahun)",
@@ -3125,6 +4262,7 @@
           const cbaTotalsRow = [
             "Jumlah / Agregat",
             document.getElementById("alt-total-capacity").textContent,
+            "",
             "",
             document.getElementById("alt-total-volume").textContent,
             document.getElementById("alt-total-capex").textContent,
@@ -3177,7 +4315,62 @@
         generateReportPDF();
       });
 
+      modeSelector.addEventListener("click", (e) => {
+        const pill = e.target.closest(".pill");
+        if (!pill) return;
+        setMode(pill.dataset.mode);
+        calculate();
+      });
+
+      autofillBtn.addEventListener("click", () => {
+        quickInputs.pop.value = 15000;
+        quickInputs.percap.value = 160;
+        quickInputs.demand.value = "";
+        quickInputs.peak.value = 1.3;
+        quickInputs.baseSupply.value = 5;
+        quickAltInputs.name.value = "Tangkapan air hujan mini";
+        quickAltInputs.capacity.value = 250;
+        quickAltInputs.util.value = 80;
+        quickAltInputs.capex.value = 900000;
+        quickAltInputs.opex.value = 50000;
+        supplyInput.value = 5;
+        tariffWaterInput.value = 1.2;
+        tariffSewerInput.value = 0.8;
+        analysisYearsInput.value = 20;
+        discountRateInput.value = 5;
+        calculate();
+      });
+
+      fixInputBtn.addEventListener("click", () => {
+        const invalid = document.querySelector(".invalid");
+        if (invalid) {
+          invalid.focus();
+        } else {
+          alert("Tiada input rosak dikesan. Anda boleh terus mengira.");
+        }
+      });
+
+      scenarioListEl.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-load-scenario");
+        if (btn) {
+          setActiveScenario(btn.dataset.id);
+        }
+      });
+
+      addScenarioBtn.addEventListener("click", addScenario);
+      duplicateScenarioBtn.addEventListener("click", duplicateScenario);
+      renameScenarioBtn.addEventListener("click", renameScenario);
+      deleteScenarioBtn.addEventListener("click", deleteScenario);
+      saveScenarioBtn.addEventListener("click", () => {
+        saveActiveScenario();
+        alert("Senario disimpan dalam pelayar.");
+      });
+
       // Kiraan awal dengan nilai contoh
+      loadState();
+      renderScenarioList();
+      setMode(appState.mode);
+      applyScenarioInputs(activeScenario().inputs);
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       calculate();
