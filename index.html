@@ -9,9 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (Export Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- jsPDF (PDF report) -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <!-- html2pdf (Laporan profesional) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -356,62 +353,6 @@
       margin: 25mm;
     }
 
-    .report-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(8, 23, 43, 0.55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      z-index: 1200;
-    }
-
-    .report-panel {
-      background: #ffffff;
-      width: min(1040px, 96vw);
-      max-height: 92vh;
-      overflow: hidden;
-      border-radius: 14px;
-      box-shadow: 0 12px 40px rgba(6, 33, 66, 0.25);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .report-panel header {
-      position: sticky;
-      top: 0;
-      background: #0d2544;
-      color: #fff;
-      padding: 0.9rem 1.1rem;
-      z-index: 2;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
-    }
-
-    .report-panel header h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .report-panel header p {
-      margin: 0.15rem 0 0;
-      font-size: 0.86rem;
-      opacity: 0.9;
-    }
-
-    .report-panel .actions {
-      margin-left: auto;
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .report-scroll {
-      padding: 0.9rem 1.1rem 1.4rem;
-      overflow: auto;
-      background: linear-gradient(135deg, #f3f6fb, #f7fbff);
-    }
-
     #reportRoot {
       width: 210mm;
       margin: 0 auto;
@@ -477,14 +418,36 @@
     #reportRoot .cover {
       min-height: 297mm;
       padding: 30mm;
-      background: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.15), transparent 40%),
-        radial-gradient(circle at 80% 0%, rgba(0, 188, 212, 0.18), transparent 38%),
-        linear-gradient(135deg, #f5f9ff, #f8fbff 50%, #eef4ff);
       position: relative;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 1.8rem;
+    }
+
+    #reportRoot .cover-water {
+      overflow: hidden;
+      background: linear-gradient(180deg, #e6f7ff 0%, #ffffff 55%, #e6f7ff 100%);
+    }
+
+    #reportRoot .cover-water::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'><path d='M0,520 C200,480 300,600 520,560 C760,510 900,610 1200,560 L1200,800 L0,800 Z' fill='%2300a3d9' fill-opacity='0.08'/><path d='M0,600 C240,560 320,680 560,640 C780,605 940,685 1200,640 L1200,800 L0,800 Z' fill='%2300a3d9' fill-opacity='0.06'/></svg>");
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: bottom;
+      pointer-events: none;
+    }
+
+    #reportRoot .cover-water::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.12), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(0, 188, 212, 0.14), transparent 38%);
+      pointer-events: none;
     }
 
     #reportRoot .cover .watermark {
@@ -496,6 +459,7 @@
       color: rgba(12, 45, 87, 0.06);
       letter-spacing: 0.12em;
       pointer-events: none;
+      z-index: 0;
     }
 
     #reportRoot .cover .logo-box {
@@ -507,6 +471,11 @@
       font-size: 0.9rem;
       color: #0d2e55;
       background: rgba(255, 255, 255, 0.65);
+    }
+
+    #reportRoot .cover > * {
+      position: relative;
+      z-index: 1;
     }
 
     #reportRoot .toc {
@@ -1114,14 +1083,8 @@
             <button id="export-excel-btn" type="button" class="export">
               📤 Export Excel (.xlsx)
             </button>
-            <button id="export-pdf-btn" type="button" class="secondary">
-              📄 Jana Laporan PDF
-            </button>
-            <button id="preview-report-btn" type="button" class="secondary">
-              👁️ Preview Laporan Profesional
-            </button>
-            <button id="download-pro-pdf-btn" type="button" class="primary">
-              🖨️ Muat Turun Laporan Profesional (PDF)
+            <button id="download-report-btn" type="button" class="primary">
+              📄 Jana Laporan
             </button>
           </div>
 
@@ -1281,24 +1244,7 @@
     </section>
   </main>
 
-  <div id="report-preview-modal" class="report-modal hidden" aria-hidden="true">
-    <div class="report-panel">
-      <header>
-        <div style="display:flex; gap:0.6rem; align-items:center;">
-          <div>
-            <h3>Preview Laporan Profesional (A4)</h3>
-            <p>Laporan selari dengan kalkulator semasa. Semua teks diratakan (justify) dan sesuai untuk muat turun PDF.</p>
-          </div>
-          <div class="actions">
-            <button id="close-report-preview" type="button" class="secondary">Tutup</button>
-          </div>
-        </div>
-      </header>
-      <div class="report-scroll">
-        <div id="reportRoot" class="report hidden"></div>
-      </div>
-    </div>
-  </div>
+  <div id="reportRoot" class="report hidden offscreen" aria-hidden="true"></div>
 
   <footer>
     © 2025 Assis, Fera, Sarimah & Sani @ RuWaS UMS. All rights reserved.
@@ -1309,11 +1255,7 @@
       const addRowBtn = document.getElementById("add-row-btn");
       const calcBtn = document.getElementById("calculate-btn");
       const exportBtn = document.getElementById("export-excel-btn");
-      const pdfBtn = document.getElementById("export-pdf-btn");
-      const previewReportBtn = document.getElementById("preview-report-btn");
-      const downloadProPdfBtn = document.getElementById("download-pro-pdf-btn");
-      const reportModal = document.getElementById("report-preview-modal");
-      const closeReportPreviewBtn = document.getElementById("close-report-preview");
+      const downloadReportBtn = document.getElementById("download-report-btn");
       const reportRoot = document.getElementById("reportRoot");
       const categoryBody = document.getElementById("category-body");
 
@@ -2316,7 +2258,7 @@
 
         return `
           <div class="report-document">
-            <section class="cover" id="cover">
+            <section class="cover cover-water" id="cover">
               <div class="watermark">UMS</div>
               <div class="logo-box">Letak logo UMS di sini</div>
               <div>
@@ -2870,280 +2812,11 @@
         }
       });
 
-      // Export PDF (EPU-style)
-      pdfBtn.addEventListener("click", () => {
-        try {
-          if (!window.jspdf || !window.jspdf.jsPDF) {
-            alert("Library PDF (jsPDF) tidak dimuatkan.");
-            return;
-          }
-          recalcCapexOpexItems();
-          calculate();
-
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF("p", "mm", "a4");
-          const today = new Date().toLocaleDateString("ms-MY");
-
-          function addParagraph(title, text, startY) {
-            let y = startY;
-            doc.setFontSize(11);
-            doc.setFont("helvetica", "bold");
-            doc.text(title, 14, y);
-            y += 5;
-            doc.setFontSize(9);
-            doc.setFont("helvetica", "normal");
-            const lines = doc.splitTextToSize(text, 180);
-            doc.text(lines, 14, y);
-            y += lines.length * 4 + 4;
-            return y;
-          }
-
-          // Muka surat 1: tajuk + naratif
-          doc.setFontSize(14);
-          doc.setFont("helvetica", "bold");
-          doc.text("Laporan Ringkasan Permintaan, Bekalan dan Sumber Air Alternatif UMS", 14, 16);
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-          doc.text("Tarikh jana: " + today, 14, 22);
-
-          let y = 30;
-
-          const latarText =
-            "Universiti Malaysia Sabah (UMS) bergantung kepada bekalan air terawat " +
-            "yang dibekalkan oleh pihak berkuasa air negeri bagi menyokong operasi " +
-            "kampus, termasuk keperluan asrama pelajar, fakulti dan pentadbiran, " +
-            "kemudahan ibadah serta sukan dan rekreasi. Pertumbuhan bilangan pelajar " +
-            "dan aktiviti kampus dari semasa ke semasa meningkatkan permintaan air, " +
-            "sekali gus menuntut perancangan bekalan yang lebih mampan dan berdaya tahan. " +
-            "Selain itu, tekanan terhadap sumber air konvensional serta keperluan " +
-            "pengurangan risiko gangguan bekalan memberi justifikasi kepada penilaian " +
-            "sumber air alternatif seperti tangkapan air hujan, reuse (greywater/RO), " +
-            "air tasik kampus dan kondensasi penghawa dingin.";
-
-          const objektifText =
-            "Objektif utama analisis ini adalah untuk: (i) menganggarkan permintaan air " +
-            "kampus UMS mengikut kategori pengguna; (ii) membandingkan permintaan purata " +
-            "dan puncak dengan kapasiti bekalan sedia ada; (iii) menilai potensi sumbangan " +
-            "sumber air alternatif terhadap bekalan efektif kampus; dan (iv) menjalankan " +
-            "analisis kos–faedah kewangan ringkas bagi sumber air alternatif, termasuk " +
-            "indikator seperti NPV, BCR, payback period dan anggaran IRR projek.";
-
-          const kaedahText =
-            "Kaedah penilaian merangkumi beberapa komponen utama. Pertama, permintaan air " +
-            "dianggarkan menggunakan pendekatan per kapita mengikut kategori pengguna " +
-            "(contoh: asrama, fakulti & pentadbiran, masjid & surau, sukan & rekreasi), " +
-            "dengan mengambil kira faktor permintaan puncak (peak factor) untuk mencerminkan " +
-            "hari dan masa penggunaan tertinggi. Kedua, kapasiti bekalan asas diambil " +
-            "berdasarkan anggaran bekalan harian daripada loji rawatan (JANS). Ketiga, " +
-            "sumber air alternatif dimodelkan melalui parameter kapasiti teknikal (m³/hari), " +
-            "faktor penggunaan tahunan, CAPEX, OPEX tetap dan OPEX berubah. Keempat, " +
-            "analisis kewangan projek dijalankan dengan mengandaikan penjimatan bil air " +
-            "dan pembetungan berkadar terus dengan volum air alternatif yang menggantikan " +
-            "air terawat. Aliran tunai bersih tahunan dikira sebagai penjimatan bil " +
-            "ditolak OPEX; NPV dan BCR dikira menggunakan tempoh analisis dan kadar diskaun " +
-            "yang ditetapkan. Selain itu, anggaran IRR projek diperoleh berdasarkan " +
-            "jumlah CAPEX dan aliran tunai bersih tahunan agregat.";
-
-          y = addParagraph("1. Latar Belakang", latarText, y);
-          y = addParagraph("2. Objektif Projek", objektifText, y);
-          y = addParagraph("3. Kaedah Penilaian", kaedahText, y);
-
-          // Muka surat 2: hasil + jadual
-          doc.addPage();
-          y = 20;
-
-          doc.setFontSize(11);
-          doc.setFont("helvetica", "bold");
-          doc.text("4. Hasil Analisis Utama", 14, y);
-          y += 6;
-
-          // 4.1 Ringkasan demand–supply
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "normal");
-          doc.text("4.1 Ringkasan Permintaan dan Bekalan Air (MLD)", 14, y);
-          y += 4;
-
-          doc.autoTable({
-            startY: y,
-            head: [["Item", "Nilai (MLD)"]],
-            body: [
-              ["Jumlah permintaan purata", document.getElementById("summary-avg-mld").textContent],
-              ["Jumlah permintaan puncak", document.getElementById("summary-peak-mld").textContent],
-              ["Bekalan sedia ada (JANS)", document.getElementById("supply-avg-mld").textContent],
-              ["Extra supply (sumber alternatif)", document.getElementById("alt-supply-mld").textContent],
-              ["Bekalan efektif (JANS + alternatif)", document.getElementById("effective-supply-mld").textContent],
-              ["Surplus / Defisit purata", document.getElementById("surplus-avg-mld").textContent],
-              ["Surplus / Defisit puncak", document.getElementById("surplus-peak-mld").textContent]
-            ],
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [13, 110, 253] }
-          });
-
-          y = doc.lastAutoTable.finalY + 8;
-
-          // 4.2 Ringkasan kewangan projek
-          doc.setFontSize(9);
-          doc.text("4.2 Ringkasan Analisis Kewangan Sumber Air Alternatif", 14, y);
-          y += 4;
-
-          doc.autoTable({
-            startY: y,
-            head: [["Indikator", "Nilai"]],
-            body: [
-              ["Jumlah CAPEX semua sumber (RM)", sumCapexEl.textContent],
-              ["Jumlah OPEX tahunan (RM/tahun)", sumOpexEl.textContent],
-              ["Penjimatan air + pembetungan (RM/tahun)", sumSavingEl.textContent],
-              ["Aliran tunai bersih tahunan (RM/tahun)", sumNetCFEl.textContent],
-              ["NPV projek (RM)", sumNPVEl.textContent],
-              ["BCR projek", sumBCREl.textContent],
-              ["Anggaran IRR projek", sumIRREl.textContent]
-            ],
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [0, 188, 212] }
-          });
-
-          y = doc.lastAutoTable.finalY + 8;
-
-          // 4.3 Perincian CAPEX & OPEX mengikut sumber
-          doc.setFontSize(9);
-          doc.text("4.3 Perincian CAPEX dan OPEX Mengikut Sumber Air Alternatif", 14, y);
-          y += 4;
-
-          if (lastAltSources && lastAltSources.length) {
-            const capexOpexBody = lastAltSources.map(s => ([
-              s.name || "-",
-              s.capexNote || "-",
-              s.opexNote || "-"
-            ]));
-
-            doc.autoTable({
-              startY: y,
-              head: [["Sumber", "Butiran CAPEX (ringkas)", "Butiran OPEX (ringkas)"]],
-              body: capexOpexBody,
-              styles: { fontSize: 8 },
-              headStyles: { fillColor: [63, 81, 181] }
-            });
-            y = doc.lastAutoTable.finalY + 8;
-          } else {
-            doc.setFontSize(8);
-            doc.text(
-              "Tiada perincian CAPEX dan OPEX dimasukkan pada peringkat ini.",
-              14,
-              y
-            );
-            y += 6;
-          }
-
-          // 4.4 Ringkasan pengiraan terperinci CAPEX/OPEX item
-          doc.setFontSize(9);
-          doc.text("4.4 Ringkasan Pengiraan Terperinci CAPEX dan OPEX Mengikut Item", 14, y);
-          y += 4;
-
-          doc.autoTable({
-            startY: y,
-            head: [["Jenis", "Jumlah (RM)"]],
-            body: [
-              ["CAPEX (daripada jadual item)", capexItemsTotalEl.textContent],
-              ["OPEX (daripada jadual item)", opexItemsTotalEl.textContent]
-            ],
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [76, 175, 80] }
-          });
-
-          // Muka surat 3: cadangan & penafian
-          doc.addPage();
-          y = 20;
-
-          const hasilText =
-            "Secara keseluruhan, analisis menunjukkan bahawa jumlah permintaan purata " +
-            "kampus adalah pada orde yang ditunjukkan dalam Jadual 4.1, manakala " +
-            "permintaan puncak lebih tinggi mengikut faktor puncak yang digunakan. " +
-            "Apabila hanya bekalan sedia ada (JANS) diambil kira, wujud risiko surplus " +
-            "atau defisit bergantung kepada kombinasi permintaan purata dan puncak. " +
-            "Dengan memasukkan sumber air alternatif, bekalan efektif kampus meningkat " +
-            "dan jurang antara permintaan dan bekalan dapat dikurangkan, sekali gus " +
-            "mengurangkan kebergantungan tunggal kepada air terawat sedia ada.\n\n" +
-            "Daripada perspektif kewangan, jumlah CAPEX projek adalah pada magnitud " +
-            sumCapexEl.textContent +
-            ", manakala OPEX tahunan dianggarkan sekitar " +
-            sumOpexEl.textContent +
-            ". Penjimatan bil air dan pembetungan tahunan sekitar " +
-            sumSavingEl.textContent +
-            " menghasilkan aliran tunai bersih tahunan sebanyak " +
-            sumNetCFEl.textContent +
-            ". NPV projek sebanyak " +
-            sumNPVEl.textContent +
-            " dan BCR sekitar " +
-            sumBCREl.textContent +
-            " menunjukkan bahawa projek ini berpotensi " +
-            "memberi pulangan kewangan yang munasabah, dengan anggaran IRR " +
-            sumIRREl.textContent +
-            " bergantung kepada andaian tarif dan tempoh analisis.";
-
-          const cadanganText =
-            "Berdasarkan dapatan ini, beberapa cadangan boleh dipertimbangkan:\n" +
-            "(i) Memfasa pelaksanaan sumber air alternatif mengikut keutamaan kos dan impak, " +
-            "contohnya memulakan dengan tangkapan air hujan dan kondensasi penghawa dingin " +
-            "yang lazimnya memerlukan CAPEX yang lebih sederhana.\n" +
-            "(ii) Menjalankan analisis teknikal terperinci di peringkat bangunan/zon bagi " +
-            "memastikan infrastruktur paip, tangki dan sistem kawalan bersesuaian dengan " +
-            "pola permintaan sebenar.\n" +
-            "(iii) Mengemas kini parameter kewangan (tarif, OPEX, jangka hayat) berdasarkan " +
-            "data terkini daripada agensi berkaitan dan pembekal teknologi.\n" +
-            "(iv) Menggabungkan dimensi alam sekitar seperti pengurangan pelepasan karbon " +
-            "dan penjimatan sumber air konvensional dalam penilaian projek, khususnya " +
-            "apabila laporan dikemukakan untuk kelulusan peringkat lebih tinggi.\n" +
-            "(v) Menyepadukan sistem pemantauan penggunaan air (metering dan data logger) " +
-            "bagi membolehkan pengesahan dan kalibrasi model permintaan–bekalan dari semasa ke semasa.";
-
-          const penafianText =
-            "Laporan ini dijana secara automatik menggunakan kalkulator permintaan–bekalan " +
-            "air UMS berasaskan input dan andaian pengguna. Nilai dan indikator kewangan " +
-            "yang dipaparkan adalah anggaran untuk tujuan perancangan awal dan tidak " +
-            "boleh dianggap sebagai angka muktamad. Sebarang keputusan pelaburan, reka bentuk " +
-            "kejuruteraan atau komitmen kewangan hendaklah disokong dengan kajian teknikal " +
-            "terperinci, data meter sebenar serta pengesahan oleh pihak berkuasa dan " +
-            "pihak berkepentingan rasmi.";
-
-          y = addParagraph("5. Hasil Analisis Utama (Rumusan Naratif)", hasilText, y);
-          y = addParagraph("6. Cadangan dan Langkah Seterusnya", cadanganText, y);
-          y = addParagraph("7. Penafian", penafianText, y);
-
-          doc.save("Laporan_UMS_Water_Demand_Supply.pdf");
-        } catch (e) {
-          console.error(e);
-          alert("Ralat semasa jana PDF. Sila cuba lagi.");
-        }
-      });
-
-      previewReportBtn.addEventListener("click", () => {
-        const data = collectReportData();
-        reportRoot.innerHTML = renderReportHTML(data);
-        reportRoot.classList.remove("hidden");
-        reportRoot.classList.remove("offscreen");
-        reportModal.classList.remove("hidden");
-        reportModal.setAttribute("aria-hidden", "false");
-        reportModal.scrollTop = 0;
-      });
-
-      closeReportPreviewBtn.addEventListener("click", () => {
-        reportModal.classList.add("hidden");
-        reportModal.setAttribute("aria-hidden", "true");
-        reportRoot.classList.add("hidden");
-      });
-
-      downloadProPdfBtn.addEventListener("click", () => {
-        const modalWasHidden = reportModal.classList.contains("hidden");
+      function downloadProfessionalPDF() {
         const cleanup = () => {
+          reportRoot.classList.add("hidden");
           reportRoot.classList.remove("offscreen");
-          if (modalWasHidden) {
-            reportRoot.classList.add("hidden");
-          }
-          if (modalWasHidden) {
-            reportModal.classList.add("hidden");
-            reportModal.style.visibility = "";
-            reportModal.style.pointerEvents = "";
-          }
+          reportRoot.setAttribute("aria-hidden", "true");
         };
 
         try {
@@ -3156,11 +2829,7 @@
           reportRoot.innerHTML = renderReportHTML(data);
           reportRoot.classList.remove("hidden");
           reportRoot.classList.add("offscreen");
-          if (modalWasHidden) {
-            reportModal.classList.remove("hidden");
-            reportModal.style.visibility = "hidden";
-            reportModal.style.pointerEvents = "none";
-          }
+          reportRoot.setAttribute("aria-hidden", "false");
 
           const opt = {
             margin: [0, 0, 0, 0],
@@ -3212,6 +2881,10 @@
           alert("Ralat semasa jana laporan profesional.");
           cleanup();
         }
+      }
+
+      downloadReportBtn.addEventListener("click", () => {
+        downloadProfessionalPDF();
       });
 
       // Kiraan awal dengan nilai contoh
