@@ -1488,6 +1488,25 @@
         return umsLogoDataUrl;
       }
 
+      function waitForNextFrame() {
+        return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      }
+
+      function waitForImages(container) {
+        const imgs = Array.from(container.querySelectorAll("img"));
+        const pending = imgs.filter((img) => !img.complete || img.naturalWidth === 0);
+        if (!pending.length) return Promise.resolve();
+        return Promise.allSettled(
+          pending.map(
+            (img) =>
+              new Promise((resolve) => {
+                img.addEventListener("load", resolve, { once: true });
+                img.addEventListener("error", resolve, { once: true });
+              })
+          )
+        );
+      }
+
       function calculate() {
         // 1. Demand by category
         const rows = Array.from(document.querySelectorAll(".category-row"));
@@ -2886,6 +2905,11 @@
           reportRoot.classList.remove("offscreen");
           reportRoot.classList.add("rendering");
           reportRoot.setAttribute("aria-hidden", "false");
+
+          // Pastikan browser sempat melukis kandungan laporan sebelum ditangkap oleh html2pdf
+          await waitForNextFrame();
+          await waitForImages(reportRoot);
+          await waitForNextFrame();
 
           const opt = {
             margin: [0, 0, 0, 0],
