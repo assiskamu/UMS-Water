@@ -9,8 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (Export Excel) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- html2pdf (Laporan profesional) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- jsPDF (Penjanaan PDF profesional) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -347,14 +347,14 @@
 
     .hidden { display: none !important; }
 
-    /* Jadikan kontena laporan kelihatan (tetapi tidak mengganggu) semasa pdf digenerate */
+    /* Kontena laporan HTML legacy (tidak lagi digunakan untuk penjanaan jsPDF) */
     #reportRoot.rendering {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       margin: 0 auto;
-      /* Biarkan elemen benar-benar kelihatan supaya html2pdf boleh menangkap kandungan dengan jelas */
+      /* Kekalkan keterlihatan jika diperlukan semasa debug paparan HTML */
       opacity: 1;
       pointer-events: none;
       overflow: visible;
@@ -1348,7 +1348,7 @@
       const cbaPaybackCtx = document
         .getElementById("cba-payback-chart")
         .getContext("2d");
-      const umsLogoPath = "UMS logo.png";
+      const umsLogoPath = "ums-logo.png";
       let umsLogoDataUrl = "";
 
       let categoryChart = null;
@@ -2896,124 +2896,396 @@
         }
       });
 
-      async function downloadProfessionalPDF() {
-        const cleanup = () => {
-          reportRoot.classList.add("hidden");
-          reportRoot.classList.remove("rendering");
-          reportRoot.classList.add("offscreen");
-          reportRoot.setAttribute("aria-hidden", "true");
+      async function generateProfessionalReport() {
+        const { jsPDF } = window.jspdf || {};
+        if (!jsPDF) {
+          alert("Library jsPDF tidak dimuatkan.");
+          return;
+        }
+
+        await loadUmsLogoDataUrl();
+        const data = collectReportData();
+
+        const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margins = { top: 24, right: 18, bottom: 16, left: 18 };
+        const contentWidth = pageWidth - margins.left - margins.right;
+        const lineHeight = 6.2;
+        let y = margins.top;
+        const tocEntries = [];
+
+        const ensureSpace = (height = lineHeight) => {
+          if (y + height > pageHeight - margins.bottom) {
+            doc.addPage();
+            y = margins.top;
+          }
         };
 
-        try {
-          if (typeof html2pdf === "undefined") {
-            alert("Library html2pdf tidak dimuatkan.");
-            return;
-          }
+        const splitLines = (text) => {
+          const normalized = (text || "").replace(/\s+/g, " ").trim();
+          if (!normalized) return [];
+          const words = normalized.split(" ");
+          const lines = [];
+          let current = [];
+          let width = 0;
+          const spaceWidth = doc.getTextWidth(" ");
+          words.forEach((word) => {
+            const w = doc.getTextWidth(word);
+            if (!current.length) {
+              current.push(word);
+              width = w;
+              return;
+            }
+            if (width + spaceWidth + w <= contentWidth) {
+              current.push(word);
+              width += spaceWidth + w;
+            } else {
+              lines.push({ words: current, width });
+              current = [word];
+              width = w;
+            }
+          });
+          if (current.length) lines.push({ words: current, width });
+          return lines;
+        };
 
-          await loadUmsLogoDataUrl();
+        const addParagraph = (text) => {
+          doc.setFontSize(11);
+          doc.setTextColor(33, 33, 33);
+          const lines = splitLines(text);
+          lines.forEach((line, idx) => {
+            ensureSpace(lineHeight);
+            if (line.words.length === 1 || idx === lines.length - 1) {
+              doc.text(line.words.join(" "), margins.left, y, { maxWidth: contentWidth });
+            } else {
+              const gaps = line.words.length - 1;
+              const extra = contentWidth - line.width;
+              const extraPerGap = extra / gaps;
+              let cursorX = margins.left;
+              line.words.forEach((word, wIdx) => {
+                doc.text(word, cursorX, y);
+                if (wIdx < gaps) {
+                  const step = doc.getTextWidth(word) + doc.getTextWidth(" ") + extraPerGap;
+                  cursorX += step;
+                }
+              });
+            }
+            y += lineHeight;
+          });
+          y += 1.8;
+        };
 
-          const data = collectReportData();
-          reportRoot.innerHTML = renderReportHTML(data);
-          reportRoot.classList.remove("hidden");
-          reportRoot.classList.remove("offscreen");
-          reportRoot.classList.add("rendering");
-          reportRoot.setAttribute("aria-hidden", "false");
-
-          // Pastikan browser sempat melukis kandungan laporan sebelum ditangkap oleh html2pdf
-          await waitForNextFrame();
-          await waitForImages(reportRoot);
-          await waitForNextFrame();
-          await wait(80);
-          await waitForFonts();
-
-          if (!reportRoot.querySelector(".report-page")) {
-            alert("Laporan tidak dapat dijana (tiada kandungan). Sila cuba lagi.");
-            return;
-          }
-
-          const contentWidth = Math.max(
-            reportRoot.scrollWidth,
-            reportRoot.clientWidth,
-            900
-          );
-          const contentHeight = Math.max(
-            reportRoot.scrollHeight,
-            reportRoot.clientHeight
-          );
-
-          if (!contentHeight || contentHeight < 50) {
-            alert("Laporan tidak dapat dijana kerana kandungan kosong atau gagal dipaparkan.");
-            return;
-          }
-
-          const viewportWidth = Math.max(
-            reportRoot.scrollWidth,
-            reportRoot.clientWidth,
-            document.documentElement.clientWidth
-          );
-          const viewportHeight = Math.max(
-            reportRoot.scrollHeight,
-            reportRoot.clientHeight,
-            document.documentElement.clientHeight
-          );
-
-          const opt = {
-            margin: [0, 0, 0, 0],
-            filename: `Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              backgroundColor: "#ffffff",
-              width: contentWidth,
-              height: contentHeight,
-              windowWidth: Math.max(viewportWidth, contentWidth),
-              windowHeight: Math.max(viewportHeight, contentHeight) + 40,
-            },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-            pagebreak: { mode: ["css", "legacy"] },
-          };
-
-          await html2pdf()
-            .set(opt)
-            .from(reportRoot)
-            .toPdf()
-            .get("pdf")
-            .then((pdf) => {
-              const total = pdf.internal.getNumberOfPages();
-              const pageWidth = pdf.internal.pageSize.getWidth();
-              const pageHeight = pdf.internal.pageSize.getHeight();
-              for (let i = 2; i <= total; i += 1) {
-                pdf.setPage(i);
-                pdf.setFont("times", "normal");
-                pdf.setFontSize(9);
-                pdf.text("Laporan UMS Water", 15, 12);
-                pdf.text(data.generatedDate, pageWidth - 15, 12, { align: "right" });
-                pdf.text(
-                  "Sulit/Untuk Kegunaan Dalaman (Jika perlu)",
-                  pageWidth / 2,
-                  pageHeight - 10,
-                  { align: "center" }
-                );
-                pdf.text(
-                  `Muka surat ${i} daripada ${total}`,
-                  pageWidth - 15,
-                  pageHeight - 10,
-                  { align: "right" }
-                );
-              }
-              pdf.save(`Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`);
+        const addBullets = (items) => {
+          doc.setFontSize(11);
+          doc.setTextColor(30, 52, 73);
+          items.forEach((item) => {
+            const lines = splitLines(item);
+            lines.forEach((line, idx) => {
+              ensureSpace(lineHeight);
+              const prefix = idx === 0 ? "• " : "  ";
+              doc.text(prefix + line.words.join(" "), margins.left, y, { maxWidth: contentWidth });
+              y += lineHeight;
             });
-        } catch (err) {
-          console.error(err);
-          alert("Ralat semasa jana laporan profesional.");
-        } finally {
-          cleanup();
+          });
+          y += 1.5;
+        };
+
+        const addKeyValueList = (title, rows) => {
+          ensureSpace(10);
+          doc.setFontSize(12);
+          doc.setTextColor(15, 76, 117);
+          doc.text(title, margins.left, y);
+          y += 5.5;
+          doc.setFontSize(10.5);
+          rows.forEach((row, idx) => {
+            ensureSpace(7);
+            const fill = idx % 2 === 0 ? [236, 245, 253] : [246, 250, 254];
+            doc.setFillColor(...fill);
+            doc.rect(margins.left, y - 4.8, contentWidth, 7, "F");
+            doc.setTextColor(40, 40, 40);
+            doc.text(row[0], margins.left + 2, y);
+            doc.text(row[1], pageWidth - margins.right, y, { align: "right" });
+            y += 7;
+          });
+          y += 2;
+        };
+
+        const addChart = (img, caption) => {
+          if (!img) return;
+          const props = doc.getImageProperties(img);
+          const imgWidth = Math.min(contentWidth, 165);
+          const imgHeight = (props.height * imgWidth) / props.width;
+          ensureSpace(imgHeight + 10);
+          doc.addImage(img, props.fileType || "PNG", margins.left, y, imgWidth, imgHeight);
+          y += imgHeight + 4;
+          doc.setFontSize(9.5);
+          doc.setTextColor(70, 80, 95);
+          doc.text(caption, margins.left, y, { maxWidth: contentWidth });
+          y += 4;
+        };
+
+        const startSection = (tag, title) => {
+          ensureSpace(16);
+          doc.setFontSize(11);
+          doc.setTextColor(22, 87, 132);
+          doc.text(tag, margins.left, y);
+          y += 5;
+          doc.setFontSize(14);
+          doc.setTextColor(0, 0, 0);
+          doc.text(title, margins.left, y);
+          tocEntries.push({
+            title: `${tag} ${title}`,
+            page: doc.getCurrentPageInfo().pageNumber,
+          });
+          y += 6;
+        };
+
+        const addSpacer = (amount = 3) => {
+          y += amount;
+        };
+
+        const drawCover = () => {
+          doc.setFillColor(226, 241, 252);
+          doc.rect(0, 0, pageWidth, pageHeight, "F");
+          doc.setFillColor(7, 116, 179);
+          doc.rect(0, pageHeight * 0.65, pageWidth, pageHeight * 0.4, "F");
+          doc.setFillColor(1, 155, 213);
+          doc.ellipse(pageWidth * 0.3, pageHeight * 0.72, pageWidth * 0.35, 18, "F");
+          doc.setFillColor(0, 126, 167);
+          doc.ellipse(pageWidth * 0.72, pageHeight * 0.80, pageWidth * 0.4, 18, "F");
+          if (data.logoDataUrl) {
+            const logoProps = doc.getImageProperties(data.logoDataUrl);
+            const logoWidth = 32;
+            const logoHeight = (logoProps.height * logoWidth) / logoProps.width;
+            doc.addImage(data.logoDataUrl, logoProps.fileType || "PNG", margins.left, 26, logoWidth, logoHeight);
+          }
+          doc.setFontSize(11);
+          doc.setTextColor(30, 74, 110);
+          doc.text("Laporan Profesional – Kalkulator UMS Water", margins.left, 20);
+          doc.setFontSize(22);
+          doc.setTextColor(255, 255, 255);
+          doc.text(
+            "LAPORAN PERMINTAAN, BEKALAN DAN SUMBER AIR ALTERNATIF UNIVERSITI MALAYSIA SABAH",
+            pageWidth / 2,
+            pageHeight * 0.42,
+            { align: "center", maxWidth: contentWidth }
+          );
+          doc.setFontSize(13);
+          doc.text("Tarikh jana: " + data.generatedDate, pageWidth / 2, pageHeight * 0.50, {
+            align: "center",
+          });
+          doc.setFontSize(11);
+          doc.text(
+            "Disediakan oleh: Prof. Madya Dr. Assis Kamu (Ketua); Dr. Fera @ Nony Cleophas; Dr. Sarimah Surianshah; Prof. Madya Ts. Dr. Mohd Sani Sarjadi",
+            pageWidth / 2,
+            pageHeight * 0.57,
+            { align: "center", maxWidth: contentWidth }
+          );
+          doc.setFontSize(10);
+          doc.text(
+            "Tema air dengan margin kemas dan perenggan justify – Halaman akan bernombor secara automatik.",
+            pageWidth / 2,
+            pageHeight * 0.63,
+            { align: "center", maxWidth: contentWidth }
+          );
+        };
+
+        drawCover();
+
+        doc.addPage();
+        const tocPage = doc.getCurrentPageInfo().pageNumber;
+        y = margins.top;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Isi Kandungan", margins.left, y);
+        y += 7;
+        doc.setFontSize(10);
+        doc.setTextColor(76, 94, 114);
+        doc.text(
+          "Isi kandungan ini akan diisi selepas seksyen siap dijana untuk memastikan nombor halaman tepat.",
+          margins.left,
+          y,
+          { maxWidth: contentWidth }
+        );
+
+        doc.addPage();
+        y = margins.top;
+
+        startSection("A. Ringkasan Eksekutif", "Ringkasan Utama");
+        addParagraph(
+          `Permintaan purata kampus dianggarkan ${data.summary.text.avg} MLD dan permintaan puncak ${data.summary.text.peak} MLD. Bekalan asas (JANS) ${data.summary.text.supply} MLD digabungkan dengan sumber alternatif ${data.summary.text.alt} MLD, menghasilkan bekalan efektif ${data.summary.text.effective} MLD.`
+        );
+        addParagraph(
+          `Status purata: ${data.summary.status.avg || "–"}. Status puncak: ${data.summary.status.peak || "–"}. Surplus/defisit purata ${data.summary.text.surplusAvg} MLD, manakala semasa puncak ${data.summary.text.surplusPeak} MLD.`
+        );
+        addKeyValueList("Sorotan kewangan & teknikal", [
+          ["Jumlah CAPEX sumber alternatif", data.financeSummary.capex],
+          ["OPEX tahunan", data.financeSummary.opex],
+          ["Penjimatan tahunan (air + pembetungan)", data.financeSummary.saving],
+          ["NPV projek / BCR / IRR", `${data.financeSummary.npv} / ${data.financeSummary.bcr} / ${data.financeSummary.irr}`],
+        ]);
+        addParagraph(
+          "Bahagian seterusnya merangkumi latar belakang, objektif, kaedah, input pengguna, hasil analisis, jurang permintaan–bekalan, cadangan pelaksanaan serta lampiran ringkas yang menyenaraikan parameter utama."
+        );
+
+        startSection("B. Latar Belakang", "Keperluan dan konteks kampus");
+        addParagraph(
+          "Operasi akademik, asrama, kemudahan ibadah dan sukan UMS memerlukan bekalan air terawat yang stabil. Pertumbuhan populasi serta peluasan fasiliti menambah tekanan kepada bekalan asas dan menuntut integrasi sumber alternatif yang mampan."
+        );
+        addParagraph(
+          "Kalkulator ini membolehkan pengguna menyesuaikan input populasi, kadar per kapita, faktor puncak, bekalan asas, tarif dan parameter kewangan untuk melihat kesan segera terhadap jurang permintaan–bekalan dan pulangan kewangan projek air alternatif."
+        );
+
+        startSection("C. Objektif", "Hala tuju analisis");
+        addBullets([
+          "Menganggarkan permintaan purata dan puncak mengikut kategori pengguna kampus.",
+          "Membandingkan permintaan dengan bekalan asas JANS serta bekalan alternatif yang dimodelkan.",
+          "Menilai kesan sumber alternatif terhadap penjimatan bil air dan pembetungan.",
+          "Menjana indikator kewangan utama (CAPEX, OPEX, penjimatan, NPV, BCR, IRR, payback).",
+          "Menyusun cadangan fasa pelaksanaan berdasarkan impak dan kecekapan kos.",
+        ]);
+
+        startSection("D. Kaedah & Andaian", "Pendekatan pengiraan");
+        addParagraph(
+          "Permintaan dikira menggunakan populasi × kadar per kapita, ditukar kepada m³/hari dan diselaraskan dengan faktor puncak. Bekalan asas diambil daripada input JANS, manakala bekalan alternatif menggunakan kapasiti teknikal, utiliti harian, OPEX tetap/berubah dan jangka hayat aset. Penjimatan tahunan dikira berdasarkan tarif air + pembetungan, kemudian dianalisis dengan kadar diskaun dan tempoh analisis yang ditetapkan."
+        );
+        addBullets([
+          "Pengiraan payback menggunakan CAPEX / aliran tunai bersih tahunan (jika positif).",
+          "NPV dan BCR menggunakan diskaun berasaskan tempoh analisis atau jangka hayat sumber.",
+          "Graf dan jadual dibina daripada input semasa tanpa memerlukan beban muat semula halaman.",
+        ]);
+
+        startSection("E. Input Data & Parameter", "Ringkasan andaian pengguna");
+        addKeyValueList("Parameter utama", [
+          ["Bekalan asas (JANS)", `${data.assumptions.supply || "–"} MLD`],
+          ["Tarif air (RM/m³)", data.assumptions.tariffWater || "–"],
+          ["Tarif pembetungan (RM/m³)", data.assumptions.tariffSewer || "–"],
+          ["Tempoh analisis (tahun)", data.assumptions.years || "–"],
+          ["Kadar diskaun (%)", data.assumptions.discount || "–"],
+          ["Bil. kategori dimodelkan", `${data.demandByCategory.length}`],
+          ["Bil. sumber alternatif", `${data.altSources.length}`],
+        ]);
+        if (data.categoryInputs.length) {
+          addParagraph("Input kategori utama:");
+          data.categoryInputs.slice(0, 6).forEach((row, idx) => {
+            addParagraph(
+              `${idx + 1}. ${row.name || "Kategori"} – Populasi ${row.pop || "–"}, per kapita ${row.percap || "–"} L/org/hari, faktor puncak ${row.peak || "–"}.`
+            );
+          });
         }
+
+        startSection("F. Hasil Analisis", "Permintaan, bekalan & kewangan");
+        addKeyValueList("Permintaan vs bekalan", [
+          ["Permintaan purata", `${data.summary.text.avg} MLD`],
+          ["Permintaan puncak", `${data.summary.text.peak} MLD`],
+          ["Bekalan asas (JANS)", `${data.summary.text.supply} MLD`],
+          ["Bekalan alternatif", `${data.summary.text.alt} MLD`],
+          ["Bekalan efektif", `${data.summary.text.effective} MLD`],
+          ["Surplus/defisit purata", `${data.summary.text.surplusAvg} MLD`],
+          ["Surplus/defisit puncak", `${data.summary.text.surplusPeak} MLD`],
+        ]);
+        addKeyValueList("Ringkasan kewangan alternatif", [
+          ["CAPEX agregat", data.altTotals.capex],
+          ["OPEX tahunan agregat", data.altTotals.opex],
+          ["Penjimatan tahunan agregat", data.altTotals.saving],
+          ["Aliran tunai bersih tahunan", data.altTotals.netcf],
+          ["NPV projek", data.altTotals.npv],
+          ["BCR projek", data.altTotals.bcr],
+        ]);
+        addParagraph(
+          "Jadual ringkas sumber alternatif (maksimum 6 entri dipaparkan untuk kesesuaian halaman):"
+        );
+        data.altSources.slice(0, 6).forEach((row, idx) => {
+          addParagraph(
+            `${idx + 1}. ${row.name} – Kapasiti ${row.capacity} m³/hari, utiliti ${row.util}% hari, volum ${row.volume} m³/tahun, CAPEX ${row.capex}, OPEX ${row.opex}, penjimatan ${row.saving}, NPV ${row.npv}, BCR ${row.bcr}.`
+          );
+        });
+        addChart(data.charts.supplyDemand, "Rajah: Permintaan purata & puncak berbanding bekalan efektif.");
+        addChart(data.charts.altComposition, "Rajah: Komposisi bekalan berkesan sumber alternatif.");
+        addChart(data.charts.demandByCategory, "Rajah: Permintaan mengikut kategori pengguna.");
+        addChart(data.charts.cbaNPV, "Rajah: NPV mengikut sumber alternatif.");
+
+        startSection("G. Jurang Permintaan–Bekalan & Implikasi", "Analisis dan tindakan segera");
+        addParagraph(
+          "Jurang bekalan ditentukan oleh perbezaan antara permintaan puncak dengan bekalan efektif. Sekiranya defisit kekal, risiko gangguan operasi meningkat dan kebergantungan kepada JANS perlu dikurangkan melalui intervensi pengurusan permintaan serta sumber alternatif yang paling pantas dilaksanakan."
+        );
+        addBullets([
+          "Prioritikan sumber dengan payback terpendek dan CAPEX sederhana untuk menutup defisit puncak.",
+          "Laksanakan audit kebocoran, retrofit peralatan dan kempen kesedaran bagi menurunkan permintaan per kapita.",
+          "Pantau penggunaan sebenar selepas intervensi untuk mengemas kini anggaran penjimatan dan aliran tunai.",
+        ]);
+
+        startSection("H. Cadangan Pelaksanaan", "Fasa & keutamaan");
+        addBullets([
+          "Fasa 1 (0–6 bulan): tangkapan air hujan berskala kecil, pengumpulan kondensasi AC, audit kebocoran dalaman serta pemasangan meter sub-zon.",
+          "Fasa 2 (6–18 bulan): sistem reuse untuk tandas/pembersihan, sambungan ke tangki penimbal utama, semakan tarif dan OPEX mengikut kontrak sebenar.",
+          "Fasa 3 (18–36 bulan): penskalaan sumber tasik/kolam rawatan awal, integrasi SCADA/IoT untuk pemantauan dan pengoptimuman campuran sumber.",
+        ]);
+        addParagraph(
+          "Keutamaan fasa boleh dilaras mengikut bajet tahunan, sasaran penjimatan dan risiko operasi. Pelaksanaan perlu disertai pemantauan prestasi bagi mengesahkan NPV, BCR dan IRR sebenar."
+        );
+
+        startSection("I. Lampiran", "Butiran tambahan & penafian");
+        addParagraph("Ringkasan item CAPEX/OPEX yang dimasukkan pengguna (dipendekkan hingga 8 baris):");
+        data.capexOpexItems.slice(0, 8).forEach((item, idx) => {
+          addParagraph(
+            `${idx + 1}. [${item.type}] ${item.name || "Item"} – Kuantiti ${item.qty || "–"}, kos seunit ${item.cost || "–"}, jumlah ${item.total || "–"}${item.note ? `, nota: ${item.note}` : ""}.`
+          );
+        });
+        addParagraph(
+          `Penafian: ${data.disclaimerText} Sebarang keputusan kejuruteraan atau pelaburan hendaklah dirujuk kepada data meter rasmi dan pengesahan pihak berkuasa berkaitan.`
+        );
+
+        doc.setPage(tocPage);
+        let tocY = margins.top;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Isi Kandungan", margins.left, tocY);
+        tocY += 7;
+        doc.setFontSize(10);
+        doc.setTextColor(76, 94, 114);
+        doc.text(
+          "Penomboran halaman dijana automatik berdasarkan halaman sebenar PDF.",
+          margins.left,
+          tocY
+        );
+        tocY += 6;
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        tocEntries.forEach((entry) => {
+          if (tocY + 6 > pageHeight - margins.bottom) return;
+          doc.text(entry.title, margins.left, tocY);
+          doc.text(String(entry.page), pageWidth - margins.right, tocY, { align: "right" });
+          tocY += 6;
+        });
+
+        const finalTotalPages = doc.getNumberOfPages();
+        for (let i = 1; i <= finalTotalPages; i += 1) {
+          if (i === 1) continue; // Skip cover for header/footer
+          doc.setPage(i);
+          doc.setFontSize(9);
+          doc.setTextColor(70, 80, 95);
+          doc.text("Laporan Permintaan & Bekalan Air UMS", margins.left, 12);
+          doc.text(data.generatedDate, pageWidth - margins.right, 12, { align: "right" });
+          doc.text(
+            "Sulit/Untuk Kegunaan Dalaman (Jika perlu)",
+            margins.left,
+            pageHeight - 8
+          );
+          doc.text(
+            `Halaman ${i} daripada ${finalTotalPages}`,
+            pageWidth - margins.right,
+            pageHeight - 8,
+            { align: "right" }
+          );
+        }
+
+        doc.save(`Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`);
       }
 
       downloadReportBtn.addEventListener("click", () => {
-        downloadProfessionalPDF();
+        generateProfessionalReport();
       });
 
       // Kiraan awal dengan nilai contoh
