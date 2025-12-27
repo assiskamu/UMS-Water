@@ -12,6 +12,8 @@
   <!-- jsPDF (PDF report) -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <!-- html2pdf (Laporan profesional) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -344,6 +346,329 @@
     .mini {
       font-size: 0.78rem;
       color: #607d8b;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Laporan Profesional (PDF) */
+    @page {
+      size: A4;
+      margin: 25mm;
+    }
+
+    .report-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 23, 43, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 1200;
+    }
+
+    .report-panel {
+      background: #ffffff;
+      width: min(1040px, 96vw);
+      max-height: 92vh;
+      overflow: hidden;
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(6, 33, 66, 0.25);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .report-panel header {
+      position: sticky;
+      top: 0;
+      background: #0d2544;
+      color: #fff;
+      padding: 0.9rem 1.1rem;
+      z-index: 2;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .report-panel header h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .report-panel header p {
+      margin: 0.15rem 0 0;
+      font-size: 0.86rem;
+      opacity: 0.9;
+    }
+
+    .report-panel .actions {
+      margin-left: auto;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .report-scroll {
+      padding: 0.9rem 1.1rem 1.4rem;
+      overflow: auto;
+      background: linear-gradient(135deg, #f3f6fb, #f7fbff);
+    }
+
+    #reportRoot {
+      width: 210mm;
+      margin: 0 auto;
+      background: #ffffff;
+      color: #1b2744;
+      font-family: "Georgia", "Times New Roman", serif;
+      box-shadow: 0 8px 24px rgba(13, 46, 79, 0.12);
+    }
+
+    #reportRoot.offscreen {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      pointer-events: none;
+    }
+
+    #reportRoot .report-page {
+      padding: 25mm;
+    }
+
+    #reportRoot h1,
+    #reportRoot h2,
+    #reportRoot h3,
+    #reportRoot h4 {
+      font-family: "Georgia", "Times New Roman", serif;
+      color: #0c2d57;
+      margin-top: 0;
+    }
+
+    #reportRoot p,
+    #reportRoot li {
+      font-size: 11.5pt;
+      line-height: 1.45;
+      text-align: justify;
+      text-justify: inter-word;
+    }
+
+    #reportRoot .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.4rem 0 0.9rem;
+      font-size: 10pt;
+    }
+
+    #reportRoot .report-table th,
+    #reportRoot .report-table td {
+      border: 1px solid #0f3057;
+      padding: 6px 8px;
+      text-align: left;
+      background: #fff;
+    }
+
+    #reportRoot .report-table thead th {
+      background: linear-gradient(135deg, rgba(13, 110, 253, 0.18), rgba(0, 188, 212, 0.2));
+    }
+
+    #reportRoot .zebra tbody tr:nth-child(even) td {
+      background: #f5f8ff;
+    }
+
+    #reportRoot .page-break { page-break-before: always; }
+
+    #reportRoot .cover {
+      min-height: 297mm;
+      padding: 30mm;
+      background: radial-gradient(circle at 20% 20%, rgba(13, 110, 253, 0.15), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(0, 188, 212, 0.18), transparent 38%),
+        linear-gradient(135deg, #f5f9ff, #f8fbff 50%, #eef4ff);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.8rem;
+    }
+
+    #reportRoot .cover .watermark {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 120px;
+      color: rgba(12, 45, 87, 0.06);
+      letter-spacing: 0.12em;
+      pointer-events: none;
+    }
+
+    #reportRoot .cover .logo-box {
+      width: 120px;
+      height: 140px;
+      border: 2px dashed #0d2e55;
+      display: grid;
+      place-items: center;
+      font-size: 0.9rem;
+      color: #0d2e55;
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    #reportRoot .toc {
+      padding: 25mm;
+      background: #ffffff;
+    }
+
+    #reportRoot .toc ol {
+      counter-reset: item;
+      padding-left: 1rem;
+    }
+
+    #reportRoot .toc li {
+      margin: 0.25rem 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 11pt;
+    }
+
+    #reportRoot .toc li::before {
+      counter-increment: item;
+      content: counters(item, ".") " ";
+      font-weight: bold;
+      margin-right: 0.35rem;
+      color: #0c2d57;
+    }
+
+    #reportRoot .toc .page-num {
+      color: #0c2d57;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #reportRoot .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.16rem 0.55rem;
+      background: rgba(13, 110, 253, 0.12);
+      color: #0d2e55;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+    }
+
+    #reportRoot .figure {
+      text-align: center;
+      margin: 0.3rem 0 0.9rem;
+    }
+
+    #reportRoot .figure img {
+      max-width: 100%;
+      border: 1px solid #cdd9eb;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    #reportRoot .figure .caption {
+      font-size: 9.5pt;
+      margin-top: 0.35rem;
+      color: #425c7a;
+    }
+
+    #reportRoot .kicker {
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      color: #0d2e55;
+      text-transform: uppercase;
+    }
+
+    #reportRoot .meta {
+      color: #244a75;
+      font-size: 0.95rem;
+    }
+
+    #reportRoot .highlight-box {
+      border: 1px solid rgba(13, 110, 253, 0.3);
+      background: rgba(13, 110, 253, 0.04);
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      margin: 0.7rem 0 1rem;
+    }
+
+    #reportRoot .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.7rem;
+    }
+
+    #reportRoot .risk-card {
+      border: 1px solid #c8d7ec;
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      background: #fbfdff;
+    }
+
+    #reportRoot .tagline {
+      color: #244a75;
+      font-style: italic;
+      margin-top: 0.4rem;
+    }
+
+    #reportRoot .footer-note {
+      text-align: center;
+      font-size: 9.5pt;
+      margin-top: 0.9rem;
+      color: #3e5674;
+    }
+
+    #reportRoot .page-note {
+      font-size: 9.5pt;
+      color: #4c6079;
+    }
+
+    #reportRoot .watermark-underline {
+      height: 5px;
+      background: linear-gradient(90deg, rgba(13, 110, 253, 0.3), rgba(0, 188, 212, 0.4));
+      border-radius: 12px;
+      margin: 0.4rem 0 0.8rem;
+    }
+
+    #reportRoot .list-tight li { margin: 0.12rem 0; }
+
+    #reportRoot .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.8rem;
+    }
+
+    #reportRoot .phase-card {
+      border: 1px solid #d1e2f5;
+      border-radius: 10px;
+      padding: 0.8rem 0.95rem;
+      background: linear-gradient(135deg, #f8fbff, #fdfefe);
+    }
+
+    #reportRoot .phase-card h4 {
+      margin: 0 0 0.25rem;
+      font-size: 1rem;
+    }
+
+    #reportRoot .phase-card ul { padding-left: 1rem; margin: 0; }
+
+    #reportRoot .inline-table {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.7rem;
+    }
+
+    #reportRoot .inline-table .box {
+      border: 1px solid #cfdff0;
+      border-radius: 10px;
+      padding: 0.7rem 0.85rem;
+      background: #fbfdff;
+    }
+
+    #reportRoot .inline-table .label {
+      font-size: 0.82rem;
+      color: #36526f;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.2rem;
     }
 
     @media (max-width: 768px) {
@@ -792,6 +1117,12 @@
             <button id="export-pdf-btn" type="button" class="secondary">
               📄 Jana Laporan PDF
             </button>
+            <button id="preview-report-btn" type="button" class="secondary">
+              👁️ Preview Laporan Profesional
+            </button>
+            <button id="download-pro-pdf-btn" type="button" class="primary">
+              🖨️ Muat Turun Laporan Profesional (PDF)
+            </button>
           </div>
 
           <div class="summary-text" id="summary-text">
@@ -950,6 +1281,25 @@
     </section>
   </main>
 
+  <div id="report-preview-modal" class="report-modal hidden" aria-hidden="true">
+    <div class="report-panel">
+      <header>
+        <div style="display:flex; gap:0.6rem; align-items:center;">
+          <div>
+            <h3>Preview Laporan Profesional (A4)</h3>
+            <p>Laporan selari dengan kalkulator semasa. Semua teks diratakan (justify) dan sesuai untuk muat turun PDF.</p>
+          </div>
+          <div class="actions">
+            <button id="close-report-preview" type="button" class="secondary">Tutup</button>
+          </div>
+        </div>
+      </header>
+      <div class="report-scroll">
+        <div id="reportRoot" class="report hidden"></div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     © 2025 Assis, Fera, Sarimah & Sani @ RuWaS UMS. All rights reserved.
   </footer>
@@ -960,6 +1310,11 @@
       const calcBtn = document.getElementById("calculate-btn");
       const exportBtn = document.getElementById("export-excel-btn");
       const pdfBtn = document.getElementById("export-pdf-btn");
+      const previewReportBtn = document.getElementById("preview-report-btn");
+      const downloadProPdfBtn = document.getElementById("download-pro-pdf-btn");
+      const reportModal = document.getElementById("report-preview-modal");
+      const closeReportPreviewBtn = document.getElementById("close-report-preview");
+      const reportRoot = document.getElementById("reportRoot");
       const categoryBody = document.getElementById("category-body");
 
       const addAltRowBtn = document.getElementById("add-alt-row-btn");
@@ -1040,6 +1395,93 @@
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
         return num.toLocaleString("ms-MY", { maximumFractionDigits: 2 });
+      }
+
+      function parseNumberFromText(value) {
+        const cleaned = String(value ?? "")
+          .replace(/\s/g, "")
+          .replace(/[^\d.-]/g, "");
+        const num = parseFloat(cleaned);
+        return isFinite(num) ? num : 0;
+      }
+
+      function getCanvasDataURL(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return "";
+        try {
+          return canvas.toDataURL("image/png", 1);
+        } catch (err) {
+          console.warn("Gagal eksport canvas", canvasId, err);
+          return "";
+        }
+      }
+
+      function buildBarChartImage({ title, labels, datasets }) {
+        if (typeof Chart === "undefined" || !labels.length || !datasets.length) {
+          return "";
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = 1100;
+        canvas.height = 620;
+        const ctx = canvas.getContext("2d");
+        const chart = new Chart(ctx, {
+          type: "bar",
+          data: { labels, datasets },
+          options: {
+            responsive: false,
+            plugins: {
+              legend: { position: "top" },
+              title: { display: true, text: title },
+            },
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: "Nilai" } },
+            },
+          },
+        });
+        const url = canvas.toDataURL("image/png", 1);
+        chart.destroy();
+        return url;
+      }
+
+      function buildSupplyDemandChartImage(summary) {
+        const labels = ["Purata (MLD)", "Puncak (MLD)"];
+        const demand = [summary.avgMLD, summary.peakMLD];
+        const supply = [summary.effectiveMLD, summary.effectiveMLD];
+        return buildBarChartImage({
+          title: "Permintaan vs Bekalan Efektif",
+          labels,
+          datasets: [
+            {
+              label: "Permintaan",
+              data: demand,
+              backgroundColor: "rgba(255, 87, 34, 0.85)",
+            },
+            {
+              label: "Bekalan Efektif",
+              data: supply,
+              backgroundColor: "rgba(13, 110, 253, 0.82)",
+            },
+          ],
+        });
+      }
+
+      function buildAltCompositionChartImage(altSources) {
+        if (!altSources || !altSources.length) return "";
+        const labels = altSources.map((s) => s.name || "Sumber");
+        const data = altSources.map((s) =>
+          (parseFloat(s.capacity) || 0) * ((parseFloat(s.utilPercent) || 0) / 100)
+        );
+        return buildBarChartImage({
+          title: "Komposisi Sumber Air Alternatif (m³/hari berkesan)",
+          labels,
+          datasets: [
+            {
+              label: "Bekalan berkesan",
+              data,
+              backgroundColor: "rgba(0, 188, 212, 0.8)",
+            },
+          ],
+        });
       }
 
       function createStatusPill(status, isPeak) {
@@ -1607,6 +2049,634 @@
         opexItemsTotalEl.textContent = formatNumber(opexTotal);
       }
 
+      function collectReportData() {
+        recalcCapexOpexItems();
+        calculate();
+
+        const now = new Date();
+        const generatedDate = now.toLocaleDateString("ms-MY");
+        const fileDate = now.toISOString().slice(0, 10);
+
+        const summary = {
+          avgMLD: parseNumberFromText(summaryAvgMLDEl.textContent),
+          peakMLD: parseNumberFromText(summaryPeakMLDEl.textContent),
+          supplyMLD: parseNumberFromText(supplyAvgMLDEl.textContent),
+          altSupplyMLD: parseNumberFromText(altSupplyMLDEl.textContent),
+          effectiveMLD: parseNumberFromText(effectiveSupplyMLDEl.textContent),
+          surplusAvg: parseNumberFromText(surplusAvgMLDEl.textContent),
+          surplusPeak: parseNumberFromText(surplusPeakMLDEl.textContent),
+          text: {
+            avg: summaryAvgMLDEl.textContent || "–",
+            peak: summaryPeakMLDEl.textContent || "–",
+            supply: supplyAvgMLDEl.textContent || "–",
+            alt: altSupplyMLDEl.textContent || "–",
+            effective: effectiveSupplyMLDEl.textContent || "–",
+            surplusAvg: surplusAvgMLDEl.textContent || "–",
+            surplusPeak: surplusPeakMLDEl.textContent || "–",
+          },
+          status: {
+            avg: statusAvgEl.textContent || "–",
+            peak: statusPeakEl.textContent || "–",
+          },
+        };
+
+        const categoryInputs = Array.from(
+          document.querySelectorAll(".category-row")
+        )
+          .map((row) => ({
+            name: row.querySelector(".cat-name")?.value || "",
+            pop: row.querySelector(".cat-pop")?.value || "",
+            percap: row.querySelector(".cat-percap")?.value || "",
+            peak: row.querySelector(".cat-peak")?.value || "",
+          }))
+          .filter(
+            (r) =>
+              r.name.trim() ||
+              parseNumberFromText(r.pop) > 0 ||
+              parseNumberFromText(r.percap) > 0
+          );
+
+        const demandByCategory = Array.from(
+          document.querySelectorAll("#results-body tr")
+        ).map((tr) => {
+          const cells = tr.querySelectorAll("td");
+          return {
+            name: cells[0]?.textContent.trim() || "-",
+            pop: cells[1]?.textContent.trim() || "–",
+            percap: cells[2]?.textContent.trim() || "–",
+            avg: cells[3]?.textContent.trim() || "–",
+            peakFactor: cells[4]?.textContent.trim() || "–",
+            peak: cells[5]?.textContent.trim() || "–",
+          };
+        });
+
+        const altRows = Array.from(
+          document.querySelectorAll("#alt-results-body tr")
+        );
+        const altSources = altRows.map((tr, idx) => {
+          const cells = tr.querySelectorAll("td");
+          return {
+            name: cells[0]?.textContent.trim() || "-",
+            capacity: cells[1]?.textContent.trim() || "–",
+            util: cells[2]?.textContent.trim() || "–",
+            volume: cells[3]?.textContent.trim() || "–",
+            capex: cells[4]?.textContent.trim() || "–",
+            opex: cells[5]?.textContent.trim() || "–",
+            saving: cells[6]?.textContent.trim() || "–",
+            netcf: cells[7]?.textContent.trim() || "–",
+            payback: cells[8]?.textContent.trim() || "–",
+            npv: cells[9]?.textContent.trim() || "–",
+            bcr: cells[10]?.textContent.trim() || "–",
+            capexNote: lastAltSources[idx]?.capexNote || "",
+            opexNote: lastAltSources[idx]?.opexNote || "",
+          };
+        });
+
+        const altTotals = {
+          capacity: altTotalCapacityEl.textContent || "–",
+          volume: altTotalVolumeEl.textContent || "–",
+          capex: altTotalCapexEl.textContent || "–",
+          opex: altTotalOpexEl.textContent || "–",
+          saving: altTotalSavingEl.textContent || "–",
+          netcf: altTotalNetCFEl.textContent || "–",
+          npv: altTotalNPVEl.textContent || "–",
+          bcr: altTotalBCREl.textContent || "–",
+        };
+
+        const financeSummary = {
+          capex: sumCapexEl.textContent || "–",
+          saving: sumSavingEl.textContent || "–",
+          opex: sumOpexEl.textContent || "–",
+          netcf: sumNetCFEl.textContent || "–",
+          npv: sumNPVEl.textContent || "–",
+          bcr: sumBCREl.textContent || "–",
+          irr: sumIRREl.textContent || "–",
+        };
+
+        const capexOpexItems = Array.from(
+          document.querySelectorAll("#capex-opex-body tr")
+        )
+          .map((tr) => ({
+            type: tr.querySelector(".item-type")?.value || "",
+            name: tr.querySelector(".item-name")?.value || "",
+            qty: tr.querySelector(".item-qty")?.value || "",
+            cost: tr.querySelector(".item-cost")?.value || "",
+            total: tr.querySelector(".item-total")?.textContent || "",
+            note: tr.querySelector(".item-note")?.value || "",
+          }))
+          .filter(
+            (r) =>
+              r.name.trim() ||
+              parseNumberFromText(r.qty) > 0 ||
+              parseNumberFromText(r.cost) > 0
+          );
+
+        const assumptions = {
+          supply: supplyInput.value || "",
+          tariffWater: tariffWaterInput.value || "",
+          tariffSewer: tariffSewerInput.value || "",
+          years: analysisYearsInput.value || "",
+          discount: discountRateInput.value || "",
+        };
+
+        const charts = {
+          demandByCategory: getCanvasDataURL("demand-by-category-chart"),
+          demandShare: getCanvasDataURL("demand-share-chart"),
+          cbaNPV: getCanvasDataURL("cba-npv-chart"),
+          cbaPayback: getCanvasDataURL("cba-payback-chart"),
+        };
+        const supplyDemandImg = buildSupplyDemandChartImage(summary);
+        const altMixImg = buildAltCompositionChartImage(lastAltSources);
+        if (supplyDemandImg) charts.supplyDemand = supplyDemandImg;
+        if (altMixImg) charts.altComposition = altMixImg;
+
+        const disclaimerText =
+          "Laporan ini dijana secara automatik berdasarkan input semasa kalkulator. " +
+          "Nilai kewangan dan teknikal adalah anggaran untuk tujuan perancangan awal " +
+          "dan tertakluk kepada perubahan selepas audit data meter serta semakan " +
+          "kejuruteraan terperinci.";
+
+        return {
+          generatedDate,
+          fileDate,
+          summary,
+          categoryInputs,
+          demandByCategory,
+          altSources,
+          altTotals,
+          financeSummary,
+          capexOpexItems,
+          assumptions,
+          charts,
+          disclaimerText,
+        };
+      }
+
+      function renderReportHTML(data) {
+        const tocEntries = [
+          { anchor: "ringkasan", title: "A. Ringkasan Eksekutif", page: "3" },
+          { anchor: "latar-objektif", title: "B. Latar Belakang & C. Objektif", page: "4" },
+          { anchor: "kaedah", title: "D. Kaedah Penilaian", page: "5" },
+          { anchor: "input", title: "E. Input & Andaian", page: "6" },
+          { anchor: "hasil", title: "F. Hasil Analisis", page: "7-8" },
+          { anchor: "perbincangan", title: "G. Perbincangan & Implikasi", page: "9" },
+          { anchor: "cadangan", title: "H. Cadangan & Pelan Pelaksanaan", page: "9" },
+          { anchor: "risiko", title: "I. Risiko, Had & Keperluan Data", page: "10" },
+          { anchor: "penafian", title: "J. Penafian", page: "10-11" },
+          { anchor: "lampiran", title: "K. Lampiran", page: "11" },
+        ];
+
+        const tocHtml = tocEntries
+          .map(
+            (item) =>
+              `<li><a href="#${item.anchor}">${item.title}</a><span class="page-num">${item.page}</span></li>`
+          )
+          .join("");
+
+        const demandRows = data.demandByCategory.length
+          ? data.demandByCategory
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${row.name}</td>
+                    <td>${row.pop}</td>
+                    <td>${row.percap}</td>
+                    <td>${row.avg}</td>
+                    <td>${row.peakFactor}</td>
+                    <td>${row.peak}</td>
+                  </tr>
+                `
+              )
+              .join("")
+          : `<tr><td colspan="6">Tiada data permintaan ditetapkan.</td></tr>`;
+
+        const inputCategoryRows = data.categoryInputs.length
+          ? data.categoryInputs
+              .map(
+                (row, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>${row.name || "-"}</td>
+                    <td>${row.pop || "-"}</td>
+                    <td>${row.percap || "-"}</td>
+                    <td>${row.peak || "-"}</td>
+                  </tr>
+                `
+              )
+              .join("")
+          : `<tr><td colspan="5">Tiada input kategori tambahan dimasukkan.</td></tr>`;
+
+        const altRowsHtml = data.altSources.length
+          ? data.altSources
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${row.name}</td>
+                    <td>${row.capacity}</td>
+                    <td>${row.util}</td>
+                    <td>${row.volume}</td>
+                    <td>${row.capex}</td>
+                    <td>${row.opex}</td>
+                    <td>${row.saving}</td>
+                    <td>${row.netcf}</td>
+                    <td>${row.payback}</td>
+                    <td>${row.npv}</td>
+                    <td>${row.bcr}</td>
+                  </tr>
+                `
+              )
+              .join("")
+          : `<tr><td colspan="11">Tiada sumber alternatif dimasukkan.</td></tr>`;
+
+        const capexOpexRows = data.capexOpexItems.length
+          ? data.capexOpexItems
+              .map(
+                (item) => `
+                  <tr>
+                    <td>${item.type}</td>
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.cost}</td>
+                    <td>${item.total}</td>
+                    <td>${item.note || "-"}</td>
+                  </tr>
+                `
+              )
+              .join("")
+          : `<tr><td colspan="6">Belum ada pecahan CAPEX/OPEX item dimasukkan.</td></tr>`;
+
+        const chartsHtml = `
+          ${data.charts.supplyDemand ? `<div class="figure"><img src="${data.charts.supplyDemand}" alt="Graf permintaan vs bekalan" /><div class="caption">Rajah F1: Permintaan purata dan puncak berbanding bekalan efektif.</div></div>` : ""}
+          ${data.charts.altComposition ? `<div class="figure"><img src="${data.charts.altComposition}" alt="Graf komposisi sumber alternatif" /><div class="caption">Rajah F2: Komposisi bekalan berkesan sumber air alternatif.</div></div>` : ""}
+          ${data.charts.demandByCategory ? `<div class="figure"><img src="${data.charts.demandByCategory}" alt="Graf permintaan mengikut kategori" /><div class="caption">Rajah F3: Permintaan purata dan puncak mengikut kategori pengguna.</div></div>` : ""}
+          ${data.charts.demandShare ? `<div class="figure"><img src="${data.charts.demandShare}" alt="Graf agihan permintaan" /><div class="caption">Rajah F4: Agihan permintaan (%) mengikut kategori.</div></div>` : ""}
+          ${data.charts.cbaNPV ? `<div class="figure"><img src="${data.charts.cbaNPV}" alt="Graf NPV" /><div class="caption">Rajah F5: NPV projek mengikut sumber alternatif.</div></div>` : ""}
+          ${data.charts.cbaPayback ? `<div class="figure"><img src="${data.charts.cbaPayback}" alt="Graf payback" /><div class="caption">Rajah F6: Payback period mengikut sumber alternatif.</div></div>` : ""}
+        `;
+
+        return `
+          <div class="report-document">
+            <section class="cover" id="cover">
+              <div class="watermark">UMS</div>
+              <div class="logo-box">Letak logo UMS di sini</div>
+              <div>
+                <div class="kicker">Laporan Profesional (PDF)</div>
+                <h1>LAPORAN PERMINTAAN, BEKALAN DAN SUMBER AIR ALTERNATIF UNIVERSITI MALAYSIA SABAH (UMS)</h1>
+                <div class="watermark-underline"></div>
+                <h3>Dijana melalui Kalkulator Permintaan–Bekalan Air UMS (Versi Web)</h3>
+                <p class="meta">Tarikh jana: ${data.generatedDate}</p>
+                <p class="meta">Disediakan oleh: Prof. Madya Dr. Assis Kamu (Ketua); Dr. Fera @ Nony Cleophas; Dr. Sarimah Surianshah; Prof. Madya Ts. Dr. Mohd Sani Sarjadi</p>
+                <p class="tagline">Semua perenggan diratakan (justify) dengan margin A4 25mm.</p>
+              </div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="toc report-page" id="toc">
+              <div class="section-tag">Isi Kandungan</div>
+              <h2>Isi Kandungan (Table of Contents)</h2>
+              <p class="page-note">Nombor muka surat adalah anggaran automatik berdasarkan susun atur digital.</p>
+              <ol>
+                ${tocHtml}
+              </ol>
+              <div class="footer-note">Laporan UMS Water · Tarikh jana: ${data.generatedDate}</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="ringkasan">
+              <div class="section-tag">A. Ringkasan Eksekutif</div>
+              <h2>Ringkasan Eksekutif</h2>
+              <p>
+                Analisis kalkulator menunjukkan permintaan purata kampus UMS adalah sekitar <strong>${data.summary.text.avg} MLD</strong> manakala permintaan puncak dianggarkan <strong>${data.summary.text.peak} MLD</strong>.
+                Bekalan sedia ada (JANS) direkodkan <strong>${data.summary.text.supply} MLD</strong> dan sumber alternatif menambah <strong>${data.summary.text.alt} MLD</strong>, menghasilkan bekalan efektif <strong>${data.summary.text.effective} MLD</strong>.
+                Status purata ialah <strong>${data.summary.status.avg}</strong> dan status puncak ialah <strong>${data.summary.status.peak}</strong>.
+              </p>
+              <div class="highlight-box">
+                <ul class="list-tight">
+                  <li>Surplus / defisit purata: ${data.summary.text.surplusAvg} MLD.</li>
+                  <li>Surplus / defisit puncak: ${data.summary.text.surplusPeak} MLD.</li>
+                  <li>Jumlah CAPEX alternatif (indikatif): ${data.financeSummary.capex}; OPEX tahunan: ${data.financeSummary.opex}; penjimatan tahunan: ${data.financeSummary.saving}; NPV projek: ${data.financeSummary.npv}; BCR: ${data.financeSummary.bcr}; IRR anggaran: ${data.financeSummary.irr}.</li>
+                </ul>
+              </div>
+              <p>
+                Laporan ini mengekalkan fokus kepada kebolehpercayaan bekalan, kesan kewangan dan keutamaan fasa pelaksanaan.
+                Kandungan seterusnya menghuraikan latar belakang, metodologi, input pengguna, hasil analisis, implikasi pengurusan, cadangan pelaksanaan serta risiko dan had kajian.
+              </p>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="latar-objektif">
+              <div class="section-tag">B. Latar Belakang</div>
+              <h2>Latar Belakang</h2>
+              <p>
+                Universiti Malaysia Sabah bergantung kepada bekalan air terawat bagi menyokong operasi akademik, asrama, kemudahan ibadah dan sukan.
+                Pertumbuhan populasi pelajar dan aktiviti kampus menuntut perancangan kapasiti bekalan yang lebih rapi, termasuk penerokaan sumber alternatif seperti tangkapan air hujan, reuse air terawat, air tasik dan kondensasi penghawa dingin.
+              </p>
+              <p>
+                Laporan ini memanfaatkan kalkulator permintaan–bekalan air UMS untuk menukar input pengguna kepada indikator permintaan purata, permintaan puncak, keupayaan sumber alternatif dan prestasi kewangan asas projek.
+                Semua angka adalah untuk tujuan perancangan dan perlu disemak dengan data meter sebenar.
+              </p>
+
+              <div class="section-tag" style="margin-top:1.1rem;">C. Objektif Projek</div>
+              <h3>Objektif Projek</h3>
+              <ul>
+                <li>Menganggarkan permintaan air kampus mengikut kategori pengguna dan faktor puncak.</li>
+                <li>Membandingkan permintaan purata dan puncak dengan bekalan sedia ada dan bekalan alternatif.</li>
+                <li>Menilai sumbangan sumber air alternatif terhadap keselamatan bekalan dan penjimatan bil.</li>
+                <li>Menjana indikator kewangan (CAPEX, OPEX, penjimatan, NPV, BCR, IRR, payback) secara automatik.</li>
+                <li>Menyusun cadangan pelaksanaan fasa 1–3 serta keutamaan tindakan “quick wins”.</li>
+              </ul>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="kaedah">
+              <div class="section-tag">D. Kaedah Penilaian</div>
+              <h2>Kaedah Penilaian</h2>
+              <p>
+                Penilaian ini menggabungkan pengiraan permintaan per kapita, faktor puncak, bekalan asas (JANS) dan model sumber air alternatif, berserta analisis kewangan projek.
+              </p>
+              <ul class="list-tight">
+                <li><strong>Permintaan per kapita:</strong> setiap kategori dikira menggunakan populasi × kadar per kapita (L/org/hari) dan ditukar kepada m³/hari.</li>
+                <li><strong>Faktor puncak:</strong> permintaan purata didarab faktor puncak untuk menangkap variasi harian puncak.</li>
+                <li><strong>Bekalan asas (JANS):</strong> input pengguna untuk bekalan terawat semasa (MLD) dijadikan asas rujukan.</li>
+                <li><strong>Model sumber alternatif:</strong> kapasiti teknikal (m³/hari), faktor penggunaan (% hari), CAPEX, OPEX tetap/berubah dan jangka hayat dimodelkan untuk mendapatkan bekalan berkesan dan penjimatan.</li>
+                <li><strong>Andaian kewangan:</strong> tarif air + pembetungan, tempoh analisis dan kadar diskaun digunakan bagi mengira penjimatan tahunan, aliran tunai bersih, NPV, BCR, IRR dan payback.</li>
+              </ul>
+              <div class="highlight-box">
+                <p class="page-note">
+                  Semua perenggan diratakan (justify) dengan jarak perenggan konsisten untuk paparan cetakan A4 margin 25mm.
+                </p>
+              </div>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="input">
+              <div class="section-tag">E. Input & Andaian</div>
+              <h2>Input &amp; Andaian Pengiraan</h2>
+              <p>Jadual berikut merangkumkan input utama yang dimasukkan pengguna.</p>
+              <div class="inline-table">
+                <div class="box">
+                  <div class="label">Bekalan asas (JANS)</div>
+                  <div><strong>${data.assumptions.supply || "–"} MLD</strong></div>
+                </div>
+                <div class="box">
+                  <div class="label">Tarif air (RM/m³)</div>
+                  <div>${data.assumptions.tariffWater || "–"}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Tarif pembetungan (RM/m³)</div>
+                  <div>${data.assumptions.tariffSewer || "–"}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Tempoh analisis (tahun)</div>
+                  <div>${data.assumptions.years || "–"}</div>
+                </div>
+                <div class="box">
+                  <div class="label">Kadar diskaun (%)</div>
+                  <div>${data.assumptions.discount || "–"}</div>
+                </div>
+              </div>
+
+              <h3>Input Permintaan Mengikut Kategori</h3>
+              <table class="report-table zebra">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Kategori</th>
+                    <th>Populasi</th>
+                    <th>Per kapita (L/org/hari)</th>
+                    <th>Faktor puncak</th>
+                  </tr>
+                </thead>
+                <tbody>${inputCategoryRows}</tbody>
+              </table>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="hasil">
+              <div class="section-tag">F. Hasil Analisis</div>
+              <h2>Hasil Analisis Utama</h2>
+              <h3>Ringkasan Permintaan & Bekalan (MLD)</h3>
+              <table class="report-table zebra">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Nilai</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Permintaan purata</td><td>${data.summary.text.avg}</td><td>${data.summary.status.avg}</td></tr>
+                  <tr><td>Permintaan puncak</td><td>${data.summary.text.peak}</td><td>${data.summary.status.peak}</td></tr>
+                  <tr><td>Bekalan sedia ada (JANS)</td><td>${data.summary.text.supply}</td><td>—</td></tr>
+                  <tr><td>Bekalan sumber alternatif</td><td>${data.summary.text.alt}</td><td>—</td></tr>
+                  <tr><td>Bekalan efektif (JANS + alternatif)</td><td>${data.summary.text.effective}</td><td>—</td></tr>
+                  <tr><td>Surplus / Defisit purata</td><td>${data.summary.text.surplusAvg}</td><td>—</td></tr>
+                  <tr><td>Surplus / Defisit puncak</td><td>${data.summary.text.surplusPeak}</td><td>—</td></tr>
+                </tbody>
+              </table>
+
+              <h3>Permintaan Mengikut Kategori</h3>
+              <table class="report-table zebra">
+                <thead>
+                  <tr>
+                    <th>Kategori</th>
+                    <th>Populasi</th>
+                    <th>Per kapita (L/org/hari)</th>
+                    <th>Purata (m³/hari)</th>
+                    <th>Faktor puncak</th>
+                    <th>Permintaan puncak (m³/hari)</th>
+                  </tr>
+                </thead>
+                <tbody>${demandRows}</tbody>
+              </table>
+
+              <h3>Sumber Air Alternatif</h3>
+              <table class="report-table zebra">
+                <thead>
+                  <tr>
+                    <th>Sumber</th>
+                    <th>Kapasiti (m³/hari)</th>
+                    <th>Utilisasi (% hari)</th>
+                    <th>Vol. tahunan (m³/tahun)</th>
+                    <th>CAPEX (RM)</th>
+                    <th>OPEX (RM/tahun)</th>
+                    <th>Saving (RM/tahun)</th>
+                    <th>CF bersih (RM/tahun)</th>
+                    <th>Payback (tahun)</th>
+                    <th>NPV (RM)</th>
+                    <th>BCR</th>
+                  </tr>
+                </thead>
+                <tbody>${altRowsHtml}</tbody>
+                <tfoot>
+                  <tr>
+                    <td>Jumlah / Agregat</td>
+                    <td>${data.altTotals.capacity}</td>
+                    <td>—</td>
+                    <td>${data.altTotals.volume}</td>
+                    <td>${data.altTotals.capex}</td>
+                    <td>${data.altTotals.opex}</td>
+                    <td>${data.altTotals.saving}</td>
+                    <td>${data.altTotals.netcf}</td>
+                    <td>—</td>
+                    <td>${data.altTotals.npv}</td>
+                    <td>${data.altTotals.bcr}</td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <h3>Analisis Kewangan</h3>
+              <div class="inline-table">
+                <div class="box"><div class="label">Jumlah CAPEX</div><div>${data.financeSummary.capex}</div></div>
+                <div class="box"><div class="label">Jumlah OPEX (tahun)</div><div>${data.financeSummary.opex}</div></div>
+                <div class="box"><div class="label">Penjimatan (tahun)</div><div>${data.financeSummary.saving}</div></div>
+                <div class="box"><div class="label">Aliran tunai bersih</div><div>${data.financeSummary.netcf}</div></div>
+                <div class="box"><div class="label">NPV projek</div><div>${data.financeSummary.npv}</div></div>
+                <div class="box"><div class="label">BCR</div><div>${data.financeSummary.bcr}</div></div>
+                <div class="box"><div class="label">IRR anggaran</div><div>${data.financeSummary.irr}</div></div>
+              </div>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="hasil-visual">
+              <div class="section-tag">F. Visual & Graf Sokongan</div>
+              <h2>Graf Permintaan, Bekalan & Kewangan</h2>
+              ${chartsHtml}
+              <p class="page-note">Graf diekstrak terus daripada kanvas kalkulator (resolusi tinggi) supaya tidak pecah apabila dicetak.</p>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="perbincangan">
+              <div class="section-tag">G. Perbincangan & Implikasi Pengurusan</div>
+              <h2>Implikasi Pengurusan</h2>
+              <p>
+                Surplus/defisit yang ditunjukkan memberikan gambaran awal kebergantungan kampus kepada bekalan JANS.
+                Sumber alternatif yang konsisten mampu mengecilkan jurang permintaan–bekalan dan mengurangkan risiko gangguan operasi.
+                Sekiranya defisit puncak kekal, intervensi pengurusan permintaan (audit kebocoran, retrofit peralatan, kempen kesedaran) perlu dilaksanakan selari dengan projek alternatif.
+              </p>
+              <p>
+                Dari sudut kewangan, nilai NPV, BCR dan IRR menjadi indikator kesesuaian pelaburan. Projek dengan payback lebih singkat serta CAPEX sederhana wajar diprioritikan pada fasa awal.
+                Penjimatan bil air dan pembetungan perlu dipantau secara berkala bagi mengesahkan jangkaan aliran tunai bersih.
+              </p>
+            </section>
+
+            <section class="report-page" id="cadangan">
+              <div class="section-tag">H. Cadangan & Pelan Pelaksanaan</div>
+              <h2>Pelan Tindakan</h2>
+              <div class="phase-grid">
+                <div class="phase-card">
+                  <h4>Fasa 1: Quick Wins (0–6 bulan)</h4>
+                  <ul>
+                    <li>Tangkapan air hujan berskala kecil pada bangunan tumpuan.</li>
+                    <li>Pengumpulan kondensasi penghawa dingin untuk kegunaan landskap.</li>
+                    <li>Audit kebocoran dalaman dan pemasangan meter sub-zon.</li>
+                  </ul>
+                </div>
+                <div class="phase-card">
+                  <h4>Fasa 2: Pengukuhan (6–18 bulan)</h4>
+                  <ul>
+                    <li>Sistem reuse (greywater/RO) untuk tandas dan pembersihan.</li>
+                    <li>Penyambungan ke tangki penimbal zon utama kampus.</li>
+                    <li>Kemas kini tarif & OPEX berdasarkan kontrak sebenar.</li>
+                  </ul>
+                </div>
+                <div class="phase-card">
+                  <h4>Fasa 3: Skala Penuh (18–36 bulan)</h4>
+                  <ul>
+                    <li>Pembangunan sumber air tasik/kewujudan kolam rawatan awal.</li>
+                    <li>Integrasi SCADA/IoT untuk pemantauan penggunaan masa nyata.</li>
+                    <li>Pengoptimuman campuran sumber untuk memaksimumkan BCR/NPV.</li>
+                  </ul>
+                </div>
+              </div>
+              <p class="page-note">Keutamaan boleh dilaras mengikut bajet dan keperluan operasi semasa kampus.</p>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <section class="report-page" id="risiko">
+              <div class="section-tag">I. Risiko, Had Kajian & Keperluan Data</div>
+              <h2>Risiko & Had</h2>
+              <div class="risk-grid">
+                <div class="risk-card">
+                  <strong>Ketidakpastian data input</strong>
+                  <p>Populasi, kadar per kapita dan faktor puncak mungkin berbeza mengikut musim akademik.</p>
+                </div>
+                <div class="risk-card">
+                  <strong>Variasi ketersediaan hujan</strong>
+                  <p>Kapasiti air hujan bergantung kepada pola hujan; perlu data sejarah tempatan.</p>
+                </div>
+                <div class="risk-card">
+                  <strong>Andaian tarif</strong>
+                  <p>Penjimatan kewangan sensitif kepada tarif air/pembetungan semasa dan semakan tarif akan datang.</p>
+                </div>
+                <div class="risk-card">
+                  <strong>Teknikal & integrasi</strong>
+                  <p>Infrastruktur sedia ada (paip, tangki, pam) perlu disahkan sebelum sambungan sumber alternatif.</p>
+                </div>
+              </div>
+              <h3>Keperluan Data Lanjutan</h3>
+              <ul class="list-tight">
+                <li>Data meter utama & sub-zon beresolusi harian/mingguan.</li>
+                <li>Profil beban puncak mengikut blok bangunan.</li>
+                <li>Log operasi sistem sedia ada serta rekod OPEX sebenar.</li>
+                <li>Data hujan setempat dan potensi kawasan tangkapan.</li>
+              </ul>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <section class="report-page" id="penafian">
+              <div class="section-tag">J. Penafian</div>
+              <h2>Penafian Laporan</h2>
+              <p>${data.disclaimerText}</p>
+              <p>
+                Sebarang keputusan pelaburan, reka bentuk kejuruteraan atau kontrak hendaklah dirujuk kepada data meter rasmi dan pengesahan pihak berkuasa berkaitan.
+                Laporan ini disediakan untuk kegunaan dalaman dan boleh dikemas kini apabila data baharu tersedia.
+              </p>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+
+            <section class="report-page" id="lampiran">
+              <div class="section-tag">K. Lampiran</div>
+              <h2>Lampiran – Jadual Terperinci CAPEX/OPEX</h2>
+              <table class="report-table zebra">
+                <thead>
+                  <tr>
+                    <th>Jenis</th>
+                    <th>Item / Komponen</th>
+                    <th>Kuantiti</th>
+                    <th>Kos seunit (RM)</th>
+                    <th>Jumlah kos (RM)</th>
+                    <th>Catatan</th>
+                  </tr>
+                </thead>
+                <tbody>${capexOpexRows}</tbody>
+              </table>
+              <p class="page-note">Jumlah CAPEX: ${data.financeSummary.capex} | Jumlah OPEX: ${data.financeSummary.opex}</p>
+              <div class="highlight-box">
+                <strong>Penafian (rujukan semula):</strong> ${data.disclaimerText}
+              </div>
+              <div class="footer-note">Sulit/Untuk Kegunaan Dalaman (Jika perlu) · Laporan UMS Water</div>
+            </section>
+          </div>
+        `;
+      }
+
       addItemBtn.addEventListener("click", () => {
         const tr = document.createElement("tr");
         tr.className = "capex-opex-row";
@@ -2043,6 +3113,104 @@
         } catch (e) {
           console.error(e);
           alert("Ralat semasa jana PDF. Sila cuba lagi.");
+        }
+      });
+
+      previewReportBtn.addEventListener("click", () => {
+        const data = collectReportData();
+        reportRoot.innerHTML = renderReportHTML(data);
+        reportRoot.classList.remove("hidden");
+        reportRoot.classList.remove("offscreen");
+        reportModal.classList.remove("hidden");
+        reportModal.setAttribute("aria-hidden", "false");
+        reportModal.scrollTop = 0;
+      });
+
+      closeReportPreviewBtn.addEventListener("click", () => {
+        reportModal.classList.add("hidden");
+        reportModal.setAttribute("aria-hidden", "true");
+        reportRoot.classList.add("hidden");
+      });
+
+      downloadProPdfBtn.addEventListener("click", () => {
+        const modalWasHidden = reportModal.classList.contains("hidden");
+        const cleanup = () => {
+          reportRoot.classList.remove("offscreen");
+          if (modalWasHidden) {
+            reportRoot.classList.add("hidden");
+          }
+          if (modalWasHidden) {
+            reportModal.classList.add("hidden");
+            reportModal.style.visibility = "";
+            reportModal.style.pointerEvents = "";
+          }
+        };
+
+        try {
+          if (typeof html2pdf === "undefined") {
+            alert("Library html2pdf tidak dimuatkan.");
+            return;
+          }
+
+          const data = collectReportData();
+          reportRoot.innerHTML = renderReportHTML(data);
+          reportRoot.classList.remove("hidden");
+          reportRoot.classList.add("offscreen");
+          if (modalWasHidden) {
+            reportModal.classList.remove("hidden");
+            reportModal.style.visibility = "hidden";
+            reportModal.style.pointerEvents = "none";
+          }
+
+          const opt = {
+            margin: [0, 0, 0, 0],
+            filename: `Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            pagebreak: { mode: ["css", "legacy"] },
+          };
+
+          html2pdf()
+            .set(opt)
+            .from(reportRoot)
+            .toPdf()
+            .get("pdf")
+            .then((pdf) => {
+              const total = pdf.internal.getNumberOfPages();
+              const pageWidth = pdf.internal.pageSize.getWidth();
+              const pageHeight = pdf.internal.pageSize.getHeight();
+              for (let i = 2; i <= total; i += 1) {
+                pdf.setPage(i);
+                pdf.setFont("times", "normal");
+                pdf.setFontSize(9);
+                pdf.text("Laporan UMS Water", 15, 12);
+                pdf.text(data.generatedDate, pageWidth - 15, 12, { align: "right" });
+                pdf.text(
+                  "Sulit/Untuk Kegunaan Dalaman (Jika perlu)",
+                  pageWidth / 2,
+                  pageHeight - 10,
+                  { align: "center" }
+                );
+                pdf.text(
+                  `Muka surat ${i} daripada ${total}`,
+                  pageWidth - 15,
+                  pageHeight - 10,
+                  { align: "right" }
+                );
+              }
+              pdf.save(`Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`);
+            })
+            .then(() => cleanup())
+            .catch((err) => {
+              console.error(err);
+              alert("Ralat semasa jana laporan profesional.");
+              cleanup();
+            });
+        } catch (err) {
+          console.error(err);
+          alert("Ralat semasa jana laporan profesional.");
+          cleanup();
         }
       });
 
