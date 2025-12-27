@@ -1,5 +1,11 @@
 # Ujian Manual Disyorkan
 
+## Wizard Onboarding (Quick path)
+1. Klik **🚀 MULA DI SINI (Wizard)** – overlay muncul, langkah 1 memilih mod Quick secara automatik.
+2. Isi demand minimum (faktor puncak + permintaan atau kategori), bekalan JANS, parameter kewangan; pastikan butang **Seterusnya** hanya aktif selepas keperluan dipenuhi.
+3. Pada langkah 6, cuba **Langkau** sumber alternatif; langkah 7 tekan **Kira** dari wizard dan semak ringkasan dikemas kini tanpa ralat konsol.
+4. Langkah 8: cuba butang eksport (Excel/PDF) dari panduan; wizard boleh ditutup tanpa memecahkan kalkulator.
+
 ## Persediaan umum
 1. Buka `index.html` di pelayar.
 2. Pastikan mod dipilih (Quick/Operational/Full) kelihatan dalam kad “Pemilih Mod & Senario”.
@@ -29,4 +35,10 @@
 1. Buat tiga senario (A/B/C) dengan input berbeza, simpan setiap satu. Tutup/ buka semula halaman – senario kekal (localStorage).
 2. Jadual **Perbandingan Senario A/B/C** memaparkan angka berbeza bagi setiap senario yang telah dikira.
 3. Klik **📤 Eksport Excel (.xlsx)** – fail mengandungi helaian Mod_Senario, Kategori, Ringkasan, CBA, CAPEX_OPEX.
-4. Pilih skop PDF (senario aktif atau semua senario), tekan **Jana Laporan** – PDF berjaya dimuat turun; jika “Semua senario” dipilih, jadual perbandingan muncul dalam laporan.
+4. Pilih skop PDF (senario aktif atau semua senario) dan tahap **Ringkas/Penuh**, tekan **Jana Laporan** – PDF berjaya dimuat turun; jika “Semua senario” dipilih, jadual perbandingan muncul.
+5. Uji medan “Disediakan oleh” dan togol kerahsiaan: pastikan muncul di muka hadapan/footer PDF.
+6. Senario kekurangan data kewangan (CAPEX/OPEX kosong) masih menghasilkan PDF dengan mesej “Analisis kewangan tidak dijana…”.
+
+## Operational dengan pelbagai alternatif
+1. Di mod Operational, isi beberapa baris kategori dan sekurang-kurangnya dua sumber alternatif (kapasiti, utiliti, CAPEX, OPEX), tekan **Kira**.
+2. Jana PDF tahap **Penuh** – pastikan lampiran sensitiviti dan jadual CAPEX/OPEX dimasukkan.
