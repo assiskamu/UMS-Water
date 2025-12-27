@@ -347,6 +347,25 @@
 
     .hidden { display: none !important; }
 
+    /* Jadikan kontena laporan kelihatan (tetapi tidak mengganggu) semasa pdf digenerate */
+    #reportRoot.rendering {
+      position: fixed;
+      inset: 0;
+      margin: 0 auto;
+      opacity: 0.01;
+      pointer-events: none;
+      overflow: auto;
+      background: #ffffff;
+      z-index: 999;
+    }
+
+    #reportRoot .logo-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
     /* Laporan Profesional (PDF) */
     @page {
       size: A4;
@@ -1326,6 +1345,8 @@
       const cbaPaybackCtx = document
         .getElementById("cba-payback-chart")
         .getContext("2d");
+      const umsLogoPath = "UMS logo.png";
+      let umsLogoDataUrl = "";
 
       let categoryChart = null;
       let shareChart = null;
@@ -1441,6 +1462,29 @@
         return `<span class="status-pill ${cls}">${
           status === "Surplus" ? "✔️" : "⚠️"
         } ${label}</span>`;
+      }
+
+      function blobToDataURL(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      async function loadUmsLogoDataUrl() {
+        if (umsLogoDataUrl) return umsLogoDataUrl;
+        try {
+          const res = await fetch(encodeURI(umsLogoPath));
+          if (!res.ok) throw new Error(`Logo gagal dimuat (status ${res.status})`);
+          const blob = await res.blob();
+          umsLogoDataUrl = await blobToDataURL(blob);
+        } catch (err) {
+          console.warn("Gagal memuat logo UMS untuk laporan:", err);
+          umsLogoDataUrl = "";
+        }
+        return umsLogoDataUrl;
       }
 
       function calculate() {
@@ -2151,6 +2195,7 @@
           assumptions,
           charts,
           disclaimerText,
+          logoDataUrl: umsLogoDataUrl,
         };
       }
 
@@ -2260,7 +2305,13 @@
           <div class="report-document">
             <section class="cover cover-water" id="cover">
               <div class="watermark">UMS</div>
-              <div class="logo-box">Letak logo UMS di sini</div>
+              <div class="logo-box">
+                ${
+                  data.logoDataUrl
+                    ? `<img src="${data.logoDataUrl}" alt="Logo Universiti Malaysia Sabah" />`
+                    : `<div>Logo UMS</div>`
+                }
+              </div>
               <div>
                 <div class="kicker">Laporan Profesional (PDF)</div>
                 <h1>LAPORAN PERMINTAAN, BEKALAN DAN SUMBER AIR ALTERNATIF UNIVERSITI MALAYSIA SABAH (UMS)</h1>
@@ -2812,10 +2863,11 @@
         }
       });
 
-      function downloadProfessionalPDF() {
+      async function downloadProfessionalPDF() {
         const cleanup = () => {
           reportRoot.classList.add("hidden");
-          reportRoot.classList.remove("offscreen");
+          reportRoot.classList.remove("rendering");
+          reportRoot.classList.add("offscreen");
           reportRoot.setAttribute("aria-hidden", "true");
         };
 
@@ -2825,10 +2877,13 @@
             return;
           }
 
+          await loadUmsLogoDataUrl();
+
           const data = collectReportData();
           reportRoot.innerHTML = renderReportHTML(data);
           reportRoot.classList.remove("hidden");
-          reportRoot.classList.add("offscreen");
+          reportRoot.classList.remove("offscreen");
+          reportRoot.classList.add("rendering");
           reportRoot.setAttribute("aria-hidden", "false");
 
           const opt = {
@@ -2840,7 +2895,7 @@
             pagebreak: { mode: ["css", "legacy"] },
           };
 
-          html2pdf()
+          await html2pdf()
             .set(opt)
             .from(reportRoot)
             .toPdf()
@@ -2869,16 +2924,11 @@
                 );
               }
               pdf.save(`Laporan_UMS_Water_Profesional_${data.fileDate}.pdf`);
-            })
-            .then(() => cleanup())
-            .catch((err) => {
-              console.error(err);
-              alert("Ralat semasa jana laporan profesional.");
-              cleanup();
             });
         } catch (err) {
           console.error(err);
           alert("Ralat semasa jana laporan profesional.");
+        } finally {
           cleanup();
         }
       }
@@ -2888,6 +2938,7 @@
       });
 
       // Kiraan awal dengan nilai contoh
+      loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       calculate();
     });
