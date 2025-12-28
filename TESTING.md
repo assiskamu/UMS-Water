@@ -1,44 +1,41 @@
 # Ujian Manual Disyorkan
 
-## Wizard Onboarding (Quick path)
-1. Klik **🚀 MULA DI SINI (Wizard)** – overlay muncul, langkah 1 memilih mod Quick secara automatik.
-2. Isi demand minimum (faktor puncak + permintaan atau kategori), bekalan JANS, parameter kewangan; pastikan butang **Seterusnya** hanya aktif selepas keperluan dipenuhi.
-3. Pada langkah 6, cuba **Langkau** sumber alternatif; langkah 7 tekan **Kira** dari wizard dan semak ringkasan dikemas kini tanpa ralat konsol.
-4. Langkah 8: cuba butang eksport (Excel/PDF) dari panduan; wizard boleh ditutup tanpa memecahkan kalkulator.
-
-## Persediaan umum
-1. Buka `index.html` di pelayar.
-2. Pastikan mod dipilih (Quick/Operational/Full) kelihatan dalam kad “Pemilih Mod & Senario”.
-3. Sahkan tiada ralat konsol semasa memuat halaman.
+## Quick Start Stepper
+1. Muatkan `index.html` dan pastikan bar “Quick Start Stepper” melekat di bahagian atas dengan 8 langkah bernombor.
+2. Klik setiap butang **Pergi ke langkah ini** – halaman tatal ke seksyen sasaran dan sorotan sementara dipaparkan.
+3. Cuba butang **Seterusnya** pada setiap kad tanpa mengisi input wajib (contoh langkah 3 atau 4) – mesej ralat sebaris muncul dan tatal tidak berlaku.
+4. Isi input minimum (mod Quick, demand/puncak, bekalan JANS) dan tekan **Seterusnya** – tatal berlaku ke langkah berikutnya.
+5. Uji butang **Seterusnya** dalam seksyen (bawah kad) – mesti membawa ke langkah seterusnya jika validasi lulus.
 
 ## Quick Estimate (1–2 min)
-1. Pilih mod **Quick Estimate**.
-2. Klik **Auto-fill nilai contoh** (sepatutnya mengisi populasi, per kapita, faktor puncak dan bekalan asas).
-3. Tekan **Kira permintaan & banding dengan bekalan** – ringkasan perlu terisi, graf dikemas kini, tiada amaran input.
-4. Uji input tidak sah: kosongkan populasi/permintaan, tekan kira – mesej validasi muncul; butang **Baiki input** fokus ke medan bermasalah.
-5. Isi CAPEX/OPEX pantas untuk sumber alternatif ringkas, kira semula – NPV/BCR/payback dipaparkan di jadual sumber alternatif.
+1. Kekalkan mod **Quick Estimate** (lalai) dan klik **⚡ Auto-fill nilai contoh** – medan populasi/per kapita/peak/bekalan asas terisi.
+2. Klik **Kira permintaan & banding dengan bekalan** – ringkasan dan graf dikemas kini tanpa ralat konsol.
+3. Klik **👀 Papar input terperinci** – seksyen mod lain muncul; klik sekali lagi untuk sembunyi.
+4. Isi sumber alternatif pantas (kapasiti + utiliti + CAPEX/OPEX) dan kira semula – jadual CBA memaparkan NPV/BCR/Payback.
 
 ## Operational Planning (10–15 min)
-1. Tukar ke mod **Operational Planning** – jadual kategori dan sumber alternatif terperinci muncul.
-2. Masukkan sekurang-kurangnya satu baris kategori (populasi + per kapita) dan bekalan JANS, kira – ringkasan permintaan/bekalan dikira.
-3. Tambah beberapa baris sumber alternatif (dengan utiliti dan jangka hayat), kira – jadual CBA, graf NPV & payback terisi.
-4. Eksperimen faktor puncak di luar julat 1.2–1.5 – amaran ditunjukkan tetapi pengiraan masih berjalan.
-5. Simpan senario melalui **💾 Simpan senario**, kemudian gandakan melalui **📑 Gandakan** dan pastikan jadual perbandingan menunjukkan nilai A/B.
+1. Pilih mod **Operational Planning** – jadual kategori/alternatif terperinci kelihatan.
+2. Isi sekurang-kurangnya satu baris kategori (populasi + per kapita) dan bekalan JANS >0, tekan **Kira** – ringkasan permintaan/bekalan terisi.
+3. Tambah dua sumber alternatif dengan utiliti + kebolehpercayaan + CAPEX/OPEX, kira – jadual CBA serta graf NPV/Payback terisi.
+4. Gandakan senario A → B melalui **📑 Gandakan**, kira, dan sahkan jadual Perbandingan Senario menunjukkan angka berbeza.
 
-## Full CBA (Advanced) (30–60 min)
-1. Tukar ke mod **Full CBA (Advanced)** – jadual CAPEX/OPEX itemised kekal kelihatan.
-2. Tambah/ubah item CAPEX/OPEX, pastikan jumlah dikemas kini dan diambil kira dalam CBA.
-3. Isi beberapa sumber alternatif dengan CAPEX, OPEX, utiliti; tetapkan tempoh analisis dan kadar diskaun, kira – NPV, BCR, IRR, payback wujud.
-4. Semak bahagian **Analisis Sensitiviti** – nilai asas, CAPEX+10%, OPEX+10%, manfaat+10% dikemaskini selepas pengiraan.
+## Full CBA (Advanced)
+1. Pilih mod **Full CBA (Advanced)** – jadual CAPEX/OPEX itemised kekal kelihatan.
+2. Tambah item CAPEX/OPEX baharu; sahkan jumlah CAPEX/OPEX di kaki jadual berubah.
+3. Isi beberapa sumber alternatif lengkap dengan tempoh hayat/discount rate dan kira – NPV/BCR/IRR/Payback dipaparkan.
+4. Semak **Analisis Sensitiviti (+/−10%)** – label NPV/BCR untuk asas, CAPEX+10%, OPEX+10%, manfaat+10% dikemas kini selepas kiraan.
 
-## Pengurus senario & eksport
-1. Buat tiga senario (A/B/C) dengan input berbeza, simpan setiap satu. Tutup/ buka semula halaman – senario kekal (localStorage).
-2. Jadual **Perbandingan Senario A/B/C** memaparkan angka berbeza bagi setiap senario yang telah dikira.
-3. Klik **📤 Eksport Excel (.xlsx)** – fail mengandungi helaian Mod_Senario, Kategori, Ringkasan, CBA, CAPEX_OPEX.
-4. Pilih skop PDF (senario aktif atau semua senario) dan tahap **Ringkas/Penuh**, tekan **Jana Laporan** – PDF berjaya dimuat turun; jika “Semua senario” dipilih, jadual perbandingan muncul.
-5. Uji medan “Disediakan oleh” dan togol kerahsiaan: pastikan muncul di muka hadapan/footer PDF.
-6. Senario kekurangan data kewangan (CAPEX/OPEX kosong) masih menghasilkan PDF dengan mesej “Analisis kewangan tidak dijana…”.
+## Pengurus Senario & Preset
+1. Pastikan hanya senario A wujud pada muat naik awal; klik **🌟 Muatkan contoh (preset)** dan **🔄 Reset senario** untuk melihat kesan pada input.
+2. Cipta senario B/C melalui tambah atau gandakan; simpan setiap satu dan muat semula halaman – senario kekal (localStorage).
+3. Jadual **Perbandingan Senario A/B/C** memaparkan nilai mengikut kiraan terakhir setiap senario.
 
-## Operational dengan pelbagai alternatif
-1. Di mod Operational, isi beberapa baris kategori dan sekurang-kurangnya dua sumber alternatif (kapasiti, utiliti, CAPEX, OPEX), tekan **Kira**.
-2. Jana PDF tahap **Penuh** – pastikan lampiran sensitiviti dan jadual CAPEX/OPEX dimasukkan.
+## Eksport
+1. Klik **📤 Eksport Excel (.xlsx)** selepas kiraan – fail mengandungi helaian Mod_Senario, Kategori, Ringkasan, CBA, CAPEX_OPEX dengan angka terkini.
+2. Pilih skop PDF (Senario terpilih/ Semua senario) dan tahap **Ringkas/Penuh**, isi “Disediakan oleh” opsyenal, tekan **Jana Laporan** – PDF dimuat turun tanpa pie chart terpotong.
+3. Semak PDF: muka depan, Table of Contents dengan nombor halaman, header kecil dengan tarikh/senario/nombor halaman, graf dengan blok interpretasi (Apa ditunjukkan/Implikasi/Tindakan), dan lampiran sensitiviti + CAPEX/OPEX bagi tahap **Penuh**.
+4. Cuba jana PDF tanpa CAPEX/OPEX – seksyen kewangan memaparkan mesej “Analisis kewangan tidak dijana…” tetapi laporan tetap terhasil.
+
+## Regressi pantas
+1. Pastikan tiada ralat konsol ketika menukar mod, menambah baris kategori/alternatif, atau memuat semula senario.
+2. Uji butang **🛠️ Baiki input** selepas meninggalkan medan wajib kosong – fokus bergerak ke input yang ditanda invalid.
