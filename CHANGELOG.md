@@ -1,9 +1,9 @@
 # Perubahan Terbaru
 
-## 2025-XX-XX (Wizard & Laporan PDF)
-- Tambah Wizard “MULA DI SINI” berlapis dengan langkah jelas (mod, senario, demand minimum, bekalan JANS, kewangan, alternatif, kiraan, eksport) termasuk validasi, auto-tetapan Quick + Senario A, dan buka automatik bagi pelawat baharu.
-- Naik taraf templat “Jana Laporan (PDF)” dengan pilihan skop (senario aktif/semua), tahap Ringkas/Penuh, medan “Disediakan oleh”, penjenamaan muka depan, ringkasan eksekutif, metodologi & andaian, hasil permintaan/bekalan/kewangan, perbandingan senario, cadangan pengurusan, graf sokongan serta lampiran sensitiviti + CAPEX/OPEX.
-- Penambahbaikan eksport PDF: nama fail disertakan senario + tarikh, makluman had data/penafian, dan format tabel zebra yang mesra bacaan pengurusan.
+## 2025-XX-XX (Stepper Quick Start & PDF Pro)
+- Gantikan wizard modal dengan “Quick Start Stepper” bernombor yang melekat di bahagian atas, lengkap dengan butang “Pergi ke langkah ini” dan “Seterusnya”, sorotan seksyen, validasi keperluan input, serta butang navigasi dalam setiap seksyen.
+- Kurangkan kekeliruan mod/senario: label senario A/B/C yang jelas, butang reset/preset, tooltip beza mod/senario, unit label di input utama, serta togol “Papar input terperinci” untuk mod Quick.
+- Naik taraf laporan PDF: tambah Table of Contents, header kecil dengan nombor halaman, interpretasi graf (“Apa yang ditunjukkan/Implikasi/Tindakan”), carta luar skrin beresolusi tinggi untuk elak pie terpotong, dan struktur seksyen mesra pengurusan.
 
 ## 2025-XX-XX
 - Tambah pemilih mod 3-lapisan (Quick Estimate, Operational Planning, Full CBA) dengan penyimpanan mod di localStorage.

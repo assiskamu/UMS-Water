@@ -13,6 +13,8 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <!-- jsPDF (Penjanaan PDF profesional) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- jsPDF AutoTable untuk jadual berbilang halaman -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root {
@@ -505,6 +507,7 @@
     }
 
     .hidden { display: none !important; }
+    body.show-advanced .mode-block { display: block !important; }
     .invalid {
       border-color: #d32f2f !important;
       box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
@@ -877,7 +880,7 @@
       padding-bottom: 0.45rem;
       border-bottom: 1px solid #e2e8f0;
       color: #0c2d57;
-      font-size: 9pt;
+      font-size: 8.5pt;
     }
 
     #reportRoot .report-page .page-footer {
@@ -1087,6 +1090,111 @@
     }
 
     .report-options .mini-input { margin-top: 0.25rem; }
+
+    .toc-box {
+      max-width: 1100px;
+      margin: 0 auto 0.8rem;
+      padding: 0.75rem 1rem;
+      background: #ffffff;
+      border: 1px solid #d6e6f7;
+      border-radius: 0.9rem;
+      box-shadow: 0 8px 18px rgba(13, 110, 253, 0.05);
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toc-box .mini {
+      margin: 0;
+      font-weight: 700;
+      color: #0d2e55;
+    }
+
+    .quick-stepper {
+      position: sticky;
+      top: 72px;
+      z-index: 9;
+      background: linear-gradient(135deg, rgba(13, 110, 253, 0.07), rgba(0, 188, 212, 0.07));
+      backdrop-filter: blur(6px);
+      margin: 0 0 1rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid #d5e4f7;
+      box-shadow: 0 8px 22px rgba(13, 110, 253, 0.08);
+    }
+
+    .stepper-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.7rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .step-card {
+      border: 1px solid #cfe1f5;
+      border-radius: 0.85rem;
+      background: #fff;
+      padding: 0.75rem 0.85rem;
+      display: grid;
+      gap: 0.35rem;
+      box-shadow: 0 6px 16px rgba(13, 110, 253, 0.06);
+      position: relative;
+    }
+
+    .step-card.active { box-shadow: 0 8px 20px rgba(0, 188, 212, 0.15); border-color: var(--primary); }
+
+    .step-card h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      color: #0d2e55;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .step-text { font-size: 0.85rem; color: #476582; margin: 0; }
+    .step-example { font-size: 0.82rem; color: #2a5c87; margin: 0; }
+
+    .step-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+    .step-error {
+      color: #b3261e;
+      font-size: 0.83rem;
+      margin: 0;
+    }
+
+    .section-highlight {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
+      transition: outline-color 0.4s ease, outline-offset 0.4s ease;
+    }
+
+    .unit-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      color: #2a5c87;
+      background: #e8f4ff;
+      padding: 0.18rem 0.45rem;
+      border-radius: 999px;
+      margin-left: 0.35rem;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -1107,9 +1215,9 @@
   </header>
 
   <main>
-    <div class="toolbar" style="justify-content:flex-end; margin-bottom:0.5rem;">
-      <button type="button" class="primary" id="btn-open-wizard">🚀 MULA DI SINI (Wizard)</button>
-    </div>
+    <section class="quick-stepper" aria-label="Quick start stepper">
+      <div class="stepper-grid" id="stepper-grid"></div>
+    </section>
 
     <div class="wizard-overlay" id="wizard-overlay" aria-hidden="true">
       <div class="wizard-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
@@ -1138,8 +1246,8 @@
       </div>
     </div>
 
-    <section class="card">
-      <h2><span class="icon">🎛️</span> Pemilih Mod & Senario</h2>
+    <section class="card" id="section-mode">
+      <h2><span class="icon">🎛️</span> Pemilih Mod & Senario <span class="mini" title="Mod Quick = input minimum; Operational = buka jadual kategori & alt; Full = tambah pecahan CAPEX/OPEX & sensitiviti.">Apa beza Mod?</span> <span class="mini" title="Senario A baseline (JANS). B/C untuk alternatif atau kombinasi.">Apa beza Senario?</span></h2>
       <div class="toolbar">
         <div class="pill-group" role="group" aria-label="Pemilih mod" id="mode-selector">
           <div class="pill active" data-mode="quick">
@@ -1222,21 +1330,33 @@
       </div>
     </section>
 
-    <section class="card mode-block" data-modes="quick">
+    <section class="card mode-block" data-modes="quick" id="section-quick">
       <h2><span class="icon">⏱️</span> Input Pantas (Quick Estimate)</h2>
+      <div class="btn-row" style="margin-top:0;">
+        <button type="button" class="secondary" id="btn-toggle-advanced">👀 Papar input terperinci</button>
+      </div>
       <div class="input-grid">
         <div>
           <label for="quick-pop">Jumlah populasi / headcount</label>
-          <input type="number" id="quick-pop" min="0" placeholder="cth: 15000" />
+          <div class="mini-input">
+            <input type="number" id="quick-pop" min="0" placeholder="cth: 15000" />
+            <span class="unit-label">orang</span>
+          </div>
           <div class="tagline">Boleh kosong jika anda masukkan permintaan harian terus.</div>
         </div>
         <div>
           <label for="quick-percap">Kadar per kapita (L/org/hari)</label>
-          <input type="number" id="quick-percap" min="0" step="0.1" placeholder="cth: 150" />
+          <div class="mini-input">
+            <input type="number" id="quick-percap" min="0" step="0.1" placeholder="cth: 150" />
+            <span class="unit-label">L/org/hari</span>
+          </div>
         </div>
         <div>
           <label for="quick-demand">Jumlah permintaan harian (m³/hari)</label>
-          <input type="number" id="quick-demand" min="0" step="0.01" placeholder="cth: 2000" />
+          <div class="mini-input">
+            <input type="number" id="quick-demand" min="0" step="0.01" placeholder="cth: 2000" />
+            <span class="unit-label">m³/hari</span>
+          </div>
           <div class="tagline">Jika diisi, kalkulator abaikan populasi × per kapita.</div>
         </div>
         <div>
@@ -1245,7 +1365,10 @@
         </div>
         <div>
           <label for="quick-base-supply">Bekalan asas (MLD)</label>
-          <input type="number" id="quick-base-supply" min="0" step="0.1" placeholder="cth: 5" />
+          <div class="mini-input">
+            <input type="number" id="quick-base-supply" min="0" step="0.1" placeholder="cth: 5" />
+            <span class="unit-label">MLD</span>
+          </div>
           <div class="tagline">Nilai ini akan disalin ke bekalan JANS di bahagian utama.</div>
         </div>
       </div>
@@ -1260,19 +1383,31 @@
               </div>
               <div>
                 <label for="quick-alt-capacity">Kapasiti (m³/hari)</label>
-                <input type="number" id="quick-alt-capacity" min="0" step="0.1" />
+                <div class="mini-input">
+                  <input type="number" id="quick-alt-capacity" min="0" step="0.1" />
+                  <span class="unit-label">m³/hari</span>
+                </div>
               </div>
               <div>
                 <label for="quick-alt-util">Faktor penggunaan (% hari/tahun)</label>
-                <input type="number" id="quick-alt-util" min="0" max="100" step="1" />
+                <div class="mini-input">
+                  <input type="number" id="quick-alt-util" min="0" max="100" step="1" />
+                  <span class="unit-label">% hari</span>
+                </div>
               </div>
               <div>
                 <label for="quick-alt-capex">CAPEX kasar (RM)</label>
-                <input type="number" id="quick-alt-capex" min="0" step="1000" />
+                <div class="mini-input">
+                  <input type="number" id="quick-alt-capex" min="0" step="1000" />
+                  <span class="unit-label">RM</span>
+                </div>
               </div>
               <div>
                 <label for="quick-alt-opex">OPEX tahunan kasar (RM/tahun)</label>
-                <input type="number" id="quick-alt-opex" min="0" step="100" />
+                <div class="mini-input">
+                  <input type="number" id="quick-alt-opex" min="0" step="100" />
+                  <span class="unit-label">RM/tahun</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1280,7 +1415,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="section-scenario">
       <h2><span class="icon">🗂️</span> Pengurus Senario (A/B/C)</h2>
       <div class="toolbar stacked">
         <div class="scenario-actions">
@@ -1288,14 +1423,16 @@
           <button type="button" class="secondary" id="btn-duplicate-scenario">📑 Gandakan</button>
           <button type="button" class="secondary" id="btn-rename-scenario">✏️ Namakan semula</button>
           <button type="button" class="secondary" id="btn-delete-scenario">🗑️ Padam</button>
+          <button type="button" class="secondary" id="btn-reset-scenario">🔄 Reset senario</button>
           <button type="button" class="primary" id="btn-save-scenario">💾 Simpan senario</button>
+          <button type="button" class="secondary" id="btn-load-preset">🌟 Muatkan contoh (preset)</button>
         </div>
         <div class="scenario-list" id="scenario-list"></div>
       </div>
       <p class="mode-note">Setiap senario menyimpan input & output (permintaan, bekalan, NPV/BCR, payback). Data kekal dalam pelayar melalui localStorage.</p>
     </section>
     <!-- INPUT KATEGORI DEMAND -->
-    <section class="card mode-block" data-modes="operational,full">
+    <section class="card mode-block" data-modes="operational,full" id="section-demand">
       <h2><span class="icon">📥</span> Input Permintaan Air Mengikut Kategori</h2>
       <p class="lead">
         Tetapkan kategori (contoh: Asrama, Fakulti & Pentadbiran, Masjid, Sukan)
@@ -1369,7 +1506,7 @@
     </section>
 
     <!-- INPUT SUPPLY (JANS) -->
-    <section class="card">
+    <section class="card" id="section-supply">
       <h2><span class="icon">🚰</span> Input Bekalan Air (Supply Sedia Ada)</h2>
       <p class="lead">
         Masukkan anggaran kapasiti bekalan air harian yang diterima kampus
@@ -1377,14 +1514,17 @@
       </p>
 
       <label for="supply-mld">Kapasiti bekalan harian sedia ada (MLD)</label>
-      <input type="number" id="supply-mld" value="5" min="0" step="0.1" />
+      <div class="mini-input">
+        <input type="number" id="supply-mld" value="5" min="0" step="0.1" />
+        <span class="unit-label">MLD</span>
+      </div>
       <div class="note">
         Contoh: jika UMS menerima sekitar 4.5–5.0 MLD daripada loji rawatan.
       </div>
     </section>
 
     <!-- PARAMETER TARIF & KEWANGAN -->
-    <section class="card">
+    <section class="card" id="section-finance">
       <h2><span class="icon">💹</span> Parameter Tarif & Kewangan</h2>
       <p class="lead">
         Parameter ini digunakan untuk mengira penjimatan bil air & pembetungan
@@ -1394,19 +1534,31 @@
       <div class="input-grid">
         <div>
           <label for="tariff-water">Tarif air terawat (RM/m³)</label>
-          <input type="number" id="tariff-water" value="1.20" min="0" step="0.01" />
+          <div class="mini-input">
+            <input type="number" id="tariff-water" value="1.20" min="0" step="0.01" />
+            <span class="unit-label">RM/m³</span>
+          </div>
         </div>
         <div>
           <label for="tariff-sewer">Kadar pembetungan (RM/m³)</label>
-          <input type="number" id="tariff-sewer" value="0.80" min="0" step="0.01" />
+          <div class="mini-input">
+            <input type="number" id="tariff-sewer" value="0.80" min="0" step="0.01" />
+            <span class="unit-label">RM/m³</span>
+          </div>
         </div>
         <div>
           <label for="analysis-years">Tempoh analisis kewangan (tahun)</label>
-          <input type="number" id="analysis-years" value="20" min="1" step="1" />
+          <div class="mini-input">
+            <input type="number" id="analysis-years" value="20" min="1" step="1" />
+            <span class="unit-label">tahun</span>
+          </div>
         </div>
         <div>
           <label for="discount-rate">Kadar diskaun (% setahun)</label>
-          <input type="number" id="discount-rate" value="5" min="0" step="0.1" />
+          <div class="mini-input">
+            <input type="number" id="discount-rate" value="5" min="0" step="0.1" />
+            <span class="unit-label">%/tahun</span>
+          </div>
         </div>
       </div>
 
@@ -1417,7 +1569,7 @@
     </section>
 
     <!-- INPUT SUMBER AIR ALTERNATIF -->
-    <section class="card mode-block" data-modes="operational,full">
+    <section class="card mode-block" data-modes="operational,full" id="section-alt">
       <h2><span class="icon">💧</span> Sumber Air Alternatif (Extra Supply & CBA)</h2>
       <p class="lead">
         Masukkan kapasiti teknikal, faktor penggunaan, CAPEX, OPEX dan nota
@@ -1528,7 +1680,7 @@
     </section>
 
     <!-- PENGIRAAN TERPERINCI CAPEX & OPEX MENGIKUT ITEM -->
-    <section class="card mode-block" data-modes="full">
+    <section class="card mode-block" data-modes="full" id="section-capex">
       <h2><span class="icon">🧾</span> Pengiraan Terperinci CAPEX & OPEX Mengikut Item</h2>
       <p class="lead">
         Jadual mini ini membolehkan pecahan CAPEX dan OPEX mengikut item
@@ -1616,7 +1768,7 @@
     </section>
 
     <!-- ANALISIS KATEGORI DEMAND -->
-    <section class="card">
+    <section class="card" id="section-results">
       <h2><span class="icon">📊</span> Analisis Permintaan Air Mengikut Kategori</h2>
       <p class="lead">
         Jadual ini menunjukkan permintaan purata dan puncak (peak) bagi setiap
@@ -1918,12 +2070,24 @@
       const wizardOverlay = document.getElementById("wizard-overlay");
       const wizardContent = document.getElementById("wizard-content");
       const wizardStepList = document.getElementById("wizard-step-list");
+      const stepperGrid = document.getElementById("stepper-grid");
       const wizardOpenBtn = document.getElementById("btn-open-wizard");
       const wizardCloseBtn = document.getElementById("btn-close-wizard");
       const wizardNextBtn = document.getElementById("wizard-next");
       const wizardBackBtn = document.getElementById("wizard-back");
       const wizardSkipBtn = document.getElementById("wizard-skip");
       const wizardStatus = document.getElementById("wizard-status");
+      const sectionMap = {
+        mode: document.getElementById("section-mode"),
+        quick: document.getElementById("section-quick"),
+        scenario: document.getElementById("section-scenario"),
+        demand: document.getElementById("section-demand"),
+        supply: document.getElementById("section-supply"),
+        finance: document.getElementById("section-finance"),
+        alt: document.getElementById("section-alt"),
+        capex: document.getElementById("section-capex"),
+        results: document.getElementById("section-results"),
+      };
 
       const addRowBtn = document.getElementById("add-row-btn");
       const calcBtn = document.getElementById("calculate-btn");
@@ -1941,6 +2105,7 @@
       const preparedByInput = document.getElementById("prepared-by");
       const reportRoot = document.getElementById("reportRoot");
       const categoryBody = document.getElementById("category-body");
+      const toggleAdvancedBtn = document.getElementById("btn-toggle-advanced");
 
       const addAltRowBtn = document.getElementById("add-alt-row-btn");
       const altBody = document.getElementById("alt-body");
@@ -2016,6 +2181,8 @@
       const renameScenarioBtn = document.getElementById("btn-rename-scenario");
       const deleteScenarioBtn = document.getElementById("btn-delete-scenario");
       const saveScenarioBtn = document.getElementById("btn-save-scenario");
+      const resetScenarioBtn = document.getElementById("btn-reset-scenario");
+      const presetBtn = document.getElementById("btn-load-preset");
 
       const categoryChartCtx = document
         .getElementById("demand-by-category-chart")
@@ -2094,6 +2261,95 @@
         exportPdf: ["#btn-generate-report", "text:Jana Laporan"],
       };
 
+      const quickStepperConfig = [
+        {
+          id: "mode",
+          title: "Pilih Mod (Quick / Operational / Full)",
+          target: "section-mode",
+          hint: "Apa perlu isi: pilih mod asas. Quick memaparkan input minimum.",
+          example: "Contoh: pilih Quick untuk mula segera.",
+          required: () => !!appState.mode,
+          requiredMessage: "Sila pilih salah satu mod.",
+        },
+        {
+          id: "scenario",
+          title: "Pilih Senario (A Baseline, B alternatif, C kombinasi)",
+          target: "section-scenario",
+          hint: "Apa perlu isi: kekalkan A sebagai baseline, gandakan ke B/C jika perlu.",
+          example: "Contoh: klik \"Gandakan\" untuk cipta B daripada A.",
+          required: () => !!activeScenario(),
+          requiredMessage: "Aktifkan sekurang-kurangnya Senario A.",
+        },
+        {
+          id: "demand",
+          title: "Masukkan Permintaan",
+          target: "section-quick",
+          hint: "Apa perlu isi: jumlah permintaan harian atau populasi + per kapita + faktor puncak.",
+          example: "Contoh: 15,000 orang × 160 L/orang/hari, faktor puncak 1.3.",
+          required: () => {
+            if (appState.mode === "quick") {
+              const pop = normalizeNumber(quickInputs.pop.value);
+              const percap = normalizeNumber(quickInputs.percap.value);
+              const demand = normalizeNumber(quickInputs.demand.value);
+              const peak = normalizeNumber(quickInputs.peak.value);
+              return (demand > 0 || (pop > 0 && percap > 0)) && peak > 0;
+            }
+            const rows = Array.from(document.querySelectorAll(".category-row"));
+            return rows.some(
+              (r) =>
+                normalizeNumber(r.querySelector(".cat-pop")?.value) > 0 &&
+                normalizeNumber(r.querySelector(".cat-percap")?.value) > 0
+            );
+          },
+          requiredMessage: "Isi permintaan (jumlah atau kategori) dan faktor puncak.",
+        },
+        {
+          id: "supply",
+          title: "Masukkan Bekalan Asas (JANS MLD)",
+          target: "section-supply",
+          hint: "Apa perlu isi: bekalan harian sedia ada (MLD).",
+          example: "Contoh: 5 MLD.",
+          required: () => normalizeNumber(supplyInput.value) > 0,
+          requiredMessage: "Isi bekalan asas (tidak negatif).",
+        },
+        {
+          id: "finance",
+          title: "Parameter Kewangan (Tarif, Tempoh, Diskaun)",
+          target: "section-finance",
+          hint: "Apa perlu isi: tarif air, tarif pembetungan, tahun analisis, kadar diskaun.",
+          example: "Contoh: Tarif air 1.20, pembetungan 0.80, 20 tahun, diskaun 5%.",
+          required: () => normalizeNumber(analysisYearsInput.value) > 0,
+          requiredMessage: "Lengkapkan tarif/parameter kewangan.",
+        },
+        {
+          id: "alt",
+          title: "(Opsyenal) Sumber Alternatif + CAPEX/OPEX",
+          target: "section-alt",
+          hint: "Apa perlu isi: nama sumber, kapasiti, utiliti (% hari), CAPEX/OPEX.",
+          example: "Contoh: Tangkapan air hujan 300 m³/hari, utiliti 80%, CAPEX RM1.2j.",
+          required: () => true,
+          requiredMessage: "",
+        },
+        {
+          id: "summary",
+          title: "Kira & Semak Ringkasan",
+          target: "section-results",
+          hint: "Apa perlu isi: tekan Kira untuk lihat surplus/defisit.",
+          example: "Contoh: Tekan \"Kira permintaan & banding dengan bekalan\".",
+          required: () => summaryAvgMLDEl.textContent && summaryAvgMLDEl.textContent !== "–",
+          requiredMessage: "Tekan butang kira untuk menjana ringkasan.",
+        },
+        {
+          id: "export",
+          title: "Eksport (Excel) & Jana Laporan (PDF)",
+          target: "section-results",
+          hint: "Apa perlu isi: pilih skop & tahap laporan, kemudian Jana Laporan/Excel.",
+          example: "Contoh: Skop \"Senario terpilih\", Tahap \"Penuh\".",
+          required: () => true,
+          requiredMessage: "",
+        },
+      ];
+
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
         return num.toLocaleString("ms-MY", { maximumFractionDigits: 2 });
@@ -2159,6 +2415,17 @@
         return () => el.classList.remove("wizard-pointer");
       }
 
+      function highlightSection(targetId) {
+        let el = document.getElementById(targetId);
+        if (el && el.classList.contains("hidden")) {
+          el = sectionMap.demand || sectionMap.quick || el;
+        }
+        if (!el) return;
+        el.classList.add("section-highlight");
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => el.classList.remove("section-highlight"), 1800);
+      }
+
       function findByLabelText(text) {
         if (!text) return null;
         const labels = Array.from(document.querySelectorAll("label"));
@@ -2182,32 +2449,74 @@
         );
       }
 
-      function buildBarChartImage({ title, labels, datasets }) {
-        if (typeof Chart === "undefined" || !labels.length || !datasets.length) {
-          return "";
-        }
+      function renderOffscreenChart({ type, data, options, width = 1000, height = 520 }) {
+        if (typeof Chart === "undefined") return "";
         const canvas = document.createElement("canvas");
-        canvas.width = 1100;
-        canvas.height = 620;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext("2d");
         const chart = new Chart(ctx, {
-          type: "bar",
-          data: { labels, datasets },
+          type,
+          data,
           options: {
             responsive: false,
             animation: false,
+            maintainAspectRatio: false,
+            layout: { padding: 28 },
             plugins: {
               legend: { position: "top" },
-              title: { display: true, text: title },
+              title: { display: !!options?.plugins?.title?.text, text: options?.plugins?.title?.text },
             },
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: "Nilai" } },
-            },
+            ...options,
           },
         });
         const url = canvas.toDataURL("image/png", 1);
         chart.destroy();
         return url;
+      }
+
+      function buildBarChartImage({ title, labels, datasets }) {
+        if (!labels.length || !datasets.length) {
+          return "";
+        }
+        return renderOffscreenChart({
+          type: "bar",
+          data: { labels, datasets },
+          options: {
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: "Nilai" } },
+            },
+            plugins: { title: { display: true, text: title } },
+          },
+        });
+      }
+
+      function buildPieChartImage({ title, labels, data }) {
+        if (!labels.length || !data.length) return "";
+        return renderOffscreenChart({
+          type: "pie",
+          width: 720,
+          height: 720,
+          data: {
+            labels,
+            datasets: [{ data, backgroundColor: [
+              "rgba(13,110,253,0.85)",
+              "rgba(0,188,212,0.85)",
+              "rgba(3,169,244,0.85)",
+              "rgba(0,150,136,0.85)",
+              "rgba(63,81,181,0.85)",
+              "rgba(33,150,243,0.85)",
+              "rgba(0,200,83,0.85)",
+              "rgba(255,193,7,0.85)",
+            ] }],
+          },
+          options: {
+            plugins: {
+              legend: { position: "bottom" },
+              title: { display: true, text: title },
+            },
+          },
+        });
       }
 
       function buildSupplyDemandChartImage(summary) {
@@ -2508,6 +2817,89 @@
         validateWizardStep();
       }
 
+      function refreshStepperValidation() {
+        quickStepperConfig.forEach((step) => validateStepCard(step));
+      }
+
+      function setStepError(id, message) {
+        const card = stepperGrid?.querySelector(`[data-step-id="${id}"]`);
+        const msg = card?.querySelector(".step-error");
+        if (msg) {
+          msg.textContent = message || "";
+          msg.classList.toggle("hidden", !message);
+        }
+      }
+
+      function validateStepCard(step) {
+        if (!step) return true;
+        const ok = step.required ? !!step.required() : true;
+        setStepError(step.id, ok ? "" : step.requiredMessage);
+        return ok;
+      }
+
+      function buildStepper() {
+        if (!stepperGrid) return;
+        stepperGrid.innerHTML = quickStepperConfig
+          .map(
+            (step, idx) => `
+              <div class="step-card" data-step-id="${step.id}">
+                <h3><span class="step-number">${idx + 1}</span> ${step.title}</h3>
+                <p class="step-text">${step.hint}</p>
+                <p class="step-example"><strong>Contoh:</strong> ${step.example}</p>
+                <p class="step-error hidden"></p>
+                <div class="step-actions">
+                  <button type="button" class="secondary" data-action="go" data-target="${step.target}">Pergi ke langkah ini</button>
+                  <button type="button" class="primary" data-action="next" data-index="${idx}">Seterusnya</button>
+                </div>
+              </div>
+            `
+          )
+          .join("");
+
+        stepperGrid.addEventListener("click", (e) => {
+          const btn = e.target.closest("button[data-action]");
+          if (!btn) return;
+          const action = btn.dataset.action;
+          if (action === "go") {
+            const targetId = btn.dataset.target;
+            highlightSection(targetId);
+            validateStepCard(quickStepperConfig.find((s) => s.target === targetId));
+          }
+          if (action === "next") {
+            const idx = parseInt(btn.dataset.index, 10);
+            const step = quickStepperConfig[idx];
+            if (!validateStepCard(step)) return;
+            const next = quickStepperConfig[idx + 1];
+            if (next) {
+              highlightSection(next.target);
+            }
+          }
+        });
+        addSectionNavButtons();
+      }
+
+      function addSectionNavButtons() {
+        quickStepperConfig.forEach((step, idx) => {
+          const section = document.getElementById(step.target);
+          if (!section) return;
+          if (section.querySelector(".section-next")) return;
+          const next = quickStepperConfig[idx + 1];
+          if (!next) return;
+          const wrapper = document.createElement("div");
+          wrapper.style.marginTop = "0.8rem";
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "primary section-next";
+          btn.textContent = `Seterusnya: ${next.title.replace(/\\(.+\\)/, "").trim()}`;
+          btn.addEventListener("click", () => {
+            if (!validateStepCard(step)) return;
+            highlightSection(next.target);
+          });
+          wrapper.appendChild(btn);
+          section.appendChild(wrapper);
+        });
+      }
+
       function openWizard(auto) {
         wizardOverlay.classList.add("active");
         wizardOverlay.setAttribute("aria-hidden", "false");
@@ -2634,6 +3026,7 @@
         modeNote.textContent = noteText;
         toggleModeBlocks(mode);
         persistState();
+        refreshStepperValidation();
       }
 
       function clearElement(el) {
@@ -2809,12 +3202,19 @@
 
       function renderScenarioList() {
         clearElement(scenarioListEl);
+        const labels = {
+          A: "A: Baseline (JANS)",
+          B: "B: + Alternatif 1",
+          C: "C: + Alternatif 2/Kombinasi",
+        };
         Object.values(appState.scenarios).forEach((sc) => {
           const card = document.createElement("div");
           card.className = "scenario-card" + (sc.id === appState.activeScenarioId ? " active" : "");
           card.dataset.id = sc.id;
+          const label = labels[sc.id] || sc.name;
+          const displayName = label && sc.name && label !== sc.name ? `${label} · ${sc.name}` : (label || sc.name);
           card.innerHTML = `
-            <p class="scenario-title">${sc.name}</p>
+            <p class="scenario-title">${displayName}</p>
             <p class="scenario-meta">Mod: ${sc.mode || "quick"} · Dikemas kini: ${new Date(
               sc.updatedAt || Date.now()
             ).toLocaleDateString("ms-MY")}</p>
@@ -2877,6 +3277,7 @@
         renderScenarioList();
         persistState();
         calculate();
+        refreshStepperValidation();
       }
 
       function addScenario() {
@@ -2936,6 +3337,33 @@
         renderScenarioList();
         persistState();
         applyScenarioInputs(activeScenario().inputs);
+      }
+
+      function resetScenario() {
+        const id = appState.activeScenarioId || "A";
+        appState.scenarios[id] = createEmptyScenario(id, `Senario ${id}`);
+        renderScenarioList();
+        applyScenarioInputs(appState.scenarios[id].inputs);
+        persistState();
+      }
+
+      function loadPreset() {
+        quickInputs.pop.value = 15000;
+        quickInputs.percap.value = 150;
+        quickInputs.demand.value = 0;
+        quickInputs.peak.value = 1.3;
+        quickInputs.baseSupply.value = 5;
+        supplyInput.value = 5;
+        tariffWaterInput.value = 1.2;
+        tariffSewerInput.value = 0.8;
+        analysisYearsInput.value = 20;
+        discountRateInput.value = 5;
+        quickAltInputs.name.value = "Tangkapan air hujan mini";
+        quickAltInputs.capacity.value = 250;
+        quickAltInputs.util.value = 80;
+        quickAltInputs.capex.value = 900000;
+        quickAltInputs.opex.value = 50000;
+        calculate();
       }
 
       function saveActiveScenario() {
@@ -3402,6 +3830,7 @@
         saveActiveScenario();
         updateCompareTable();
         updateSensitivityUI();
+        refreshStepperValidation();
       }
 
       function updateDemandCharts(labels, avgData, peakData) {
@@ -3945,16 +4374,42 @@
           },
         };
 
-        const charts = {
-          demandByCategory: chartToImage(categoryChart, "demand-by-category-chart"),
-          demandShare: chartToImage(shareChart, "demand-share-chart"),
-          cbaNPV: chartToImage(cbaNpvChart, "cba-npv-chart"),
-          cbaPayback: chartToImage(cbaPaybackChart, "cba-payback-chart"),
-        };
-        const supplyDemandImg = buildSupplyDemandChartImage(summary);
-        const altMixImg = buildAltCompositionChartImage(lastAltSources);
-        if (supplyDemandImg) charts.supplyDemand = supplyDemandImg;
-        if (altMixImg) charts.altComposition = altMixImg;
+        const demandLabels = demandByCategory.map((d) => d.name);
+        const demandAvgData = demandByCategory.map((d) => parseNumberFromText(d.avg));
+        const demandPeakData = demandByCategory.map((d) => parseNumberFromText(d.peak));
+        const charts = {};
+        charts.demandByCategory = buildBarChartImage({
+          title: "Permintaan purata & puncak mengikut kategori",
+          labels: demandLabels,
+          datasets: [
+            { label: "Purata (m³/hari)", data: demandAvgData, backgroundColor: "rgba(13,110,253,0.8)" },
+            { label: "Puncak (m³/hari)", data: demandPeakData, backgroundColor: "rgba(0,188,212,0.8)" },
+          ],
+        });
+        charts.demandShare = buildPieChartImage({
+          title: "Agihan permintaan (%)",
+          labels: demandLabels,
+          data: demandAvgData,
+        });
+        const cbaLabels = altSources.map((a) => a.name);
+        const cbaNpvData = altSources.map((a) => parseNumberFromText(a.npv));
+        const cbaPaybackData = altSources.map((a) => parseNumberFromText(a.payback));
+        charts.cbaNPV = buildBarChartImage({
+          title: "NPV mengikut sumber alternatif",
+          labels: cbaLabels,
+          datasets: [
+            { label: "NPV (RM)", data: cbaNpvData, backgroundColor: "rgba(3,169,244,0.8)" },
+          ],
+        });
+        charts.cbaPayback = buildBarChartImage({
+          title: "Tempoh pulangan modal mengikut sumber",
+          labels: cbaLabels,
+          datasets: [
+            { label: "Payback (tahun)", data: cbaPaybackData, backgroundColor: "rgba(255,193,7,0.9)" },
+          ],
+        });
+        charts.supplyDemand = buildSupplyDemandChartImage(summary);
+        charts.altComposition = buildAltCompositionChartImage(lastAltSources);
 
         const disclaimerText =
           "Laporan ini dijana secara automatik berdasarkan input semasa kalkulator. " +
@@ -4112,8 +4567,10 @@
         const pageShell = (id, title, subtitle, body) => `
           <section class="report-page" id="${id}">
             <div class="page-header">
-              <span>Laporan Permintaan &amp; Bekalan Air UMS</span>
+              <span style="font-weight:700;">Laporan Permintaan &amp; Bekalan Air UMS</span>
+              <span>Senario ${data.activeScenarioName || data.activeScenarioId || "Aktif"}</span>
               <span>${data.generatedDate}</span>
+              <span class="page-number"></span>
             </div>
             <div class="section-block">
               <p class="section-tagline">${title}</p>
@@ -4127,6 +4584,27 @@
             </div>
           </section>
         `;
+
+        const tocPage = pageShell(
+          "toc",
+          "Kandungan",
+          "Table of Contents",
+          `
+            <div class="toc-box">
+              <p class="mini">Senarai kandungan (halaman)</p>
+              <ul class="toc-list">
+                <li><span class="label">Ringkasan Eksekutif</span><span class="page" data-page-ref="exec-summary"></span></li>
+                <li><span class="label">Metodologi & Andaian</span><span class="page" data-page-ref="method"></span></li>
+                <li><span class="label">Analisis Permintaan & Bekalan</span><span class="page" data-page-ref="results"></span></li>
+                <li><span class="label">Analisis Kewangan</span><span class="page" data-page-ref="finance"></span></li>
+                <li><span class="label">Perbandingan Senario</span><span class="page" data-page-ref="scenario-compare"></span></li>
+                <li><span class="label">Graf & Visual</span><span class="page" data-page-ref="visuals"></span></li>
+                <li><span class="label">Cadangan & Tindakan</span><span class="page" data-page-ref="recommendations"></span></li>
+                <li><span class="label">Lampiran</span><span class="page" data-page-ref="appendix"></span></li>
+              </ul>
+            </div>
+          `
+        );
 
         const execSummary = pageShell(
           "exec-summary",
@@ -4283,15 +4761,15 @@
         const visualsPage = pageShell(
           "visuals",
           "Graf & Visual",
-          "Paparan sokongan",
+          "Paparan sokongan dengan interpretasi",
           `
-            ${data.charts.supplyDemand ? `<div class="captioned-image"><img src="${data.charts.supplyDemand}" alt="Permintaan vs bekalan" /><div class="caption">Rajah: Permintaan purata & puncak berbanding bekalan efektif.</div></div>` : ""}
-            ${data.charts.altComposition ? `<div class="captioned-image"><img src="${data.charts.altComposition}" alt="Komposisi sumber alternatif" /><div class="caption">Rajah: Komposisi bekalan berkesan sumber alternatif.</div></div>` : ""}
-            ${data.charts.demandByCategory ? `<div class="captioned-image"><img src="${data.charts.demandByCategory}" alt="Permintaan mengikut kategori" /><div class="caption">Rajah: Permintaan purata dan puncak mengikut kategori.</div></div>` : ""}
-            ${data.charts.demandShare ? `<div class="captioned-image"><img src="${data.charts.demandShare}" alt="Agihan permintaan" /><div class="caption">Rajah: Agihan permintaan (%) mengikut kategori.</div></div>` : ""}
-            ${data.charts.cbaNPV ? `<div class="captioned-image"><img src="${data.charts.cbaNPV}" alt="NPV sumber alternatif" /><div class="caption">Rajah: NPV mengikut sumber alternatif.</div></div>` : ""}
-            ${data.charts.cbaPayback ? `<div class="captioned-image"><img src="${data.charts.cbaPayback}" alt="Pulangan modal sumber alternatif" /><div class="caption">Rajah: Tempoh pulangan modal mengikut sumber alternatif.</div></div>` : ""}
-            <p class="page-note">Graf diambil terus daripada Chart.js (base64) bagi menjamin kualiti cetakan.</p>
+            ${data.charts.supplyDemand ? `<div class="captioned-image"><img src="${data.charts.supplyDemand}" alt="Permintaan vs bekalan" /><div class="caption">Rajah 1: Permintaan purata & puncak berbanding bekalan efektif.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Permintaan purata/puncak melawan bekalan JANS + alternatif. <strong>Implikasi keputusan:</strong> Jika bar permintaan puncak melebihi bekalan, fokuskan mitigasi puncak (stor/incremental supply). <strong>Tindakan dicadangkan:</strong> Semak bekalan asas, tambah sumber alternatif atau pelarasan faktor puncak.</p></div>` : ""}
+            ${data.charts.altComposition ? `<div class="captioned-image"><img src="${data.charts.altComposition}" alt="Komposisi sumber alternatif" /><div class="caption">Rajah 2: Komposisi bekalan berkesan sumber alternatif.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Sumbangan setiap sumber alternatif (m³/hari berkesan). <strong>Implikasi keputusan:</strong> Sumber dominan perlu dijamin kebolehpercayaan utiliti. <strong>Tindakan dicadangkan:</strong> Laksanakan penyelenggaraan/penguatan sumber teratas dan rancang diversifikasi.</p></div>` : ""}
+            ${data.charts.demandByCategory ? `<div class="captioned-image"><img src="${data.charts.demandByCategory}" alt="Permintaan mengikut kategori" /><div class="caption">Rajah 3: Permintaan purata dan puncak mengikut kategori.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Keperluan air kategori utama (asrama, fakulti, dsb.). <strong>Implikasi keputusan:</strong> Kategori tertinggi memacu defisit; keutamaan audit kebocoran/kecekapan di sana. <strong>Tindakan dicadangkan:</strong> Meter sub-zon, kempen jimat air kategori tinggi.</p></div>` : ""}
+            ${data.charts.demandShare ? `<div class="captioned-image"><img src="${data.charts.demandShare}" alt="Agihan permintaan" /><div class="caption">Rajah 4: Agihan permintaan (%) mengikut kategori.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Peratusan sumbangan kategori kepada keseluruhan permintaan. <strong>Implikasi keputusan:</strong> Kecekapan pada kategori dominan memberi impak terbesar. <strong>Tindakan dicadangkan:</strong> Sasarkan program kecekapan/penukaran peralatan di kategori >20% sumbangan.</p></div>` : ""}
+            ${data.charts.cbaNPV ? `<div class="captioned-image"><img src="${data.charts.cbaNPV}" alt="NPV sumber alternatif" /><div class="caption">Rajah 5: NPV mengikut sumber alternatif.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Nilai kini bersih setiap pilihan. <strong>Implikasi keputusan:</strong> Pilihan NPV tertinggi patut didahulukan; NPV negatif perlukan penstrukturan semula kos/faedah. <strong>Tindakan dicadangkan:</strong> Semak andaian CAPEX/OPEX, laksana fasa untuk pilihan hampir neutral.</p></div>` : ""}
+            ${data.charts.cbaPayback ? `<div class="captioned-image"><img src="${data.charts.cbaPayback}" alt="Pulangan modal sumber alternatif" /><div class="caption">Rajah 6: Tempoh pulangan modal mengikut sumber alternatif.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Tahun pulangan modal bagi setiap sumber. <strong>Implikasi keputusan:</strong> Payback pendek sesuai untuk keputusan segera/pembiayaan dalaman. <strong>Tindakan dicadangkan:</strong> Pilih sumber payback &lt;5 tahun untuk fasa 1; simpan yang lebih panjang sebagai fasa kemudian.</p></div>` : ""}
+            <p class="page-note">Graf diambil daripada kanvas luar skrin (900–1100px) dengan padding, memastikan tiada pie/bar terpotong dalam PDF.</p>
           `
         );
 
@@ -4360,6 +4838,7 @@
 
         return [
           cover,
+          tocPage,
           execSummary,
           methodology,
           demandSupply,
@@ -4424,8 +4903,52 @@
           doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
         }
 
+        if (doc.autoTable) {
+          doc.addPage();
+          doc.setFontSize(12);
+          doc.text("Lampiran Jadual Terperinci (AutoTable)", 14, 14);
+          const altRows = data.altSources.map((r) => [
+            r.name,
+            r.capacity,
+            r.util,
+            r.capex,
+            r.opex,
+            r.npv,
+            r.bcr,
+          ]);
+          if (altRows.length) {
+            doc.autoTable({
+              head: [["Sumber", "Kapasiti (m³/hari)", "Utilisasi (% hari)", "CAPEX (RM)", "OPEX (RM/tahun)", "NPV (RM)", "BCR"]],
+              body: altRows,
+              theme: "grid",
+              styles: { fontSize: 8 },
+              startY: 20,
+              margin: { left: 14, right: 14 },
+            });
+          }
+
+          const capexRows = data.capexOpexItems.map((r) => [
+            r.type,
+            r.name,
+            r.qty,
+            r.cost,
+            r.total,
+            r.note || "-",
+          ]);
+          if (capexRows.length) {
+            doc.autoTable({
+              head: [["Jenis", "Item / Komponen", "Kuantiti", "Kos seunit (RM)", "Jumlah (RM)", "Catatan"]],
+              body: capexRows,
+              theme: "grid",
+              styles: { fontSize: 8 },
+              margin: { left: 14, right: 14 },
+              startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : undefined,
+            });
+          }
+        }
+
         reportRoot.classList.add("hidden");
-        const safeScenario = (data.activeScenarioId || "Aktif").replace(/\\W+/g, "_");
+        const safeScenario = (data.activeScenarioId || "Aktif").replace(/\W+/g, "_");
         doc.save(`Laporan_UMS_Water_${safeScenario}_${data.fileDate}.pdf`);
       }
       // END REPORT UPDATE
@@ -4635,10 +5158,10 @@
         updateWizardNav();
       }
 
-      wizardOpenBtn.addEventListener("click", () => openWizard(false));
-      wizardCloseBtn.addEventListener("click", closeWizard);
-      wizardBackBtn.addEventListener("click", () => goWizard(-1));
-      wizardNextBtn.addEventListener("click", () => {
+      if (wizardOpenBtn) wizardOpenBtn.addEventListener("click", () => openWizard(false));
+      if (wizardCloseBtn) wizardCloseBtn.addEventListener("click", closeWizard);
+      if (wizardBackBtn) wizardBackBtn.addEventListener("click", () => goWizard(-1));
+      if (wizardNextBtn) wizardNextBtn.addEventListener("click", () => {
         const steps = wizardStepsConfig();
         if (wizardStep >= steps.length - 1) {
           closeWizard();
@@ -4646,9 +5169,15 @@
           goWizard(1);
         }
       });
-      wizardSkipBtn.addEventListener("click", () => goWizard(1));
-      document.addEventListener("input", () => validateWizardStep());
-      document.addEventListener("change", () => validateWizardStep());
+      if (wizardSkipBtn) wizardSkipBtn.addEventListener("click", () => goWizard(1));
+      document.addEventListener("input", () => {
+        validateWizardStep();
+        refreshStepperValidation();
+      });
+      document.addEventListener("change", () => {
+        validateWizardStep();
+        refreshStepperValidation();
+      });
 
       modeSelector.addEventListener("click", (e) => {
         const pill = e.target.closest(".pill");
@@ -4676,6 +5205,13 @@
         calculate();
       });
 
+      toggleAdvancedBtn?.addEventListener("click", () => {
+        document.body.classList.toggle("show-advanced");
+        toggleAdvancedBtn.textContent = document.body.classList.contains("show-advanced")
+          ? "Sembunyi input terperinci"
+          : "👀 Papar input terperinci";
+      });
+
       fixInputBtn.addEventListener("click", () => {
         const invalid = document.querySelector(".invalid");
         if (invalid) {
@@ -4700,8 +5236,12 @@
         saveActiveScenario();
         alert("Senario disimpan dalam pelayar.");
       });
+      resetScenarioBtn?.addEventListener("click", resetScenario);
+      presetBtn?.addEventListener("click", loadPreset);
 
       // Kiraan awal dengan nilai contoh
+      buildStepper();
+      refreshStepperValidation();
       loadState();
       renderScenarioList();
       setMode(appState.mode);
@@ -4709,9 +5249,6 @@
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       calculate();
-      if (!wizardSeen) {
-        setTimeout(() => openWizard(true), 500);
-      }
     });
   </script>
 </body>
