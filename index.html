@@ -1115,12 +1115,81 @@
       position: sticky;
       top: 72px;
       z-index: 9;
-      background: linear-gradient(135deg, rgba(13, 110, 253, 0.07), rgba(0, 188, 212, 0.07));
-      backdrop-filter: blur(6px);
+      background: #ffffff;
       margin: 0 0 1rem;
-      padding: 0.85rem 1rem;
       border-bottom: 1px solid #d5e4f7;
       box-shadow: 0 8px 22px rgba(13, 110, 253, 0.08);
+    }
+
+    .quick-stepper .stepper-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .stepper-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-height: 44px;
+      padding: 0.45rem 1rem;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, rgba(13, 110, 253, 0.07), rgba(0, 188, 212, 0.07));
+      backdrop-filter: blur(6px);
+      z-index: 2;
+    }
+
+    .stepper-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .stepper-title {
+      margin: 0;
+      color: #0d2e55;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-size: 0.98rem;
+    }
+
+    .stepper-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #cfe1f5;
+      cursor: pointer;
+      color: #0d2e55;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(13, 110, 253, 0.08);
+    }
+
+    .stepper-toggle:hover { background: #f4f8ff; }
+
+    .stepper-panel {
+      padding: 0.6rem 1rem 1rem;
+      transition: max-height 0.25s ease, opacity 0.25s ease;
+      background: #f9fcff;
+      border-top: 1px solid #d5e4f7;
+    }
+
+    .stepper-panel.hidden {
+      display: none;
+    }
+
+    .stepper-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      margin: 0 auto 0.4rem;
+      max-width: 1100px;
+      flex-wrap: wrap;
     }
 
     .stepper-grid {
@@ -1175,6 +1244,22 @@
       color: #b3261e;
       font-size: 0.83rem;
       margin: 0;
+    }
+
+    .floating-stepper-btn {
+      position: fixed;
+      right: 18px;
+      bottom: 20px;
+      padding: 0.75rem 0.95rem;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 10px 24px rgba(13, 110, 253, 0.2);
+      cursor: pointer;
+      z-index: 11;
+      display: none;
     }
 
     .section-highlight {
@@ -1278,16 +1363,28 @@
   </header>
 
   <main>
-    <section class="quick-stepper" aria-label="Quick start stepper">
-      <div style="max-width:1100px;margin:0 auto 0.4rem;display:flex;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;">
-        <div>
-          <p style="margin:0;color:#0d2e55;font-weight:800;letter-spacing:0.02em;">Quick Start: 8 Langkah</p>
-          <p style="margin:0;color:#34526e;font-size:0.9rem;">Ikut urutan ringkas di bawah. Setiap langkah ada contoh & pautan pantas.</p>
+    <section class="quick-stepper" id="quick-stepper" aria-label="Quick start stepper">
+      <div class="stepper-inner">
+        <div class="stepper-bar" id="stepper-bar">
+          <div class="stepper-bar-left">
+            <p class="stepper-title">Quick Start: 8 Langkah</p>
+            <div class="status-badge" id="stepper-status-pill">Belum lengkap</div>
+          </div>
+          <button type="button" class="stepper-toggle" id="stepper-toggle" aria-expanded="false" aria-controls="stepper-panel">
+            <span id="stepper-toggle-text">Papar</span>
+            <span id="stepper-toggle-icon" aria-hidden="true">▸</span>
+          </button>
         </div>
-        <div class="status-badge" id="stepper-status-pill">Belum lengkap</div>
+        <div class="stepper-panel hidden" id="stepper-panel">
+          <div class="stepper-panel-header">
+            <p style="margin:0;color:#34526e;font-size:0.9rem;">Ikut urutan ringkas di bawah. Setiap langkah ada contoh & pautan pantas.</p>
+            <button type="button" class="secondary" id="stepper-close">Tutup ✕</button>
+          </div>
+          <div class="stepper-grid" id="stepper-grid"></div>
+        </div>
       </div>
-      <div class="stepper-grid" id="stepper-grid"></div>
     </section>
+    <button type="button" class="floating-stepper-btn" id="stepper-floating-btn">Langkah</button>
 
     <div class="wizard-overlay" id="wizard-overlay" aria-hidden="true">
       <div class="wizard-dialog" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
@@ -2175,14 +2272,22 @@
       const wizardOverlay = document.getElementById("wizard-overlay");
       const wizardContent = document.getElementById("wizard-content");
       const wizardStepList = document.getElementById("wizard-step-list");
+      const quickStepper = document.getElementById("quick-stepper");
+      const stepperPanel = document.getElementById("stepper-panel");
       const stepperGrid = document.getElementById("stepper-grid");
       const stepperStatusPill = document.getElementById("stepper-status-pill");
+      const stepperToggle = document.getElementById("stepper-toggle");
+      const stepperToggleIcon = document.getElementById("stepper-toggle-icon");
+      const stepperToggleText = document.getElementById("stepper-toggle-text");
+      const stepperCloseBtn = document.getElementById("stepper-close");
+      const stepperFloatingBtn = document.getElementById("stepper-floating-btn");
       const wizardOpenBtn = document.getElementById("btn-open-wizard");
       const wizardCloseBtn = document.getElementById("btn-close-wizard");
       const wizardNextBtn = document.getElementById("wizard-next");
       const wizardBackBtn = document.getElementById("wizard-back");
       const wizardSkipBtn = document.getElementById("wizard-skip");
       const wizardStatus = document.getElementById("wizard-status");
+      const mainEl = document.querySelector("main");
       const sectionMap = {
         mode: document.getElementById("section-mode"),
         quick: document.getElementById("section-quick"),
@@ -2358,6 +2463,10 @@
       const WIZARD_STORAGE_KEY = "ums-water-wizard-seen";
       let wizardSeen = localStorage.getItem(WIZARD_STORAGE_KEY) === "1";
       let wizardStep = 0;
+      const STEPPER_STATE_KEY = "ums-water-stepper-state";
+      let stepperState = { expanded: false, seen: false };
+      let stepperAutoCollapseTimer = null;
+      let stepperAutoCollapseArmed = false;
       const WIZ_SELECTORS = {
         mode: ["#mode-selector .pill[data-mode]"],
         scenarioA: [".btn-load-scenario[data-id='A']", "#scenario-list .scenario-card", "text:Senario A", "text:Muat & kira"],
@@ -2377,6 +2486,89 @@
         exportExcel: ["#export-excel-btn", "text:Eksport"],
         exportPdf: ["#btn-generate-report", "text:Jana Laporan"],
       };
+
+      function loadStepperState() {
+        try {
+          const raw = localStorage.getItem(STEPPER_STATE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            stepperState = {
+              expanded: !!parsed.expanded,
+              seen: !!parsed.seen,
+            };
+          }
+        } catch (e) {
+          stepperState = { expanded: false, seen: false };
+        }
+      }
+
+      function saveStepperState() {
+        try {
+          localStorage.setItem(STEPPER_STATE_KEY, JSON.stringify(stepperState));
+        } catch (e) {
+          // ignore storage failures
+        }
+      }
+
+      function cancelAutoCollapse() {
+        if (stepperAutoCollapseTimer) {
+          clearTimeout(stepperAutoCollapseTimer);
+          stepperAutoCollapseTimer = null;
+        }
+        stepperAutoCollapseArmed = false;
+      }
+
+      function updateFloatingButton() {
+        if (!stepperFloatingBtn) return;
+        const shouldShow = !stepperState.expanded && window.scrollY > 300;
+        stepperFloatingBtn.style.display = shouldShow ? "inline-flex" : "none";
+      }
+
+      function updateStepperUI() {
+        if (!quickStepper || !stepperPanel || !stepperToggle) return;
+        quickStepper.classList.toggle("expanded", stepperState.expanded);
+        quickStepper.classList.toggle("collapsed", !stepperState.expanded);
+        stepperPanel.classList.toggle("hidden", !stepperState.expanded);
+        stepperToggle.setAttribute("aria-expanded", stepperState.expanded ? "true" : "false");
+        if (stepperToggleText) {
+          stepperToggleText.textContent = stepperState.expanded ? "Sembunyi" : "Papar";
+        }
+        if (stepperToggleIcon) {
+          stepperToggleIcon.textContent = stepperState.expanded ? "▾" : "▸";
+        }
+        updateFloatingButton();
+      }
+
+      function setStepperExpanded(expanded, { source = "manual", scrollIntoView = false } = {}) {
+        if (typeof expanded !== "boolean") return;
+        stepperState.expanded = expanded;
+        if (expanded) {
+          stepperState.seen = true;
+          cancelAutoCollapse();
+          if (scrollIntoView && quickStepper) {
+            quickStepper.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        } else {
+          cancelAutoCollapse();
+        }
+        saveStepperState();
+        updateStepperUI();
+      }
+
+      function armAutoCollapse() {
+        cancelAutoCollapse();
+        stepperAutoCollapseArmed = true;
+        stepperAutoCollapseTimer = setTimeout(() => autoCollapseNow("timer"), 5000);
+      }
+
+      function autoCollapseNow() {
+        if (!stepperAutoCollapseArmed) return;
+        stepperAutoCollapseArmed = false;
+        cancelAutoCollapse();
+        if (stepperState.expanded) {
+          setStepperExpanded(false, { source: "auto" });
+        }
+      }
 
       const quickStepperConfig = [
         {
@@ -3030,6 +3222,57 @@
           wrapper.appendChild(btn);
           section.appendChild(wrapper);
         });
+      }
+
+      function handleStepperScroll() {
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (stepperAutoCollapseArmed && y > 0) {
+          autoCollapseNow();
+        }
+        if (y > 120 && stepperState.expanded) {
+          setStepperExpanded(false, { source: "scroll" });
+        }
+        if (quickStepper) {
+          quickStepper.classList.toggle("near-top", y < 80);
+        }
+        updateFloatingButton();
+      }
+
+      function handleStepperFocusCollapse(event) {
+        const target = event.target;
+        if (!target || quickStepper?.contains(target)) return;
+        if (mainEl && !mainEl.contains(target)) return;
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
+          setStepperExpanded(false, { source: "focus" });
+          autoCollapseNow();
+        }
+      }
+
+      function initStepperBehavior() {
+        loadStepperState();
+        updateStepperUI();
+        if (!stepperState.seen) {
+          setTimeout(() => {
+            if (stepperState.seen || stepperState.expanded || window.scrollY > 150) return;
+            setStepperExpanded(true, { source: "auto" });
+            armAutoCollapse();
+          }, 400);
+        }
+        stepperToggle?.addEventListener("click", () => {
+          setStepperExpanded(!stepperState.expanded, { source: "toggle" });
+          if (stepperState.expanded && quickStepper) {
+            quickStepper.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+        stepperCloseBtn?.addEventListener("click", () => setStepperExpanded(false, { source: "close" }));
+        stepperFloatingBtn?.addEventListener("click", () => {
+          const nextState = !stepperState.expanded;
+          setStepperExpanded(nextState, { source: "floating", scrollIntoView: true });
+        });
+        window.addEventListener("scroll", handleStepperScroll, { passive: true });
+        document.addEventListener("focusin", handleStepperFocusCollapse, true);
+        handleStepperScroll();
       }
 
       function openWizard(auto) {
@@ -5532,9 +5775,11 @@
       });
       resetScenarioBtn?.addEventListener("click", resetScenario);
       presetBtn?.addEventListener("click", loadPreset);
+      calcBtn?.addEventListener("click", () => setStepperExpanded(false, { source: "calculate" }));
 
       // Kiraan awal dengan nilai contoh
       buildStepper();
+      initStepperBehavior();
       refreshStepperValidation();
       loadState();
       renderScenarioList();
