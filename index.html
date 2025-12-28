@@ -1195,6 +1195,69 @@
       margin-left: 0.35rem;
       vertical-align: middle;
     }
+
+    .muted {
+      opacity: 0.5;
+      filter: grayscale(0.15);
+      pointer-events: none;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid #cfe1f5;
+      background: #f4f8ff;
+      color: #12324a;
+    }
+
+    .status-badge.done {
+      background: #e8fff3;
+      border-color: #a7eec5;
+      color: #006c3f;
+    }
+
+    .status-badge.calculated {
+      background: #e6f2ff;
+      border-color: #9ec9ff;
+      color: #0d3f91;
+    }
+
+    .demand-toggle {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.6rem;
+      margin: 0.6rem 0 0.2rem;
+    }
+
+    .demand-toggle label {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.85rem;
+      border: 1px solid #cfe1f5;
+      background: #f9fcff;
+      cursor: pointer;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .demand-toggle input {
+      width: 1.05rem;
+      height: 1.05rem;
+      accent-color: var(--primary);
+    }
+
+    .demand-mode-note {
+      margin-top: 0.2rem;
+      color: #476582;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -1216,6 +1279,13 @@
 
   <main>
     <section class="quick-stepper" aria-label="Quick start stepper">
+      <div style="max-width:1100px;margin:0 auto 0.4rem;display:flex;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;">
+        <div>
+          <p style="margin:0;color:#0d2e55;font-weight:800;letter-spacing:0.02em;">Quick Start: 8 Langkah</p>
+          <p style="margin:0;color:#34526e;font-size:0.9rem;">Ikut urutan ringkas di bawah. Setiap langkah ada contoh & pautan pantas.</p>
+        </div>
+        <div class="status-badge" id="stepper-status-pill">Belum lengkap</div>
+      </div>
       <div class="stepper-grid" id="stepper-grid"></div>
     </section>
 
@@ -1282,6 +1352,9 @@
     <section class="card mode-block" data-modes="full,operational,quick">
       <h2><span class="icon">🧪</span> Analisis Sensitiviti (+/−10%)</h2>
       <p class="lead">Lihat kesan perubahan kos/manfaat terhadap NPV & BCR projek alternatif.</p>
+      <div class="inline-alert" id="sens-empty" style="display:none;">
+        Analisis sensitiviti akan muncul selepas kiraan lengkap (Mod Full/Operational) dengan CAPEX, OPEX dan parameter kewangan lengkap.
+      </div>
       <div class="input-grid">
         <div>
           <div class="label">Senario asas</div>
@@ -1306,6 +1379,9 @@
     <section class="card">
       <h2><span class="icon">🧮</span> Perbandingan Senario A/B/C</h2>
       <p class="lead">Bandingkan metrik utama (permintaan, bekalan, defisit, NPV, BCR, IRR, Payback) untuk senario yang disimpan.</p>
+      <div class="inline-alert" id="compare-empty" style="display:none;">
+        Perbandingan memerlukan sekurang-kurangnya dua senario yang telah dikira. Gandakan atau tambah senario, jalankan kiraan, kemudian semak semula di sini.
+      </div>
       <div class="compare-grid">
         <table id="scenario-compare-table">
           <thead>
@@ -1332,6 +1408,22 @@
 
     <section class="card mode-block" data-modes="quick" id="section-quick">
       <h2><span class="icon">⏱️</span> Input Pantas (Quick Estimate)</h2>
+      <div class="demand-toggle" role="radiogroup" aria-label="Pilih mod permintaan">
+        <label>
+          <input type="radio" name="demand-mode" value="quick" checked />
+          <div>
+            <div><strong>Gunakan Demand Quick (ringkas)</strong></div>
+            <div class="demand-mode-note">Isi jumlah permintaan harian atau Populasi × per kapita.</div>
+          </div>
+        </label>
+        <label>
+          <input type="radio" name="demand-mode" value="category" />
+          <div>
+            <div><strong>Gunakan Demand Mengikut Kategori (terperinci)</strong></div>
+            <div class="demand-mode-note">Buka jadual kategori di bahagian bawah dan isi sekurang-kurangnya satu baris.</div>
+          </div>
+        </label>
+      </div>
       <div class="btn-row" style="margin-top:0;">
         <button type="button" class="secondary" id="btn-toggle-advanced">👀 Papar input terperinci</button>
       </div>
@@ -1417,6 +1509,7 @@
 
     <section class="card" id="section-scenario">
       <h2><span class="icon">🗂️</span> Pengurus Senario (A/B/C)</h2>
+      <p id="active-scenario-banner" class="lead" style="font-weight:700;color:#0d2e55;">Senario aktif: A (Baseline) · Status: Belum disimpan</p>
       <div class="toolbar stacked">
         <div class="scenario-actions">
           <button type="button" class="secondary" id="btn-add-scenario">➕ Senario baharu</button>
@@ -1434,6 +1527,7 @@
     <!-- INPUT KATEGORI DEMAND -->
     <section class="card mode-block" data-modes="operational,full" id="section-demand">
       <h2><span class="icon">📥</span> Input Permintaan Air Mengikut Kategori</h2>
+      <div class="demand-mode-note" id="category-guard">Pilih “Gunakan Demand Mengikut Kategori” untuk mengaktifkan jadual ini. Input Quick akan dikunci.</div>
       <p class="lead">
         Tetapkan kategori (contoh: Asrama, Fakulti & Pentadbiran, Masjid, Sukan)
         bersama bilangan pengguna, kadar penggunaan per kapita, dan faktor
@@ -1885,6 +1979,13 @@
               <label for="prepared-by">Disediakan oleh (opsyenal)</label>
               <input type="text" id="prepared-by" placeholder="Nama penyedia laporan" />
             </div>
+            <div class="mini-input">
+              <label for="pdf-charts-toggle">Sertakan grafik</label>
+              <select id="pdf-charts-toggle">
+                <option value="yes">Ya, sertakan carta & rajah</option>
+                <option value="no">Tidak perlu carta</option>
+              </select>
+            </div>
           </div>
 
           <div class="btn-row" style="margin-top: 0.8rem;">
@@ -1908,6 +2009,7 @@
 
         <div>
           <canvas id="demand-by-category-chart" height="200"></canvas>
+          <div class="summary-text" id="chart-explain-category"></div>
         </div>
       </div>
     </section>
@@ -1920,6 +2022,7 @@
         keseluruhan kampus.
       </p>
       <canvas id="demand-share-chart" height="200"></canvas>
+      <div class="summary-text" id="chart-explain-share"></div>
     </section>
 
     <!-- ANALISIS CBA SUMBER ALTERNATIF -->
@@ -2009,7 +2112,9 @@
 
         <div>
           <canvas id="cba-npv-chart" height="200" style="margin-bottom:0.8rem;"></canvas>
+          <div class="summary-text" id="chart-explain-npv"></div>
           <canvas id="cba-payback-chart" height="200"></canvas>
+          <div class="summary-text" id="chart-explain-payback"></div>
         </div>
       </div>
     </section>
@@ -2071,6 +2176,7 @@
       const wizardContent = document.getElementById("wizard-content");
       const wizardStepList = document.getElementById("wizard-step-list");
       const stepperGrid = document.getElementById("stepper-grid");
+      const stepperStatusPill = document.getElementById("stepper-status-pill");
       const wizardOpenBtn = document.getElementById("btn-open-wizard");
       const wizardCloseBtn = document.getElementById("btn-close-wizard");
       const wizardNextBtn = document.getElementById("wizard-next");
@@ -2103,9 +2209,12 @@
       const pdfScopeSelect = document.getElementById("pdf-scope");
       const pdfLevelSelect = document.getElementById("pdf-level");
       const preparedByInput = document.getElementById("prepared-by");
+      const pdfChartsToggle = document.getElementById("pdf-charts-toggle");
       const reportRoot = document.getElementById("reportRoot");
       const categoryBody = document.getElementById("category-body");
       const toggleAdvancedBtn = document.getElementById("btn-toggle-advanced");
+      const demandModeRadios = document.querySelectorAll("input[name='demand-mode']");
+      const categoryGuard = document.getElementById("category-guard");
 
       const addAltRowBtn = document.getElementById("add-alt-row-btn");
       const altBody = document.getElementById("alt-body");
@@ -2142,6 +2251,10 @@
       const statusAvgEl = document.getElementById("status-avg");
       const statusPeakEl = document.getElementById("status-peak");
       const summaryTextEl = document.getElementById("summary-text");
+      const chartExplainCategory = document.getElementById("chart-explain-category");
+      const chartExplainShare = document.getElementById("chart-explain-share");
+      const chartExplainNPV = document.getElementById("chart-explain-npv");
+      const chartExplainPayback = document.getElementById("chart-explain-payback");
 
       const rowAvg = document.getElementById("row-avg");
       const rowPeak = document.getElementById("row-peak");
@@ -2164,6 +2277,7 @@
       const sumNPVEl = document.getElementById("sum-npv");
       const sumBCREl = document.getElementById("sum-bcr");
       const sumIRREl = document.getElementById("sum-irr");
+      const activeScenarioBanner = document.getElementById("active-scenario-banner");
 
       const tariffWaterInput = document.getElementById("tariff-water");
       const tariffSewerInput = document.getElementById("tariff-sewer");
@@ -2203,6 +2317,8 @@
         opex: document.getElementById("sens-opex"),
         benefit: document.getElementById("sens-benefit"),
       };
+      const compareEmpty = document.getElementById("compare-empty");
+      const sensEmpty = document.getElementById("sens-empty");
 
       if (window.Chart && Chart.defaults) {
         Chart.defaults.animation = false;
@@ -2234,6 +2350,7 @@
       let appState = {
         version: SCHEMA_VERSION,
         mode: "quick",
+        demandMode: "quick",
         activeScenarioId: "A",
         scenarios: {},
       };
@@ -2287,7 +2404,7 @@
           hint: "Apa perlu isi: jumlah permintaan harian atau populasi + per kapita + faktor puncak.",
           example: "Contoh: 15,000 orang × 160 L/orang/hari, faktor puncak 1.3.",
           required: () => {
-            if (appState.mode === "quick") {
+            if (appState.demandMode === "quick") {
               const pop = normalizeNumber(quickInputs.pop.value);
               const percap = normalizeNumber(quickInputs.percap.value);
               const demand = normalizeNumber(quickInputs.demand.value);
@@ -2819,6 +2936,21 @@
 
       function refreshStepperValidation() {
         quickStepperConfig.forEach((step) => validateStepCard(step));
+        if (stepperStatusPill) {
+          const stepStates = quickStepperConfig.map((s) => validateStepCard(s));
+          const baseComplete = stepStates.slice(0, 6).every(Boolean);
+          const calcComplete = quickStepperConfig.find((s) => s.id === "summary")?.required?.();
+          if (calcComplete) {
+            stepperStatusPill.textContent = "Sudah dikira";
+            stepperStatusPill.className = "status-badge calculated";
+          } else if (baseComplete) {
+            stepperStatusPill.textContent = "Lengkap";
+            stepperStatusPill.className = "status-badge done";
+          } else {
+            stepperStatusPill.textContent = "Belum lengkap";
+            stepperStatusPill.className = "status-badge";
+          }
+        }
       }
 
       function setStepError(id, message) {
@@ -2929,8 +3061,11 @@
           id,
           name,
           mode: "quick",
+          demandMode: "quick",
           inputs: {},
           outputs: {},
+          savedAt: null,
+          calculatedAt: null,
           updatedAt: Date.now(),
         };
       }
@@ -2954,6 +3089,7 @@
         return {
           version: SCHEMA_VERSION,
           mode: scenario.mode,
+          demandMode: "quick",
           activeScenarioId: "A",
           scenarios: { A: scenario },
         };
@@ -2966,6 +3102,7 @@
             const parsed = JSON.parse(raw);
             if (parsed.version === SCHEMA_VERSION) {
               appState = parsed;
+              appState.demandMode = appState.demandMode || "quick";
               return;
             }
           }
@@ -2984,6 +3121,7 @@
         appState = {
           version: SCHEMA_VERSION,
           mode: "quick",
+          demandMode: "quick",
           activeScenarioId: "A",
           scenarios: { A: createEmptyScenario("A", "Senario A") },
         };
@@ -3010,6 +3148,48 @@
             section.classList.add("hidden");
           }
         });
+      }
+
+      function setQuickInputsDisabled(disabled) {
+        Object.values(quickInputs).forEach((el) => {
+          if (!el) return;
+          el.disabled = disabled;
+          el.classList.toggle("muted", disabled);
+        });
+        Object.values(quickAltInputs).forEach((el) => {
+          if (!el) return;
+          el.disabled = disabled;
+          el.classList.toggle("muted", disabled);
+        });
+        document.getElementById("section-quick")?.classList.toggle("muted", disabled);
+      }
+
+      function setCategoryInputsDisabled(disabled) {
+        document.querySelectorAll("#section-demand input").forEach((el) => {
+          el.disabled = disabled;
+          el.classList.toggle("muted", disabled);
+        });
+        document.getElementById("section-demand")?.classList.toggle("muted", disabled);
+        if (categoryGuard) {
+          categoryGuard.textContent = disabled
+            ? "Pilih “Gunakan Demand Mengikut Kategori” untuk mengaktifkan jadual ini. Input Quick akan dikunci."
+            : "Mod kategori aktif. Input Quick dikunci supaya tidak bercampur.";
+        }
+      }
+
+      function setDemandMode(mode, skipPersist = false) {
+        appState.demandMode = mode;
+        demandModeRadios.forEach((r) => {
+          r.checked = r.value === mode;
+        });
+        const useQuick = mode === "quick";
+        setQuickInputsDisabled(!useQuick);
+        setCategoryInputsDisabled(useQuick);
+        if (!useQuick) {
+          document.body.classList.add("show-advanced");
+        }
+        if (!skipPersist) persistState();
+        refreshStepperValidation();
       }
 
       function setMode(mode) {
@@ -3149,6 +3329,7 @@
         );
         return {
           mode: appState.mode,
+          demandMode: appState.demandMode,
           quick: {
             pop: quickInputs.pop.value,
             percap: quickInputs.percap.value,
@@ -3177,6 +3358,7 @@
       function applyScenarioInputs(data) {
         if (!data) return;
         setMode(data.mode || "quick");
+        setDemandMode(data.demandMode || "quick", true);
         quickInputs.pop.value = data.quick?.pop || "";
         quickInputs.percap.value = data.quick?.percap || "";
         quickInputs.demand.value = data.quick?.demand || "";
@@ -3213,28 +3395,45 @@
           card.dataset.id = sc.id;
           const label = labels[sc.id] || sc.name;
           const displayName = label && sc.name && label !== sc.name ? `${label} · ${sc.name}` : (label || sc.name);
+          const savedText = sc.savedAt ? `Disimpan: ${formatDateTime(sc.savedAt)}` : "Belum disimpan";
+          const calcText = sc.calculatedAt ? `Sudah dikira: ${formatDateTime(sc.calculatedAt)}` : "Belum dikira";
           card.innerHTML = `
             <p class="scenario-title">${displayName}</p>
-            <p class="scenario-meta">Mod: ${sc.mode || "quick"} · Dikemas kini: ${new Date(
-              sc.updatedAt || Date.now()
-            ).toLocaleDateString("ms-MY")}</p>
+            <p class="scenario-meta">Mod: ${sc.mode || "quick"} · ${savedText} · ${calcText}</p>
             <div class="scenario-actions">
               <button type="button" class="secondary btn-load-scenario" data-id="${sc.id}">Muat & kira</button>
             </div>
           `;
           scenarioListEl.appendChild(card);
         });
+        updateActiveScenarioBanner();
+      }
+
+      function formatDateTime(ts) {
+        if (!ts) return "";
+        return new Date(ts).toLocaleString("ms-MY", { hour12: false });
+      }
+
+      function updateActiveScenarioBanner() {
+        const sc = activeScenario();
+        if (!sc || !activeScenarioBanner) return;
+        const calcStatus = sc.calculatedAt ? `Sudah dikira ${formatDateTime(sc.calculatedAt)}` : "Belum dikira";
+        const saveStatus = sc.savedAt ? `Disimpan ${formatDateTime(sc.savedAt)}` : "Belum disimpan";
+        activeScenarioBanner.textContent = `Senario aktif: ${sc.id} (${sc.name || "Baseline"}) · Status: ${saveStatus} · ${calcStatus}`;
       }
 
       function updateScenarioOutputs(summary, finance) {
         const sc = activeScenario();
         if (!sc) return;
         sc.mode = appState.mode;
+        sc.demandMode = appState.demandMode;
         sc.outputs = {
           summary,
           finance,
         };
+        sc.calculatedAt = Date.now();
         sc.updatedAt = Date.now();
+        updateActiveScenarioBanner();
       }
 
       function updateCompareTable() {
@@ -3278,6 +3477,7 @@
         persistState();
         calculate();
         refreshStepperValidation();
+        updateActiveScenarioBanner();
       }
 
       function addScenario() {
@@ -3371,12 +3571,25 @@
         if (!sc) return;
         sc.inputs = captureScenarioInputs();
         sc.mode = appState.mode;
+        sc.demandMode = appState.demandMode;
+        sc.savedAt = Date.now();
         sc.updatedAt = Date.now();
         persistState();
         renderScenarioList();
+        updateActiveScenarioBanner();
       }
 
       function updateSensitivityUI() {
+        const showSens = appState.mode === "full" && lastAltSources.length > 0 && normalizeNumber(tariffWaterInput.value) >= 0 && normalizeNumber(analysisYearsInput.value) > 0;
+        if (sensEmpty) {
+          sensEmpty.style.display = showSens ? "none" : "block";
+        }
+        if (!showSens) {
+          Object.values(sensitivityLabels).forEach((el) => {
+            if (el) el.textContent = "NPV: –, BCR: –";
+          });
+          return;
+        }
         const { totalPVBenefits, totalPVCosts, pvCapex, pvOpex } = lastAltSummary;
         const baseNPV = totalPVBenefits - totalPVCosts;
         const baseBCR = totalPVCosts > 0 ? totalPVBenefits / totalPVCosts : NaN;
@@ -3402,6 +3615,23 @@
         });
       }
 
+      function updateAdvancedVisibility() {
+        const compareCard = scenarioCompareTable.closest(".card");
+        const computedCount = Object.values(appState.scenarios).filter(
+          (sc) => sc.outputs?.summary && sc.outputs?.finance
+        ).length;
+        const showCompare = computedCount >= 2;
+        if (compareEmpty) compareEmpty.style.display = showCompare ? "none" : "block";
+        if (compareCard) {
+          compareCard.classList.toggle("muted", !showCompare);
+          scenarioCompareTable.style.display = showCompare ? "table" : "none";
+        }
+        const hasDemand = summaryAvgMLDEl.textContent && summaryAvgMLDEl.textContent !== "–";
+        if (!hasDemand) {
+          summaryTextEl.innerHTML = "Belum ada data. Lengkapkan Langkah 3–5 dan tekan Kira.";
+        }
+      }
+
       function showValidation(messages) {
         if (!messages.length) {
           validationBox.classList.add("hidden");
@@ -3419,7 +3649,7 @@
 
         [...document.querySelectorAll("input")].forEach(clearInvalid);
 
-        if (mode === "quick") {
+        if (appState.demandMode === "quick") {
           const pop = normalizeNumber(quickInputs.pop.value);
           const percap = normalizeNumber(quickInputs.percap.value);
           const demand = normalizeNumber(quickInputs.demand.value);
@@ -3546,7 +3776,8 @@
 
         resultsBody.innerHTML = "";
 
-        if (appState.mode === "quick") {
+        const useQuick = appState.demandMode === "quick";
+        if (useQuick) {
           const pop = normalizeNumber(quickInputs.pop.value);
           const percap = normalizeNumber(quickInputs.percap.value);
           const demand = normalizeNumber(quickInputs.demand.value);
@@ -3629,7 +3860,7 @@
         totalAvgMLDEl.textContent = formatNumber(totalAvgMLD);
         totalPeakMLDEl.textContent = formatNumber(totalPeakMLD);
 
-        if (appState.mode === "quick" && quickInputs.baseSupply.value) {
+        if (useQuick && quickInputs.baseSupply.value) {
           supplyInput.value = quickInputs.baseSupply.value;
         }
 
@@ -3644,7 +3875,7 @@
         // 3. Alternative supply + build altData for CBA
         const altData = [];
         let altAvgM3PerDayTotal = 0;
-        if (appState.mode === "quick") {
+        if (useQuick) {
           const name = (quickAltInputs.name.value || "").trim();
           const cap = normalizeNumber(quickAltInputs.capacity.value);
           const util = normalizeNumber(quickAltInputs.util.value);
@@ -3826,10 +4057,12 @@
           surplusAvg,
           surplusPeak,
         };
+        updateChartNarratives(demandRows, summaryOut, finance);
         updateScenarioOutputs(summaryOut, finance);
         saveActiveScenario();
         updateCompareTable();
         updateSensitivityUI();
+        updateAdvancedVisibility();
         refreshStepperValidation();
       }
 
@@ -3858,12 +4091,14 @@
               },
             ],
           },
-            options: {
-              responsive: true,
-              animation: false,
-              plugins: {
-                legend: { position: "top" },
-                title: {
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            layout: { padding: 16 },
+            plugins: {
+              legend: { position: "bottom" },
+              title: {
                 display: true,
                 text: "Permintaan Air Mengikut Kategori",
               },
@@ -3897,9 +4132,11 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             animation: false,
+            layout: { padding: 18 },
             plugins: {
-              legend: { position: "right" },
+              legend: { position: "bottom" },
               title: {
                 display: true,
                 text: "Agihan Permintaan Purata Mengikut Kategori",
@@ -3907,6 +4144,48 @@
             },
           },
         });
+      }
+
+      function updateChartNarratives(demandRows, summary, finance) {
+        const top = (demandRows || []).reduce(
+          (acc, row) => (row.avgM3 > (acc?.avgM3 || 0) ? row : acc),
+          null
+        );
+        if (chartExplainCategory) {
+          chartExplainCategory.innerHTML = `
+            <strong>Apa yang ditunjukkan:</strong> Purata dan puncak setiap kategori (MLD).
+            <br><strong>Maksud/Implikasi:</strong> ${top ? `${top.name} merupakan penyumbang tertinggi (${formatNumber(top.avgM3 / 1000)} MLD).` : "Isi data untuk melihat kategori dominan."}
+            <br><strong>Tindakan dicadangkan:</strong> Fokuskan intervensi ke kategori tertinggi dan semak faktor puncak jika tinggi.
+          `;
+        }
+        if (chartExplainShare) {
+          const surplusText = summary?.surplusAvg >= 0 ? "bekalan mencukupi" : "terdapat defisit yang perlu ditutup";
+          chartExplainShare.innerHTML = `
+            <strong>Apa yang ditunjukkan:</strong> Peratus sumbangan permintaan mengikut kategori.
+            <br><strong>Maksud/Implikasi:</strong> ${surplusText}. Kategori terbesar memberi impak besar kepada strategi penjimatan.
+            <br><strong>Tindakan dicadangkan:</strong> Prioritikan program penjimatan di 2–3 kategori teratas dan semak peluang sumber alternatif.
+          `;
+        }
+        if (chartExplainNPV) {
+          const npvText = isFinite(finance?.npv) && finance.npv !== 0
+            ? `NPV projek agregat ${finance.npv > 0 ? "positif" : "negatif"} (${formatNumber(finance.npv)}).`
+            : "Isi CAPEX/OPEX untuk melihat NPV.";
+          chartExplainNPV.innerHTML = `
+            <strong>Apa yang ditunjukkan:</strong> Nilai NPV bagi setiap sumber alternatif.
+            <br><strong>Maksud/Implikasi:</strong> ${npvText}
+            <br><strong>Tindakan dicadangkan:</strong> Utamakan sumber dengan NPV positif/BCR tinggi; semak semula kos untuk sumber negatif.
+          `;
+        }
+        if (chartExplainPayback) {
+          const payText = isFinite(finance?.payback)
+            ? `Anggaran pulangan modal ${formatNumber(finance.payback)} tahun.`
+            : "Pulangan modal tidak dapat dikira tanpa aliran tunai positif.";
+          chartExplainPayback.innerHTML = `
+            <strong>Apa yang ditunjukkan:</strong> Tempoh pulangan modal setiap sumber.
+            <br><strong>Maksud/Implikasi:</strong> ${payText}
+            <br><strong>Tindakan dicadangkan:</strong> Pilih sumber dengan tempoh pulangan lebih pendek dahulu untuk fasa awal.
+          `;
+        }
       }
 
       function computeIRR(initialCapex, netCF, years) {
@@ -4131,7 +4410,9 @@
             },
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               animation: false,
+              layout: { padding: 18 },
               plugins: {
                 legend: { display: false },
                 title: { display: true, text: "NPV Mengikut Sumber Air Alternatif" },
@@ -4157,7 +4438,9 @@
             },
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               animation: false,
+              layout: { padding: 18 },
               plugins: {
                 legend: { display: false },
                 title: { display: true, text: "Tempoh Pulangan Modal Mengikut Sumber" },
@@ -4218,6 +4501,7 @@
         const fileDate = now.toISOString().slice(0, 10);
         const reportLevel = pdfLevelSelect?.value || "ringkas";
         const preparedBy = (preparedByInput?.value || "").trim();
+        const includeCharts = (pdfChartsToggle?.value || "yes") === "yes";
 
         const summary = {
           avgMLD: parseNumberFromText(summaryAvgMLDEl.textContent),
@@ -4378,38 +4662,42 @@
         const demandAvgData = demandByCategory.map((d) => parseNumberFromText(d.avg));
         const demandPeakData = demandByCategory.map((d) => parseNumberFromText(d.peak));
         const charts = {};
-        charts.demandByCategory = buildBarChartImage({
-          title: "Permintaan purata & puncak mengikut kategori",
-          labels: demandLabels,
-          datasets: [
-            { label: "Purata (m³/hari)", data: demandAvgData, backgroundColor: "rgba(13,110,253,0.8)" },
-            { label: "Puncak (m³/hari)", data: demandPeakData, backgroundColor: "rgba(0,188,212,0.8)" },
-          ],
-        });
-        charts.demandShare = buildPieChartImage({
-          title: "Agihan permintaan (%)",
-          labels: demandLabels,
-          data: demandAvgData,
-        });
+        if (includeCharts) {
+          charts.demandByCategory = buildBarChartImage({
+            title: "Permintaan purata & puncak mengikut kategori",
+            labels: demandLabels,
+            datasets: [
+              { label: "Purata (m³/hari)", data: demandAvgData, backgroundColor: "rgba(13,110,253,0.8)" },
+              { label: "Puncak (m³/hari)", data: demandPeakData, backgroundColor: "rgba(0,188,212,0.8)" },
+            ],
+          });
+          charts.demandShare = buildPieChartImage({
+            title: "Agihan permintaan (%)",
+            labels: demandLabels,
+            data: demandAvgData,
+          });
+        }
         const cbaLabels = altSources.map((a) => a.name);
         const cbaNpvData = altSources.map((a) => parseNumberFromText(a.npv));
         const cbaPaybackData = altSources.map((a) => parseNumberFromText(a.payback));
-        charts.cbaNPV = buildBarChartImage({
-          title: "NPV mengikut sumber alternatif",
-          labels: cbaLabels,
-          datasets: [
-            { label: "NPV (RM)", data: cbaNpvData, backgroundColor: "rgba(3,169,244,0.8)" },
-          ],
-        });
-        charts.cbaPayback = buildBarChartImage({
-          title: "Tempoh pulangan modal mengikut sumber",
-          labels: cbaLabels,
-          datasets: [
-            { label: "Payback (tahun)", data: cbaPaybackData, backgroundColor: "rgba(255,193,7,0.9)" },
-          ],
-        });
-        charts.supplyDemand = buildSupplyDemandChartImage(summary);
-        charts.altComposition = buildAltCompositionChartImage(lastAltSources);
+        if (includeCharts) {
+          charts.cbaNPV = buildBarChartImage({
+            title: "NPV mengikut sumber alternatif",
+            labels: cbaLabels,
+            datasets: [
+              { label: "NPV (RM)", data: cbaNpvData, backgroundColor: "rgba(3,169,244,0.8)" },
+            ],
+          });
+          charts.cbaPayback = buildBarChartImage({
+            title: "Tempoh pulangan modal mengikut sumber",
+            labels: cbaLabels,
+            datasets: [
+              { label: "Payback (tahun)", data: cbaPaybackData, backgroundColor: "rgba(255,193,7,0.9)" },
+            ],
+          });
+          charts.supplyDemand = buildSupplyDemandChartImage(summary);
+          charts.altComposition = buildAltCompositionChartImage(lastAltSources);
+        }
 
         const disclaimerText =
           "Laporan ini dijana secara automatik berdasarkan input semasa kalkulator. " +
@@ -4440,6 +4728,7 @@
           disclaimerText,
           logoDataUrl: umsLogoDataUrl,
           confidential: Boolean(confidentialToggle?.checked),
+          includeCharts,
         };
       }
 
@@ -4758,7 +5047,7 @@
             )
           : "";
 
-        const visualsPage = pageShell(
+        const visualsPage = data.includeCharts ? pageShell(
           "visuals",
           "Graf & Visual",
           "Paparan sokongan dengan interpretasi",
@@ -4771,7 +5060,7 @@
             ${data.charts.cbaPayback ? `<div class="captioned-image"><img src="${data.charts.cbaPayback}" alt="Pulangan modal sumber alternatif" /><div class="caption">Rajah 6: Tempoh pulangan modal mengikut sumber alternatif.</div><p class="justified"><strong>Apa yang ditunjukkan:</strong> Tahun pulangan modal bagi setiap sumber. <strong>Implikasi keputusan:</strong> Payback pendek sesuai untuk keputusan segera/pembiayaan dalaman. <strong>Tindakan dicadangkan:</strong> Pilih sumber payback &lt;5 tahun untuk fasa 1; simpan yang lebih panjang sebagai fasa kemudian.</p></div>` : ""}
             <p class="page-note">Graf diambil daripada kanvas luar skrin (900–1100px) dengan padding, memastikan tiada pie/bar terpotong dalam PDF.</p>
           `
-        );
+        ) : "";
 
         const recommendations = pageShell(
           "recommendations",
@@ -5211,6 +5500,11 @@
           ? "Sembunyi input terperinci"
           : "👀 Papar input terperinci";
       });
+      demandModeRadios.forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+          setDemandMode(e.target.value);
+        });
+      });
 
       fixInputBtn.addEventListener("click", () => {
         const invalid = document.querySelector(".invalid");
@@ -5245,7 +5539,10 @@
       loadState();
       renderScenarioList();
       setMode(appState.mode);
+      setDemandMode(appState.demandMode || "quick", true);
       applyScenarioInputs(activeScenario().inputs);
+      updateAdvancedVisibility();
+      updateActiveScenarioBanner();
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       calculate();
