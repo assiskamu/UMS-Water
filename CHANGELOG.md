@@ -1,9 +1,10 @@
 # Perubahan Terbaru
 
-## 2025-XX-XX (Stepper Quick Start & PDF Pro)
-- Gantikan wizard modal dengan “Quick Start Stepper” bernombor yang melekat di bahagian atas, lengkap dengan butang “Pergi ke langkah ini” dan “Seterusnya”, sorotan seksyen, validasi keperluan input, serta butang navigasi dalam setiap seksyen.
-- Kurangkan kekeliruan mod/senario: label senario A/B/C yang jelas, butang reset/preset, tooltip beza mod/senario, unit label di input utama, serta togol “Papar input terperinci” untuk mod Quick.
-- Naik taraf laporan PDF: tambah Table of Contents, header kecil dengan nombor halaman, interpretasi graf (“Apa yang ditunjukkan/Implikasi/Tindakan”), carta luar skrin beresolusi tinggi untuk elak pie terpotong, dan struktur seksyen mesra pengurusan.
+## 2025-02-04 (Usability Overhaul & Laporan Profesional)
+- Quick Start “8 Langkah” kekal di atas (sticky) dengan status badge (Belum lengkap/Lengkap/Sudah dikira), butang “Pergi ke langkah ini”, sorotan seksyen, dan butang “Seterusnya” pada hujung setiap seksyen.
+- Togol permintaan “Quick vs Kategori” yang saling eksklusif; input yang tidak dipilih dikunci/kelabu. Senario aktif kini memaparkan status Disimpan/Sudah dikira dengan masa, B/C hanya muncul selepas ditambah, dan perbandingan/sensitiviti disembunyikan sehingga syarat data dipenuhi.
+- Penambahbaikan carta & penjelasan: tinggi tetap responsif, legend di bawah, blok “Apa ditunjukkan/Implikasi/Tindakan” di web dan PDF.
+- Penjana PDF baharu: pilihan skop (senario aktif/all), tahap (Ringkas/Penuh), pilihan sertakan carta, tajuk kandungan automatik, header dalaman kecil, rajah luar skrin resolusi tinggi, interpretasi rajah, lampiran sensitiviti & CAPEX/OPEX, serta pengendalian data hilang yang mesra.
 
 ## 2025-XX-XX
 - Tambah pemilih mod 3-lapisan (Quick Estimate, Operational Planning, Full CBA) dengan penyimpanan mod di localStorage.
