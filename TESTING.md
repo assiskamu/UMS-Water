@@ -1,26 +1,25 @@
 # Ujian Manual Dilaksanakan / Disyorkan
 
-## 1) Aliran asas Quick (Langkah 1–3 → KIRA → OUTPUT)
-- Mulakan di halaman utama: pastikan hanya INPUT kelihatan dan status chip “Belum dikira”.
-- Isi Langkah 1 Quick (populasi/per kapita atau jumlah permintaan override) + Langkah 2 bekalan asas + Langkah 3 parameter kewangan.
-- Tekan **KIRA SEKARANG**: OUTPUT dibuka, auto-skrol ke Ringkasan, carta muncul tanpa ralat konsol, status chip dikemas kini masa dikira.
+## 1) Mod Quick – input minimum → KIRA → OUTPUT
+- Isi Langkah 1 Quick (permintaan harian atau populasi + per kapita + faktor puncak), Langkah 2 bekalan JANS, Langkah 3 tarif/diskaun.
+- Tekan **KIRA SEKARANG** di hujung input wajib: semak tiada amaran merah, OUTPUT muncul, status chip dikemas kini, carta tidak menindih (tinggi terhad).
 
-## 2) Permintaan kategori (Langkah 1 kategori) + Carta
-- Pilih “Gunakan Demand Mengikut Kategori”, isi sekurang-kurangnya dua baris dengan populasi, per kapita dan faktor puncak yang munasabah.
-- Tekan **KIRA SEKARANG** dan semak jadual hasil, Ringkasan MLD, carta bar/pai + blok “Apa ditunjukkan / Implikasi / Tindakan”.
+## 2) Mod Operational – validasi dan sorotan input hilang
+- Tukar ke **Operational Planning**, pilih “Gunakan Demand Mengikut Kategori” dan kosongkan satu baris kritikal.
+- Tekan **KIRA SEKARANG**: panel amaran merah muncul dengan senarai item wajib, auto-skrol ke medan pertama, sempadan merah + mesej “WAJIB diisi”; isi nilai dan pastikan sorotan hilang selepas diperbetul.
 
-## 3) Sumber alternatif (Langkah 4) dikira dalam bekalan
-- Masukkan satu sumber alternatif (kapasiti, utiliti, CAPEX/OPEX) dan kira.
-- Sahkan bekalan efektif, jadual CBA, dan graf NPV/Payback kemas kini dengan penjelasan.
+## 3) Mod Full CBA – sensitiviti muncul hanya selepas input lengkap
+- Pilih **Full CBA**, isi bekalan, kewangan, sekurang-kurangnya satu sumber alternatif + CAPEX/OPEX munasabah.
+- Tekan **KIRA SEKARANG**: sahkan seksyen Analisis Sensitiviti tidak dipaparkan sebelum kiraan, tetapi muncul dengan nilai NPV/BCR selepas kiraan berjaya.
 
-## 4) Senario B (gandakan A) + perbandingan
-- Gandakan A→B, ubah input (contoh: alt supply berbeza), kira kedua-dua senario.
-- Semak seksyen Perbandingan Senario hanya muncul selepas ≥2 senario dikira dan memaparkan perbezaan.
+## 4) Simpan/Muat Senario A/B/C + status masa simpan
+- Isi senario A dan tekan **SIMPAN SENARIO** (butang berdekatan blok KIRA); semak label “Disimpan pada HH:MM”.
+- Gandakan ke B, ubah input, kira kedua-dua senario, simpan B; muat semula halaman dan sahkan senario A/B dimuat dengan status disimpan & dikira dikekalkan.
 
-## 5) Full CBA + CAPEX/OPEX terperinci → Sensitiviti
-- Pilih Mod **Full CBA**, isi CAPEX/OPEX itemised dan sekurang-kurangnya satu sumber alternatif dengan tarif/diskaun/tempoh lengkap.
-- Kira dan sahkan seksyen Analisis Sensitiviti muncul (tiada banner amaran) dengan nilai NPV/BCR untuk asas, CAPEX+10%, OPEX+10%, manfaat+10%.
+## 5) Muat naik Excel untuk permintaan kategori
+- Pilih “Muat naik Excel”, muat turun templat, isikan beberapa baris (termasuk satu baris dengan ralat nilai) dan import.
+- Semak jadual kategori diisi semula, baris ralat diserlahkan merah dengan sebab, dan ringkasan import memaparkan “Berjaya import X baris; Y baris ralat.”
 
-## 6) PDF Ringkas & Penuh (senario aktif & semua senario)
-- Cuba jana PDF sebelum KIRA: pastikan prompt “Kira & Jana Laporan” muncul dan berjalan sebelum PDF dijana.
-- Jana PDF untuk “Senario terpilih” & “Ringkas” dan untuk “Semua senario” & “Penuh”; semak urutan laporan (Ringkasan Eksekutif → INPUT → OUTPUT → Cadangan → Lampiran), TOC bernombor, header dalaman kecil, graf tidak terpotong, sensitiviti hanya bila memenuhi syarat.
+## 6) Perbandingan Senario dipaparkan hanya selepas ≥2 kiraan
+- Pastikan hanya satu senario dikira: seksyen Perbandingan menunjukkan placeholder “Akan dipaparkan selepas kiraan lengkap.”
+- Kira dua senario berbeza: jadual perbandingan menjadi aktif dengan nilai permintaan/bekalan/NPV/Payback.
