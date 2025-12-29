@@ -1287,6 +1287,92 @@
       pointer-events: none;
     }
 
+    /* Susun atur baharu INPUT → OUTPUT */
+    .layout-hero {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .layout-hero-inner { display: grid; gap: 0.7rem; }
+
+    .layout-hero .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .layout-hero .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+
+    .layout-hero .status-chip {
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      background: #e8f2ff;
+      color: #0d2e55;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.9rem;
+    }
+
+    .layout-hero .hero-sub {
+      display: grid;
+      gap: 0.4rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      align-items: start;
+    }
+
+    .input-steps { display: grid; gap: 0.75rem; }
+    .input-step {
+      border: 1px solid #d5e6f8;
+      border-radius: 0.95rem;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(13, 110, 253, 0.05);
+      overflow: hidden;
+    }
+
+    .input-step summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.9rem 1rem;
+      font-weight: 800;
+      color: #0d2e55;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, rgba(13,110,253,0.08), rgba(0,188,212,0.08));
+    }
+
+    .input-step summary::-webkit-details-marker { display: none; }
+
+    .input-step .step-body { padding: 0.9rem 1rem 1rem; background: #ffffff; }
+
+    .input-step .step-label { font-size: 0.82rem; font-weight: 700; color: #0d6efd; }
+    .input-step .step-meta { color: #48607a; font-size: 0.86rem; margin: 0.15rem 0 0.45rem; }
+    .input-step .step-next { margin-top: 0.7rem; display: inline-flex; align-items: center; gap: 0.35rem; }
+
+    .output-block { display: grid; gap: 1rem; }
+    .output-hidden { display: none; }
+
+    .empty-output {
+      border: 1px dashed #b5cdea;
+      border-radius: 0.9rem;
+      padding: 0.9rem 1rem;
+      background: #f7fbff;
+      color: #34526e;
+      font-weight: 600;
+    }
+
+    .chart-explain-block { margin-top: 0.4rem; font-size: 0.86rem; color: #2d4c69; }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -1363,6 +1449,52 @@
   </header>
 
   <main>
+    <section class="card layout-hero" id="layout-hero-card">
+      <div class="layout-hero-inner">
+        <div class="hero-top">
+          <div>
+            <h2 style="margin:0 0 0.25rem; font-size:1.25rem;">UMS Water Calculator</h2>
+            <p style="margin:0; color:#3b5574; max-width:640px;">
+              Lengkapkan INPUT mengikut urutan di bawah, tekan <strong>KIRA SEKARANG</strong>, kemudian semak OUTPUT dan laporan.
+            </p>
+          </div>
+          <div class="hero-actions">
+            <button type="button" class="primary" id="btn-global-calc">🚀 KIRA SEKARANG</button>
+            <div class="status-chip" id="calc-status-chip">Belum dikira</div>
+          </div>
+        </div>
+        <div class="hero-sub">
+          <div class="mini-input">
+            <button type="button" class="secondary" id="btn-reset-inputs">🔄 Reset input</button>
+            <button type="button" class="secondary" id="btn-load-preset-hero">🌟 Muatkan preset contoh</button>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+            <span class="pill-badge">Mod & Senario sentiasa kelihatan di sini.</span>
+            <span class="pill-badge">Isi INPUT dahulu sebelum OUTPUT.</span>
+          </div>
+        </div>
+        <div id="hero-mode-holder"></div>
+        <div id="hero-scenario-holder"></div>
+      </div>
+    </section>
+
+    <section class="card" id="input-wrapper">
+      <h2><span class="icon">📝</span> INPUT (Isi dahulu)</h2>
+      <p class="lead">Ikuti 5 langkah INPUT. Setiap langkah label <strong>WAJIB</strong> atau <strong>Pilihan</strong>. Selesai semua, tekan <strong>KIRA SEKARANG</strong>.</p>
+      <div id="input-steps" class="input-steps"></div>
+    </section>
+
+    <section class="card output-hidden" id="output-wrapper">
+      <h2><span class="icon">📤</span> OUTPUT & Analisis</h2>
+      <div id="output-empty" class="empty-output">Belum ada hasil. Lengkapkan INPUT dan tekan <strong>KIRA SEKARANG</strong>.</div>
+      <div id="output-block" class="output-block"></div>
+    </section>
+
+    <section class="card output-hidden" id="export-wrapper">
+      <h2><span class="icon">📦</span> Eksport & Laporan</h2>
+      <div id="export-slot"></div>
+    </section>
+
     <section class="quick-stepper" id="quick-stepper" aria-label="Quick start stepper">
       <div class="stepper-inner">
         <div class="stepper-bar" id="stepper-bar">
@@ -1446,7 +1578,7 @@
       </div>
     </section>
 
-    <section class="card mode-block" data-modes="full,operational,quick">
+    <section class="card mode-block" data-modes="full,operational,quick" id="section-sensitivity">
       <h2><span class="icon">🧪</span> Analisis Sensitiviti (+/−10%)</h2>
       <p class="lead">Lihat kesan perubahan kos/manfaat terhadap NPV & BCR projek alternatif.</p>
       <div class="inline-alert" id="sens-empty" style="display:none;">
@@ -1473,7 +1605,7 @@
       <div class="tagline">Analisis sensitiviti menggunakan PV manfaat & kos terkira semasa.</div>
     </section>
 
-    <section class="card">
+    <section class="card" id="section-compare">
       <h2><span class="icon">🧮</span> Perbandingan Senario A/B/C</h2>
       <p class="lead">Bandingkan metrik utama (permintaan, bekalan, defisit, NPV, BCR, IRR, Payback) untuk senario yang disimpan.</p>
       <div class="inline-alert" id="compare-empty" style="display:none;">
@@ -1563,7 +1695,7 @@
       </div>
       <div class="accordion" style="margin-top:0.8rem;">
         <details open>
-          <summary>Opsyen sumber alternatif ringkas</summary>
+          <summary>Pilihan sumber alternatif ringkas</summary>
           <div class="content">
             <div class="input-grid">
               <div>
@@ -2006,7 +2138,7 @@
     </section>
 
     <!-- DEMAND VS SUPPLY + EXPORT -->
-    <section class="card">
+    <section class="card" id="section-balance">
       <h2><span class="icon">⚖️</span> Ringkasan Demand–Supply (MLD)</h2>
       <div class="two-column">
         <div>
@@ -2090,7 +2222,7 @@
               📤 Eksport Excel (.xlsx)
             </button>
             <button id="btn-generate-report" type="button" class="primary">
-              Jana Laporan
+              Jana Laporan (PDF)
             </button>
           </div>
           <label class="confidential-toggle">
@@ -2112,7 +2244,7 @@
     </section>
 
     <!-- PIE CHART DEMAND SHARE -->
-    <section class="card">
+    <section class="card" id="section-chart-category">
       <h2><span class="icon">📈</span> Agihan Permintaan Mengikut Kategori</h2>
       <p class="lead">
         Rajah menunjukkan sumbangan (%) setiap kategori kepada permintaan purata
@@ -2123,7 +2255,7 @@
     </section>
 
     <!-- ANALISIS CBA SUMBER ALTERNATIF -->
-    <section class="card">
+    <section class="card" id="section-alt-analysis">
       <h2><span class="icon">💼</span> Analisis Kewangan Sumber Air Alternatif</h2>
       <p class="lead">
         Jadual di bawah merumuskan volum, penjimatan, CAPEX, OPEX, aliran tunai
@@ -2217,7 +2349,7 @@
     </section>
 
     <!-- METODOLOGI + DISCLAIMER -->
-    <section class="card">
+    <section class="card" id="section-method">
       <h2><span class="icon">🧮</span> Nota Metodologi (Ringkas) & Penafian</h2>
       <div class="disclaimer">
         <p><strong>Metodologi ringkas:</strong></p>
@@ -2288,6 +2420,18 @@
       const wizardSkipBtn = document.getElementById("wizard-skip");
       const wizardStatus = document.getElementById("wizard-status");
       const mainEl = document.querySelector("main");
+      const heroModeHolder = document.getElementById("hero-mode-holder");
+      const heroScenarioHolder = document.getElementById("hero-scenario-holder");
+      const inputStepsContainer = document.getElementById("input-steps");
+      const outputWrapper = document.getElementById("output-wrapper");
+      const outputBlock = document.getElementById("output-block");
+      const outputEmpty = document.getElementById("output-empty");
+      const exportWrapper = document.getElementById("export-wrapper");
+      const exportSlot = document.getElementById("export-slot");
+      const globalCalcBtn = document.getElementById("btn-global-calc");
+      const calcStatusChip = document.getElementById("calc-status-chip");
+      const resetInputsBtn = document.getElementById("btn-reset-inputs");
+      const presetHeroBtn = document.getElementById("btn-load-preset-hero");
       const sectionMap = {
         mode: document.getElementById("section-mode"),
         quick: document.getElementById("section-quick"),
@@ -2459,6 +2603,8 @@
         activeScenarioId: "A",
         scenarios: {},
       };
+      let hasCalculated = false;
+      let lastCalculatedAt = null;
 
       const WIZARD_STORAGE_KEY = "ums-water-wizard-seen";
       let wizardSeen = localStorage.getItem(WIZARD_STORAGE_KEY) === "1";
@@ -2632,7 +2778,7 @@
         },
         {
           id: "alt",
-          title: "(Opsyenal) Sumber Alternatif + CAPEX/OPEX",
+          title: "(Pilihan) Sumber Alternatif + CAPEX/OPEX",
           target: "section-alt",
           hint: "Apa perlu isi: nama sumber, kapasiti, utiliti (% hari), CAPEX/OPEX.",
           example: "Contoh: Tangkapan air hujan 300 m³/hari, utiliti 80%, CAPEX RM1.2j.",
@@ -2658,6 +2804,165 @@
           requiredMessage: "",
         },
       ];
+
+      function moveSectionTo(el, target) {
+        if (!el || !target) return;
+        target.appendChild(el);
+      }
+
+      function buildInputSteps() {
+        if (!inputStepsContainer) return;
+        inputStepsContainer.innerHTML = "";
+        const steps = [
+          {
+            title: "Langkah 1 — Permintaan Air (WAJIB)",
+            meta: "Pilih Quick atau Kategori. Hanya satu kaedah aktif.",
+            badge: "WAJIB",
+            nodes: [quickStepper, sectionMap.quick, sectionMap.demand].filter(Boolean),
+          },
+          {
+            title: "Langkah 2 — Bekalan Asas (WAJIB)",
+            meta: "Isi bekalan JANS (MLD) dan faktor kebolehpercayaan jika ada.",
+            badge: "WAJIB",
+            nodes: [sectionMap.supply].filter(Boolean),
+          },
+          {
+            title: "Langkah 3 — Parameter Kewangan (WAJIB untuk analisis kewangan)",
+            meta: "Tarif air & pembetungan, tempoh analisis, kadar diskaun.",
+            badge: "WAJIB",
+            nodes: [sectionMap.finance].filter(Boolean),
+          },
+          {
+            title: "Langkah 4 — Sumber Air Alternatif (Pilihan)",
+            meta: "Tambah sumber alternatif dengan kapasiti, utiliti & kos.",
+            badge: "Pilihan",
+            nodes: [sectionMap.alt].filter(Boolean),
+          },
+          {
+            title: "Langkah 5 — CAPEX & OPEX Terperinci (Pilihan / Full CBA)",
+            meta: "Isi pecahan item kos jika mahu.",
+            badge: "Pilihan",
+            nodes: [sectionMap.capex].filter(Boolean),
+          },
+        ];
+        steps.forEach((step, idx) => {
+          const details = document.createElement("details");
+          details.className = "input-step";
+          details.open = idx === 0;
+          details.innerHTML = `
+            <summary>
+              <div>
+                <div class="step-label">${step.badge}</div>
+                <div>${step.title}</div>
+                <div class="step-meta">${step.meta}</div>
+              </div>
+              <span aria-hidden="true">▾</span>
+            </summary>
+          `;
+          const body = document.createElement("div");
+          body.className = "step-body";
+          step.nodes.forEach((node) => body.appendChild(node));
+          if (steps[idx + 1]) {
+            const nextBtn = document.createElement("button");
+            nextBtn.type = "button";
+            nextBtn.className = "secondary step-next";
+            nextBtn.textContent = "Seterusnya →";
+            nextBtn.addEventListener("click", () => {
+              details.open = false;
+              const next = inputStepsContainer.querySelectorAll(".input-step")[idx + 1];
+              if (next) {
+                next.open = true;
+                next.scrollIntoView({ behavior: "smooth", block: "start" });
+                next.classList.add("section-highlight");
+                setTimeout(() => next.classList.remove("section-highlight"), 1200);
+              }
+            });
+            body.appendChild(nextBtn);
+          }
+          details.appendChild(body);
+          inputStepsContainer.appendChild(details);
+        });
+      }
+
+      function buildOutputLayout() {
+        if (!outputBlock) return;
+        outputBlock.innerHTML = "";
+        const outputs = [
+          { title: "Output 1 — Ringkasan Eksekutif", node: document.getElementById("section-balance") },
+          { title: "Output 2 — Jadual Permintaan Mengikut Kategori", node: sectionMap.results },
+          { title: "Output 3 — Analisis Kewangan", node: document.getElementById("section-alt-analysis") },
+          { title: "Output 4 — Graf & Penerangan", node: document.getElementById("section-chart-category") },
+          { title: "Output 5 — Perbandingan Senario", node: document.getElementById("section-compare") },
+          { title: "Output 6 — Analisis Sensitiviti", node: document.getElementById("section-sensitivity") },
+          { title: "Output 7 — Nota Metodologi", node: document.getElementById("section-method") },
+        ];
+        outputs.forEach((item) => {
+          if (!item.node) return;
+          const wrap = document.createElement("div");
+          wrap.className = "output-section";
+          const title = document.createElement("h3");
+          title.textContent = item.title;
+          wrap.appendChild(title);
+          wrap.appendChild(item.node);
+          outputBlock.appendChild(wrap);
+        });
+      }
+
+      function attachHero() {
+        moveSectionTo(sectionMap.mode, heroModeHolder);
+        moveSectionTo(sectionMap.scenario, heroScenarioHolder);
+      }
+
+      function moveExportUI() {
+        if (!exportSlot) return;
+        exportSlot.innerHTML = "";
+        const container = document.createElement("div");
+        container.className = "stacked";
+        const options = document.querySelector(".report-options");
+        const btnRow = exportBtn?.closest(".btn-row");
+        const conf = document.querySelector(".confidential-toggle");
+        if (options) container.appendChild(options);
+        if (btnRow) container.appendChild(btnRow);
+        if (conf) container.appendChild(conf);
+        exportSlot.appendChild(container);
+      }
+
+      function updateStatusChip() {
+        if (!calcStatusChip) return;
+        if (!hasCalculated || !lastCalculatedAt) {
+          calcStatusChip.textContent = "Belum dikira";
+          return;
+        }
+        const ts = new Date(lastCalculatedAt).toLocaleString("ms-MY", { hour12: false });
+        calcStatusChip.textContent = `Dikira pada ${ts}`;
+      }
+
+      function revealOutputs() {
+        if (outputWrapper) outputWrapper.classList.remove("output-hidden");
+        if (exportWrapper) exportWrapper.classList.toggle("output-hidden", !hasCalculated);
+        if (outputEmpty) outputEmpty.style.display = hasCalculated ? "none" : "block";
+        if (outputBlock) outputBlock.style.display = hasCalculated ? "grid" : "none";
+      }
+
+      function scrollToOutput() {
+        const first = outputBlock?.querySelector(".output-section");
+        if (first) {
+          first.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function runCalculateAndReveal({ scroll = true } = {}) {
+        recalcCapexOpexItems();
+        const ok = calculate();
+        if (ok !== false) {
+          hasCalculated = true;
+          lastCalculatedAt = Date.now();
+          updateStatusChip();
+          revealOutputs();
+          if (scroll) scrollToOutput();
+        }
+        return ok !== false;
+      }
 
       function formatNumber(num) {
         if (!isFinite(num)) return "–";
@@ -3806,7 +4111,7 @@
         quickAltInputs.util.value = 80;
         quickAltInputs.capex.value = 900000;
         quickAltInputs.opex.value = 50000;
-        calculate();
+        runCalculateAndReveal({ scroll: false });
       }
 
       function saveActiveScenario() {
@@ -3861,17 +4166,27 @@
       function updateAdvancedVisibility() {
         const compareCard = scenarioCompareTable.closest(".card");
         const computedCount = Object.values(appState.scenarios).filter(
-          (sc) => sc.outputs?.summary && sc.outputs?.finance
+          (sc) => sc.outputs?.summary
         ).length;
         const showCompare = computedCount >= 2;
         if (compareEmpty) compareEmpty.style.display = showCompare ? "none" : "block";
         if (compareCard) {
           compareCard.classList.toggle("muted", !showCompare);
+          compareCard.style.display = showCompare ? "" : "none";
           scenarioCompareTable.style.display = showCompare ? "table" : "none";
+          const wrap = compareCard.closest(".output-section");
+          if (wrap) wrap.style.display = showCompare ? "" : "none";
         }
         const hasDemand = summaryAvgMLDEl.textContent && summaryAvgMLDEl.textContent !== "–";
         if (!hasDemand) {
           summaryTextEl.innerHTML = "Belum ada data. Lengkapkan Langkah 3–5 dan tekan Kira.";
+        }
+        const sensCard = document.getElementById("section-sensitivity");
+        const showSens = appState.mode === "full" && lastAltSources.length > 0 && normalizeNumber(tariffWaterInput.value) >= 0 && normalizeNumber(analysisYearsInput.value) > 0;
+        if (sensCard) {
+          sensCard.style.display = showSens ? "" : "none";
+          const wrap = sensCard.closest(".output-section");
+          if (wrap) wrap.style.display = showSens ? "" : "none";
         }
       }
 
@@ -4006,7 +4321,7 @@
           if (validation.firstInvalid) {
             validation.firstInvalid.focus();
           }
-          return;
+          return false;
         }
 
         const demandRows = [];
@@ -4307,6 +4622,7 @@
         updateSensitivityUI();
         updateAdvancedVisibility();
         refreshStepperValidation();
+        return true;
       }
 
       function updateDemandCharts(labels, avgData, peakData) {
@@ -4735,7 +5051,7 @@
 
       async function collectReportData() {
         recalcCapexOpexItems();
-        calculate();
+        runCalculateAndReveal({ scroll: false });
         await waitForNextFrame();
         await wait(80);
 
@@ -4867,6 +5183,17 @@
           years: analysisYearsInput.value || "",
           discount: discountRateInput.value || "",
         };
+        const quickInput = {
+          pop: quickInputs.pop.value || "",
+          percap: quickInputs.percap.value || "",
+          demand: quickInputs.demand.value || "",
+          peak: quickInputs.peak.value || "",
+        };
+        const financeComplete =
+          normalizeNumber(tariffWaterInput.value) >= 0 &&
+          normalizeNumber(tariffSewerInput.value) >= 0 &&
+          normalizeNumber(analysisYearsInput.value) > 0 &&
+          normalizeNumber(discountRateInput.value) >= 0;
 
         const scenariosForReport = Object.values(appState.scenarios || {}).map((s) => ({
           name: s.name,
@@ -4972,6 +5299,10 @@
           logoDataUrl: umsLogoDataUrl,
           confidential: Boolean(confidentialToggle?.checked),
           includeCharts,
+          financeComplete,
+          demandMode: appState.demandMode,
+          quickInput,
+          mode: appState.mode,
         };
       }
 
@@ -5166,20 +5497,44 @@
             <div class="page-card">
               <h4>Cadangan cepat</h4>
               <ul class="list-tight">
-                <li>Pastikan faktor puncak dalam julat 1.2–1.5 dan kemas kini permintaan mengikut kategori utama.</li>
-                <li>Utamakan sumber alternatif dengan payback terpendek dan BCR tertinggi.</li>
-                <li>Benamkan keputusan ke dalam bajet tahunan dan pelan kesinambungan operasi.</li>
-              </ul>
+              <li>Pastikan faktor puncak dalam julat 1.2–1.5 dan kemas kini permintaan mengikut kategori utama.</li>
+              <li>Utamakan sumber alternatif dengan payback terpendek dan BCR tertinggi.</li>
+              <li>Benamkan keputusan ke dalam bajet tahunan dan pelan kesinambungan operasi.</li>
+            </ul>
             </div>
+            ${data.financeComplete ? "" : `<p class="wizard-warning">Analisis kewangan tidak dijana kerana input tarif/tempoh/diskaun/CAPEX/OPEX tidak lengkap.</p>`}
           `
         );
 
         const methodology = pageShell(
           "method",
-          "Metodologi & Andaian",
-          "Definisi & pendekatan",
+          "INPUT & Andaian",
+          "Langkah INPUT sebelum OUTPUT",
           `
-            <p class="justified">Unit: m³/hari, MLD, RM. Permintaan dikira melalui populasi × per kapita atau input jumlah harian. Permintaan puncak = purata × faktor puncak. Bekalan alternatif = kapasiti × utiliti (% hari) × kebolehpercayaan (%).</p>
+            <p class="justified"><strong>Langkah 1 – Permintaan:</strong> Kaedah digunakan: ${data.demandMode === "quick" ? "Permintaan Quick (ringkas)" : "Permintaan Mengikut Kategori (terperinci)"}.</p>
+            ${
+              data.demandMode === "quick"
+                ? `
+                  <div class="inline-table">
+                    <div class="box"><div class="label">Populasi</div><div>${data.quickInput.pop || "–"} orang</div></div>
+                    <div class="box"><div class="label">Per kapita</div><div>${data.quickInput.percap || "–"} L/org/hari</div></div>
+                    <div class="box"><div class="label">Jumlah permintaan (override)</div><div>${data.quickInput.demand || "Tidak diisi"} m³/hari</div></div>
+                    <div class="box"><div class="label">Faktor puncak</div><div>${data.quickInput.peak || "–"}</div></div>
+                  </div>
+                `
+                : `
+                  <p class="justified">Ringkasan kategori digunakan:</p>
+                  <table class="report-table zebra">
+                    <thead><tr><th>Kategori</th><th>Populasi</th><th>Per kapita</th><th>Purata (m³/hari)</th><th>Faktor puncak</th><th>Puncak (m³/hari)</th></tr></thead>
+                    <tbody>${demandRows}</tbody>
+                  </table>
+                `
+            }
+            <p class="justified"><strong>Langkah 2 – Bekalan Asas (WAJIB):</strong> ${data.assumptions.supply || "–"} MLD.</p>
+            <p class="justified"><strong>Langkah 3 – Parameter Kewangan:</strong> Tarif air ${data.assumptions.tariffWater || "–"} RM/m³; pembetungan ${data.assumptions.tariffSewer || "–"} RM/m³; tempoh ${data.assumptions.years || "–"} tahun; diskaun ${data.assumptions.discount || "–"}%.</p>
+            <p class="justified"><strong>Langkah 4 – Sumber Alternatif (Pilihan):</strong> ${data.altSources.length ? "Sumber disenaraikan di bahagian OUTPUT." : "Tiada sumber alternatif dimasukkan."}</p>
+            <p class="justified"><strong>Langkah 5 – CAPEX/OPEX Terperinci (Pilihan):</strong> ${data.capexOpexItems.length ? "Pecahan item disertakan di Lampiran." : "Tiada pecahan item dimasukkan."}</p>
+            <p class="justified">Unit: m³/hari, MLD, RM. Permintaan puncak = purata × faktor puncak. Bekalan alternatif = kapasiti × utiliti (% hari) × kebolehpercayaan (%).</p>
             <p class="justified">Kewangan: penjimatan = volum alternatif × (tarif air + pembetungan). NPV/BCR menggunakan kadar diskaun dan tempoh analisis. Payback = CAPEX / aliran tunai bersih tahunan.</p>
             <div class="inline-table">
               <div class="box"><div class="label">Bekalan asas (JANS)</div><div><strong>${data.assumptions.supply || "–"} MLD</strong></div></div>
@@ -5250,7 +5605,7 @@
           "Sorotan NPV/BCR/IRR/Payback",
           `
             ${
-              hasFinance
+              hasFinance && data.financeComplete
                 ? `
                   <div class="inline-table">
                     <div class="box"><div class="label">CAPEX</div><div>${data.financeSummary.capex}</div></div>
@@ -5323,7 +5678,7 @@
                 <h4>Perlu kaji lanjut</h4>
                 <ul class="list-tight">
                   <li>Analisis kesan variasi hujan terhadap bekalan alternatif.</li>
-                  <li>Opsyen reuse air kelabu/tasik jika defisit puncak kekal.</li>
+                <li>Pilihan reuse air kelabu/tasik jika defisit puncak kekal.</li>
                   <li>Strategi pembiayaan berfasa sekiranya NPV negatif.</li>
                 </ul>
               </div>
@@ -5347,16 +5702,22 @@
                 "Lampiran & Had Data",
                 "Butiran teknikal",
                 `
-                  <p class="justified"><strong>Analisis sensitiviti (+/−10%):</strong></p>
-                  <table class="report-table zebra">
-                    <thead><tr><th>Senario sensitiviti</th><th>NPV (RM)</th><th>BCR</th></tr></thead>
-                    <tbody>
-                      <tr><td>Asas</td><td>${formatNumber(data.sensitivity.base.npv)}</td><td>${isFinite(data.sensitivity.base.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"}</td></tr>
-                      <tr><td>CAPEX +10%</td><td>${formatNumber(data.sensitivity.capex.npv)}</td><td>${isFinite(data.sensitivity.capex.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"}</td></tr>
-                      <tr><td>OPEX +10%</td><td>${formatNumber(data.sensitivity.opex.npv)}</td><td>${isFinite(data.sensitivity.opex.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"}</td></tr>
-                      <tr><td>Manfaat +10%</td><td>${formatNumber(data.sensitivity.benefit.npv)}</td><td>${isFinite(data.sensitivity.benefit.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"}</td></tr>
-                    </tbody>
-                  </table>
+                  ${
+                    data.mode === "full" && data.financeComplete
+                      ? `
+                        <p class="justified"><strong>Analisis sensitiviti (+/−10%):</strong></p>
+                        <table class="report-table zebra">
+                          <thead><tr><th>Senario sensitiviti</th><th>NPV (RM)</th><th>BCR</th></tr></thead>
+                          <tbody>
+                            <tr><td>Asas</td><td>${formatNumber(data.sensitivity.base.npv)}</td><td>${isFinite(data.sensitivity.base.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"}</td></tr>
+                            <tr><td>CAPEX +10%</td><td>${formatNumber(data.sensitivity.capex.npv)}</td><td>${isFinite(data.sensitivity.capex.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"}</td></tr>
+                            <tr><td>OPEX +10%</td><td>${formatNumber(data.sensitivity.opex.npv)}</td><td>${isFinite(data.sensitivity.opex.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"}</td></tr>
+                            <tr><td>Manfaat +10%</td><td>${formatNumber(data.sensitivity.benefit.npv)}</td><td>${isFinite(data.sensitivity.benefit.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"}</td></tr>
+                          </tbody>
+                        </table>
+                      `
+                      : `<p class="wizard-helper">Analisis sensitiviti hanya dipaparkan untuk Mod Full CBA dengan input kewangan lengkap.</p>`
+                  }
                   <p class="justified">Pecahan CAPEX/OPEX item:</p>
                   <table class="report-table zebra">
                     <thead><tr><th>Jenis</th><th>Item / Komponen</th><th>Kuantiti</th><th>Kos seunit (RM)</th><th>Jumlah kos (RM)</th><th>Catatan</th></tr></thead>
@@ -5404,6 +5765,12 @@
         if (!jsPDF) {
           alert("Library jsPDF tidak dimuatkan.");
           return;
+        }
+        if (!hasCalculated) {
+          const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana laporan.\nPilih OK untuk Kira & Jana Laporan, atau Batal untuk kembali.");
+          if (!proceed) return;
+          const ok = runCalculateAndReveal({ scroll: false });
+          if (!ok) return;
         }
 
         await loadUmsLogoDataUrl();
@@ -5514,8 +5881,8 @@
       });
 
       calcBtn.addEventListener("click", () => {
-        recalcCapexOpexItems();
-        calculate();
+        runCalculateAndReveal();
+        setStepperExpanded(false, { source: "calculate" });
       });
 
       // Export Excel
@@ -5527,8 +5894,7 @@
           }
 
           // Ensure latest calculations
-          recalcCapexOpexItems();
-          calculate();
+          runCalculateAndReveal({ scroll: false });
 
           const wb = XLSX.utils.book_new();
 
@@ -5734,7 +6100,7 @@
         tariffSewerInput.value = 0.8;
         analysisYearsInput.value = 20;
         discountRateInput.value = 5;
-        calculate();
+        runCalculateAndReveal({ scroll: false });
       });
 
       toggleAdvancedBtn?.addEventListener("click", () => {
@@ -5775,9 +6141,24 @@
       });
       resetScenarioBtn?.addEventListener("click", resetScenario);
       presetBtn?.addEventListener("click", loadPreset);
-      calcBtn?.addEventListener("click", () => setStepperExpanded(false, { source: "calculate" }));
 
-      // Kiraan awal dengan nilai contoh
+      globalCalcBtn?.addEventListener("click", () => runCalculateAndReveal());
+      presetHeroBtn?.addEventListener("click", () => {
+        loadPreset();
+        runCalculateAndReveal({ scroll: true });
+      });
+      resetInputsBtn?.addEventListener("click", () => {
+        resetScenario();
+        hasCalculated = false;
+        revealOutputs();
+        updateStatusChip();
+      });
+
+      attachHero();
+      buildInputSteps();
+      buildOutputLayout();
+      moveExportUI();
+      revealOutputs();
       buildStepper();
       initStepperBehavior();
       refreshStepperValidation();
@@ -5791,6 +6172,7 @@
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       calculate();
+      updateStatusChip();
     });
   </script>
 </body>

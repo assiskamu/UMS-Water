@@ -1,22 +1,26 @@
 # Ujian Manual Dilaksanakan / Disyorkan
 
-## 1) Pengguna baharu – Mod Quick, Senario A → Kira → Ringkasan → PDF Ringkas
-- Pastikan halaman memaparkan Stepper 8 Langkah, mod Quick dan senario A terpilih automatik.
-- Isi permintaan pantas (populasi/per kapita atau jumlah harian) + bekalan JANS, tekan **Kira** → ringkasan dan carta dikemas kini tanpa ralat konsol.
-- Jana PDF dengan pilihan **Senario terpilih** & **Ringkas (Top Mgmt)**, semak muka depan, TOC, header kecil, dan graf tidak terpotong.
+## 1) Aliran asas Quick (Langkah 1–3 → KIRA → OUTPUT)
+- Mulakan di halaman utama: pastikan hanya INPUT kelihatan dan status chip “Belum dikira”.
+- Isi Langkah 1 Quick (populasi/per kapita atau jumlah permintaan override) + Langkah 2 bekalan asas + Langkah 3 parameter kewangan.
+- Tekan **KIRA SEKARANG**: OUTPUT dibuka, auto-skrol ke Ringkasan, carta muncul tanpa ralat konsol, status chip dikemas kini masa dikira.
 
-## 2) Mod Kategori – Isi 2 baris → Kira → Carta
-- Tukar togol ke **Demand Mengikut Kategori**, isi sekurang-kurangnya dua baris kategori dengan populasi + per kapita + faktor puncak.
-- Tekan **Kira** dan sahkan jadual hasil, ringkasan MLD, serta carta bar/pai muncul dengan penjelasan “Apa ditunjukkan/Implikasi/Tindakan”.
+## 2) Permintaan kategori (Langkah 1 kategori) + Carta
+- Pilih “Gunakan Demand Mengikut Kategori”, isi sekurang-kurangnya dua baris dengan populasi, per kapita dan faktor puncak yang munasabah.
+- Tekan **KIRA SEKARANG** dan semak jadual hasil, Ringkasan MLD, carta bar/pai + blok “Apa ditunjukkan / Implikasi / Tindakan”.
 
-## 3) Senario B daripada Gandakan A→B – Tambah bekalan alternatif → Kira → Banding
-- Gandakan senario A ke B, tambahkan satu sumber alternatif (kapasiti + utiliti + CAPEX/OPEX).
-- Jalankan kiraan untuk kedua-dua senario dan buka seksyen Perbandingan Senario; pastikan jadual muncul (sekurang-kurangnya dua senario dikira) dan nilai berbeza mengikut input.
+## 3) Sumber alternatif (Langkah 4) dikira dalam bekalan
+- Masukkan satu sumber alternatif (kapasiti, utiliti, CAPEX/OPEX) dan kira.
+- Sahkan bekalan efektif, jadual CBA, dan graf NPV/Payback kemas kini dengan penjelasan.
 
-## 4) Full CBA + CAPEX/OPEX Terperinci – Sensitiviti
-- Pilih mod **Full CBA**, isi beberapa baris CAPEX/OPEX itemised dan sekurang-kurangnya satu sumber alternatif lengkap (utiliti, kebolehpercayaan, CAPEX, OPEX, hayat, tarif, diskaun, tempoh).
-- Kira dan semak jadual kewangan, graf NPV/Payback, serta seksyen Analisis Sensitiviti yang aktif (tiada banner amaran).
+## 4) Senario B (gandakan A) + perbandingan
+- Gandakan A→B, ubah input (contoh: alt supply berbeza), kira kedua-dua senario.
+- Semak seksyen Perbandingan Senario hanya muncul selepas ≥2 senario dikira dan memaparkan perbezaan.
 
-## 5) PDF Semua Senario (Ringkas & Penuh)
-- Pilih skop **Semua senario (A–C)**, jana PDF Ringkas dan Penuh.
-- Sahkan TOC dengan nombor halaman, header dalaman kecil, tiada pie/carta terpotong, setiap rajah mempunyai tiga ayat interpretasi, serta lampiran sensitiviti dan CAPEX/OPEX untuk laporan Penuh.
+## 5) Full CBA + CAPEX/OPEX terperinci → Sensitiviti
+- Pilih Mod **Full CBA**, isi CAPEX/OPEX itemised dan sekurang-kurangnya satu sumber alternatif dengan tarif/diskaun/tempoh lengkap.
+- Kira dan sahkan seksyen Analisis Sensitiviti muncul (tiada banner amaran) dengan nilai NPV/BCR untuk asas, CAPEX+10%, OPEX+10%, manfaat+10%.
+
+## 6) PDF Ringkas & Penuh (senario aktif & semua senario)
+- Cuba jana PDF sebelum KIRA: pastikan prompt “Kira & Jana Laporan” muncul dan berjalan sebelum PDF dijana.
+- Jana PDF untuk “Senario terpilih” & “Ringkas” dan untuk “Semua senario” & “Penuh”; semak urutan laporan (Ringkasan Eksekutif → INPUT → OUTPUT → Cadangan → Lampiran), TOC bernombor, header dalaman kecil, graf tidak terpotong, sensitiviti hanya bila memenuhi syarat.
