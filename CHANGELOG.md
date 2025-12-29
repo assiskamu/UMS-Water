@@ -1,5 +1,10 @@
 # Perubahan Terbaru
 
+## 2025-12-29 (Input → Kira → Output)
+- Tata atur baharu: header dengan butang utama “KIRA SEKARANG”, status dikira, preset/reset pantas, dan blok INPUT (5 langkah WAJIB/Pilihan) sebelum sebarang output; output hanya muncul selepas kiraan dan auto-skrol ke ringkasan.
+- Gating paparan lanjutan: perbandingan senario hanya bila ≥2 senario dikira, sensitiviti hanya untuk Mod Full + input kewangan lengkap, eksport PDF digesa untuk kira dahulu; status chip dan mesej kosong mesra pengguna.
+- Laporan PDF disusun semula: INPUT didahulukan (kaedah permintaan, bekalan, kewangan, alt supply, CAPEX/OPEX), diikuti OUTPUT, cadangan, dan lampiran; amaran jelas jika input kewangan tidak lengkap, sensitiviti ditunjukkan mengikut syarat.
+
 ## 2025-02-04 (Usability Overhaul & Laporan Profesional)
 - Quick Start “8 Langkah” kekal di atas (sticky) dengan status badge (Belum lengkap/Lengkap/Sudah dikira), butang “Pergi ke langkah ini”, sorotan seksyen, dan butang “Seterusnya” pada hujung setiap seksyen.
 - Togol permintaan “Quick vs Kategori” yang saling eksklusif; input yang tidak dipilih dikunci/kelabu. Senario aktif kini memaparkan status Disimpan/Sudah dikira dengan masa, B/C hanya muncul selepas ditambah, dan perbandingan/sensitiviti disembunyikan sehingga syarat data dipenuhi.
