@@ -1,5 +1,11 @@
 # Perubahan Terbaru
 
+## 2025-12-30 (P1–P6 Kegunaan & Kebolehpercayaan)
+- Butang utama dikemas kini: “Lompat ke Kira” di header (skrol sahaja) dan “KIRA SEKARANG” dipindah ke akhir input wajib (atau selepas CAPEX/OPEX untuk Mod Full); pipeline dikira disatukan di `runCalculation()` dengan validasi berwarna/auto-skrol dan mesej ralat jelas.
+- Senario: status “Belum disimpan/Disimpan HH:MM” berhampiran pengurus senario, butang “SIMPAN SENARIO” baharu berdekatan blok KIRA, simpanan menyertakan `schemaVersion` dan `lastSavedAt` dalam localStorage.
+- Input kategori: pilihan “Isi terus (manual)” vs “Muat naik Excel”, butang muat turun templat, import .xlsx menggunakan SheetJS dengan sorotan baris ralat, ringkasan import, dan jadual dipraisi dengan data sah.
+- Paparan lanjutan dikurangkan kekusutan: Sensitiviti & Perbandingan A/B/C dipendam sehingga kiraan sah; placeholder “Akan dipaparkan selepas kiraan lengkap.” dipaparkan apabila disembunyikan; carta diberi had tinggi maksimum dan `maintainAspectRatio=false`.
+
 ## 2025-12-29 (Input → Kira → Output)
 - Tata atur baharu: header dengan butang utama “KIRA SEKARANG”, status dikira, preset/reset pantas, dan blok INPUT (5 langkah WAJIB/Pilihan) sebelum sebarang output; output hanya muncul selepas kiraan dan auto-skrol ke ringkasan.
 - Gating paparan lanjutan: perbandingan senario hanya bila ≥2 senario dikira, sensitiviti hanya untuk Mod Full + input kewangan lengkap, eksport PDF digesa untuk kira dahulu; status chip dan mesej kosong mesra pengguna.

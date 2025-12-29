@@ -143,6 +143,49 @@
       font-size: 0.86rem;
     }
 
+    .calc-alert {
+      border-radius: 0.85rem;
+      padding: 0.85rem 0.95rem;
+      background: #fff3f3;
+      border: 1px solid rgba(211, 50, 47, 0.35);
+      color: #8b1f1b;
+      font-weight: 700;
+    }
+
+    .calc-alert ul {
+      margin: 0.35rem 0 0.1rem 1rem;
+      padding: 0;
+      color: #6b1a17;
+    }
+
+    .field-missing {
+      border-color: #d32f2f !important;
+      background: #fff6f6 !important;
+      outline: 2px solid rgba(211, 47, 47, 0.35);
+    }
+
+    .missing-hint {
+      color: #b3261e;
+      font-size: 0.82rem;
+      margin-top: 0.25rem;
+    }
+
+    .row-error {
+      background: #fff3f3;
+    }
+
+    .row-error input {
+      border-color: #d32f2f;
+      background: #fff8f8;
+    }
+
+    .row-error .error-hint {
+      color: #b3261e;
+      font-size: 0.8rem;
+      margin-top: 0.15rem;
+      display: block;
+    }
+
     .inline-alert ul { margin: 0.35rem 0 0 1rem; padding: 0; }
 
     .toolbar {
@@ -151,6 +194,47 @@
       gap: 0.6rem;
       align-items: center;
     }
+
+    .option-toggle {
+      display: inline-flex;
+      gap: 0.8rem;
+      padding: 0.65rem 0.85rem;
+      background: #f5f9ff;
+      border: 1px solid #d5e6f8;
+      border-radius: 0.85rem;
+      font-weight: 700;
+      color: #12324a;
+    }
+
+    .option-toggle label {
+      display: inline-flex;
+      gap: 0.4rem;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .excel-panel {
+      border: 1px dashed #b5cdea;
+      border-radius: 0.85rem;
+      padding: 0.75rem 0.85rem;
+      background: #f7fbff;
+      margin: 0.55rem 0;
+    }
+
+    .upload-btn {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+      padding: 0.45rem 0.75rem;
+      border-radius: 0.6rem;
+      background: #0d6efd;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      font-weight: 700;
+    }
+
+    .upload-btn input[type="file"] { display: none; }
 
     .scenario-list {
       display: grid;
@@ -1373,6 +1457,17 @@
 
     .chart-explain-block { margin-top: 0.4rem; font-size: 0.86rem; color: #2d4c69; }
 
+    .chart-area canvas {
+      max-height: 320px;
+    }
+
+    #demand-by-category-chart,
+    #demand-share-chart,
+    #cba-npv-chart,
+    #cba-payback-chart {
+      max-height: 320px;
+    }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -1459,7 +1554,7 @@
             </p>
           </div>
           <div class="hero-actions">
-            <button type="button" class="primary" id="btn-global-calc">🚀 KIRA SEKARANG</button>
+            <button type="button" class="secondary" id="btn-jump-calc">⏬ Lompat ke Kira</button>
             <div class="status-chip" id="calc-status-chip">Belum dikira</div>
           </div>
         </div>
@@ -1480,7 +1575,7 @@
 
     <section class="card" id="input-wrapper">
       <h2><span class="icon">📝</span> INPUT (Isi dahulu)</h2>
-      <p class="lead">Ikuti 5 langkah INPUT. Setiap langkah label <strong>WAJIB</strong> atau <strong>Pilihan</strong>. Selesai semua, tekan <strong>KIRA SEKARANG</strong>.</p>
+      <p class="lead">Ikuti langkah INPUT. Setiap langkah label <strong>WAJIB</strong> atau <strong>Pilihan</strong>. Selesai semua, tekan <strong>KIRA SEKARANG</strong>.</p>
       <div id="input-steps" class="input-steps"></div>
     </section>
 
@@ -1584,6 +1679,7 @@
       <div class="inline-alert" id="sens-empty" style="display:none;">
         Analisis sensitiviti akan muncul selepas kiraan lengkap (Mod Full/Operational) dengan CAPEX, OPEX dan parameter kewangan lengkap.
       </div>
+      <p class="mini" id="sens-placeholder" style="margin:0.2rem 0 0.6rem;">Akan dipaparkan selepas kiraan lengkap.</p>
       <div class="input-grid">
         <div>
           <div class="label">Senario asas</div>
@@ -1611,6 +1707,7 @@
       <div class="inline-alert" id="compare-empty" style="display:none;">
         Perbandingan memerlukan sekurang-kurangnya dua senario yang telah dikira. Gandakan atau tambah senario, jalankan kiraan, kemudian semak semula di sini.
       </div>
+      <p class="mini" id="compare-placeholder" style="margin:0.2rem 0 0.6rem;">Akan dipaparkan selepas kiraan lengkap.</p>
       <div class="compare-grid">
         <table id="scenario-compare-table">
           <thead>
@@ -1739,6 +1836,7 @@
     <section class="card" id="section-scenario">
       <h2><span class="icon">🗂️</span> Pengurus Senario (A/B/C)</h2>
       <p id="active-scenario-banner" class="lead" style="font-weight:700;color:#0d2e55;">Senario aktif: A (Baseline) · Status: Belum disimpan</p>
+      <p class="mode-note" id="scenario-save-status">Belum disimpan</p>
       <div class="toolbar stacked">
         <div class="scenario-actions">
           <button type="button" class="secondary" id="btn-add-scenario">➕ Senario baharu</button>
@@ -1762,6 +1860,28 @@
         bersama bilangan pengguna, kadar penggunaan per kapita, dan faktor
         permintaan puncak (peak factor).
       </p>
+
+      <div class="option-toggle" id="category-input-toggle">
+        <label>
+          <input type="radio" name="category-input-mode" value="manual" checked />
+          Isi terus (manual)
+        </label>
+        <label>
+          <input type="radio" name="category-input-mode" value="excel" />
+          Muat naik Excel
+        </label>
+      </div>
+
+      <div class="excel-panel hidden" id="excel-panel">
+        <div class="btn-row" style="margin-top:0;">
+          <button type="button" class="secondary" id="btn-download-template">📥 Muat turun template Excel</button>
+          <label class="upload-btn">
+            📤 Muat naik Excel
+            <input type="file" id="excel-upload" accept=".xlsx,.xls" />
+          </label>
+        </div>
+        <p class="mini" id="excel-summary">Sokong fail .xlsx dengan lajur: nama_bangunan, populasi_orang, per_kapita_L_org_hari, faktor_puncak.</p>
+      </div>
 
       <div class="note">
         Tip: 1 m³/hari = 1,000 L/hari. Peak factor biasa 1.2–1.5 untuk asrama
@@ -1821,9 +1941,6 @@
       <div class="btn-row">
         <button id="add-row-btn" type="button" class="secondary">
           ➕ Tambah baris kategori
-        </button>
-        <button id="calculate-btn" type="button" class="primary">
-          🔍 Kira permintaan & banding dengan bekalan
         </button>
       </div>
     </section>
@@ -1889,6 +2006,18 @@
         Kebiasaannya kadar diskaun 3–7% digunakan untuk projek infrastruktur
         awam, bergantung kepada garis panduan agensi.
       </div>
+    </section>
+
+    <section class="card" id="section-calc-actions">
+      <h2><span class="icon">🚀</span> Jalankan Kiraan & Simpan Senario</h2>
+      <div id="calc-alert" class="calc-alert hidden"></div>
+      <div class="btn-row">
+        <button id="calculate-btn" type="button" class="primary">
+          🚀 KIRA SEKARANG
+        </button>
+        <button type="button" class="secondary" id="btn-save-scenario-cta">💾 SIMPAN SENARIO</button>
+      </div>
+      <p class="tagline" id="calc-location-note">Pastikan Langkah 1–3 diisi (Permintaan, Bekalan, Kewangan). Untuk Mod Full CBA, semak CAPEX/OPEX sebelum mengira.</p>
     </section>
 
     <!-- INPUT SUMBER AIR ALTERNATIF -->
@@ -2428,10 +2557,13 @@
       const outputEmpty = document.getElementById("output-empty");
       const exportWrapper = document.getElementById("export-wrapper");
       const exportSlot = document.getElementById("export-slot");
-      const globalCalcBtn = document.getElementById("btn-global-calc");
+      const jumpCalcBtn = document.getElementById("btn-jump-calc");
       const calcStatusChip = document.getElementById("calc-status-chip");
       const resetInputsBtn = document.getElementById("btn-reset-inputs");
       const presetHeroBtn = document.getElementById("btn-load-preset-hero");
+      const calcActionsSection = document.getElementById("section-calc-actions");
+      const calcAlertBox = document.getElementById("calc-alert");
+      const calcLocationNote = document.getElementById("calc-location-note");
       const sectionMap = {
         mode: document.getElementById("section-mode"),
         quick: document.getElementById("section-quick"),
@@ -2441,6 +2573,7 @@
         finance: document.getElementById("section-finance"),
         alt: document.getElementById("section-alt"),
         capex: document.getElementById("section-capex"),
+        calc: document.getElementById("section-calc-actions"),
         results: document.getElementById("section-results"),
       };
 
@@ -2464,6 +2597,11 @@
       const toggleAdvancedBtn = document.getElementById("btn-toggle-advanced");
       const demandModeRadios = document.querySelectorAll("input[name='demand-mode']");
       const categoryGuard = document.getElementById("category-guard");
+      const categoryInputToggle = document.getElementById("category-input-toggle");
+      const excelPanel = document.getElementById("excel-panel");
+      const excelUpload = document.getElementById("excel-upload");
+      const excelSummary = document.getElementById("excel-summary");
+      const downloadTemplateBtn = document.getElementById("btn-download-template");
 
       const addAltRowBtn = document.getElementById("add-alt-row-btn");
       const altBody = document.getElementById("alt-body");
@@ -2544,6 +2682,7 @@
       const renameScenarioBtn = document.getElementById("btn-rename-scenario");
       const deleteScenarioBtn = document.getElementById("btn-delete-scenario");
       const saveScenarioBtn = document.getElementById("btn-save-scenario");
+      const saveScenarioCtaBtn = document.getElementById("btn-save-scenario-cta");
       const resetScenarioBtn = document.getElementById("btn-reset-scenario");
       const presetBtn = document.getElementById("btn-load-preset");
 
@@ -2568,12 +2707,16 @@
       };
       const compareEmpty = document.getElementById("compare-empty");
       const sensEmpty = document.getElementById("sens-empty");
+      const comparePlaceholder = document.getElementById("compare-placeholder");
+      const sensPlaceholder = document.getElementById("sens-placeholder");
+      const scenarioSaveStatus = document.getElementById("scenario-save-status");
 
       if (window.Chart && Chart.defaults) {
         Chart.defaults.animation = false;
         Chart.defaults.transitions = Chart.defaults.transitions || {};
         Chart.defaults.transitions.active = Chart.defaults.transitions.active || {};
         Chart.defaults.transitions.active.animation = { duration: 0 };
+        Chart.defaults.maintainAspectRatio = false;
       }
 
       const umsLogoPath = "UMS logo.png";
@@ -2845,6 +2988,15 @@
             nodes: [sectionMap.capex].filter(Boolean),
           },
         ];
+
+        const calcStep = {
+          title: "Langkah Kira & Simpan (WAJIB)",
+          meta: "Tekan KIRA SEKARANG selepas input wajib, kemudian Simpan Senario.",
+          badge: "WAJIB",
+          nodes: [sectionMap.calc].filter(Boolean),
+        };
+        const insertIndex = appState.mode === "full" ? steps.length : 3;
+        steps.splice(insertIndex, 0, calcStep);
         steps.forEach((step, idx) => {
           const details = document.createElement("details");
           details.className = "input-step";
@@ -2951,9 +3103,33 @@
         }
       }
 
-      function runCalculateAndReveal({ scroll = true } = {}) {
+      function scrollToFirstMissing(missing) {
+        if (!missing?.length) return;
+        const el = resolveTarget(missing[0]?.target);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (typeof el.focus === "function") {
+            el.focus({ preventScroll: true });
+          }
+        }
+      }
+
+      function runCalculation({ mode = appState.mode, scenarioId = appState.activeScenarioId, demandMethod = appState.demandMode, scroll = true } = {}) {
+        if (scenarioId && appState.scenarios[scenarioId]) {
+          appState.activeScenarioId = scenarioId;
+        }
+        clearMissingHighlights();
+        const validation = validateInputs({ mode, demandMethod });
+        showValidation(validation.warnings || []);
+        if (!validation.ok) {
+          applyMissingHighlights(validation.missing);
+          showMissingPanel(validation.missing);
+          scrollToFirstMissing(validation.missing);
+          return false;
+        }
+        showMissingPanel([]);
         recalcCapexOpexItems();
-        const ok = calculate();
+        const ok = calculateCore({ mode, demandMethod });
         if (ok !== false) {
           hasCalculated = true;
           lastCalculatedAt = Date.now();
@@ -3612,6 +3788,8 @@
           demandMode: "quick",
           inputs: {},
           outputs: {},
+          schemaVersion: SCHEMA_VERSION,
+          lastSavedAt: null,
           savedAt: null,
           calculatedAt: null,
           updatedAt: Date.now(),
@@ -3651,6 +3829,7 @@
             if (parsed.version === SCHEMA_VERSION) {
               appState = parsed;
               appState.demandMode = appState.demandMode || "quick";
+              appState.schemaVersion = appState.schemaVersion || SCHEMA_VERSION;
               return;
             }
           }
@@ -3668,6 +3847,7 @@
         }
         appState = {
           version: SCHEMA_VERSION,
+          schemaVersion: SCHEMA_VERSION,
           mode: "quick",
           demandMode: "quick",
           activeScenarioId: "A",
@@ -3677,6 +3857,7 @@
 
       function persistState() {
         try {
+          appState.schemaVersion = SCHEMA_VERSION;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         } catch (err) {
           console.warn("Gagal simpan state:", err);
@@ -3733,6 +3914,9 @@
         const useQuick = mode === "quick";
         setQuickInputsDisabled(!useQuick);
         setCategoryInputsDisabled(useQuick);
+        if (useQuick) {
+          setCategoryInputMode("manual");
+        }
         if (!useQuick) {
           document.body.classList.add("show-advanced");
         }
@@ -3752,9 +3936,16 @@
             ? "Operational Planning: buka jadual kategori, sumber alternatif berganda dengan faktor utiliti & kebolehpercayaan. Gunakan untuk perancangan 10–15 minit."
             : "Full CBA (Advanced): kekalkan pecahan CAPEX/OPEX, kitaran penggantian, penjimatan terperinci dan sensitiviti +/-10%.";
         modeNote.textContent = noteText;
+        if (calcLocationNote) {
+          calcLocationNote.textContent =
+            mode === "full"
+              ? "Pastikan Langkah 1–5 diisi (Permintaan, Bekalan, Kewangan, Alt, CAPEX/OPEX) sebelum tekan KIRA."
+              : "Pastikan Langkah 1–3 diisi (Permintaan, Bekalan, Kewangan) sebelum tekan KIRA.";
+        }
         toggleModeBlocks(mode);
         persistState();
         refreshStepperValidation();
+        buildInputSteps();
       }
 
       function clearElement(el) {
@@ -3764,8 +3955,14 @@
       function createCategoryRow(data = {}) {
         const tr = document.createElement("tr");
         tr.className = "category-row";
+        if (data.errorReason) {
+          tr.classList.add("row-error");
+        }
         tr.innerHTML = `
-          <td><input type="text" class="cat-name" value="${data.name || ""}" placeholder="Nama kategori" /></td>
+          <td>
+            <input type="text" class="cat-name" value="${data.name || ""}" placeholder="Nama kategori" />
+            ${data.errorReason ? `<span class="error-hint">${data.errorReason}</span>` : ""}
+          </td>
           <td><input type="number" class="cat-pop" value="${data.pop || ""}" min="0" /></td>
           <td><input type="number" class="cat-percap" value="${data.percap || ""}" min="0" /></td>
           <td><input type="number" class="cat-peak" value="${data.peak || "1.3"}" min="1" step="0.05" /></td>
@@ -3784,6 +3981,89 @@
         } else {
           rows.forEach((r) => categoryBody.appendChild(createCategoryRow(r)));
         }
+      }
+
+      function setCategoryInputMode(mode) {
+        if (!excelPanel) return;
+        const useExcel = mode === "excel";
+        excelPanel.classList.toggle("hidden", !useExcel);
+        if (useExcel) {
+          excelPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function downloadCategoryTemplate() {
+        if (typeof XLSX === "undefined") {
+          alert("Library Excel (SheetJS) tidak dimuatkan.");
+          return;
+        }
+        const wb = XLSX.utils.book_new();
+        const rows = [
+          ["nama_bangunan", "populasi_orang", "per_kapita_L_org_hari", "faktor_puncak"],
+          ["Asrama A", 800, 180, 1.3],
+          ["Fakulti & Pentadbiran", 4000, 60, 1.25],
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, "PermintaanKategori");
+        XLSX.writeFile(wb, "Template_Input_Permintaan_UMS.xlsx");
+      }
+
+      function importCategoryExcel(file) {
+        if (!file) return;
+        if (typeof XLSX === "undefined") {
+          alert("Library Excel (SheetJS) tidak dimuatkan.");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: "array" });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+            const validRows = [];
+            const errorRows = [];
+            json.forEach((row, idx) => {
+              const name = (row.nama_bangunan || "").toString().trim();
+              const pop = parseFloat(row.populasi_orang);
+              const percap = parseFloat(row.per_kapita_L_org_hari);
+              const peak = parseFloat(row.faktor_puncak);
+              const isEmpty = [name, pop, percap, peak].every((v) => !v);
+              if (isEmpty) return;
+              const reason = [];
+              if (!isFinite(pop) || pop <= 0) reason.push("Populasi tidak sah");
+              if (!isFinite(percap) || percap <= 0) reason.push("Per kapita tidak sah");
+              if (!isFinite(peak) || peak <= 0) reason.push("Faktor puncak tidak sah");
+              if (reason.length) {
+                errorRows.push({
+                  name: name || `Baris ${idx + 2}`,
+                  pop: isFinite(pop) ? pop : "",
+                  percap: isFinite(percap) ? percap : "",
+                  peak: isFinite(peak) ? peak : "",
+                  errorReason: reason.join("; "),
+                });
+              } else {
+                validRows.push({
+                  name: name || `Baris ${idx + 2}`,
+                  pop,
+                  percap,
+                  peak: peak || 1.3,
+                });
+              }
+            });
+            clearMissingHighlights();
+            const mergedRows = validRows.concat(errorRows);
+            setCategoryRows(mergedRows.length ? mergedRows : validRows);
+            if (excelSummary) {
+              excelSummary.textContent = `Berjaya import ${validRows.length} baris; ${errorRows.length} baris ralat.`;
+              excelSummary.style.color = errorRows.length ? "#b3261e" : "#12324a";
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Gagal memproses fail Excel. Pastikan format lajur betul.");
+          }
+        };
+        reader.readAsArrayBuffer(file);
       }
 
       function createAltRow(data = {}) {
@@ -3962,12 +4242,31 @@
         return new Date(ts).toLocaleString("ms-MY", { hour12: false });
       }
 
+      function formatTimeHM(ts) {
+        if (!ts) return "";
+        return new Date(ts).toLocaleTimeString("ms-MY", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+      }
+
+      function updateScenarioSaveStatus() {
+        if (!scenarioSaveStatus) return;
+        const sc = activeScenario();
+        if (!sc) return;
+        scenarioSaveStatus.textContent = sc.savedAt
+          ? `Disimpan pada ${formatTimeHM(sc.savedAt)}`
+          : "Belum disimpan";
+      }
+
       function updateActiveScenarioBanner() {
         const sc = activeScenario();
         if (!sc || !activeScenarioBanner) return;
         const calcStatus = sc.calculatedAt ? `Sudah dikira ${formatDateTime(sc.calculatedAt)}` : "Belum dikira";
         const saveStatus = sc.savedAt ? `Disimpan ${formatDateTime(sc.savedAt)}` : "Belum disimpan";
         activeScenarioBanner.textContent = `Senario aktif: ${sc.id} (${sc.name || "Baseline"}) · Status: ${saveStatus} · ${calcStatus}`;
+        updateScenarioSaveStatus();
       }
 
       function updateScenarioOutputs(summary, finance) {
@@ -3981,6 +4280,7 @@
         };
         sc.calculatedAt = Date.now();
         sc.updatedAt = Date.now();
+        sc.schemaVersion = SCHEMA_VERSION;
         updateActiveScenarioBanner();
       }
 
@@ -4023,7 +4323,16 @@
         applyScenarioInputs(appState.scenarios[id].inputs || {});
         renderScenarioList();
         persistState();
-        calculate();
+        hasCalculated = !!appState.scenarios[id].outputs?.summary;
+        if (hasCalculated) {
+          runCalculation({ scenarioId: id, scroll: false });
+        } else {
+          clearMissingHighlights();
+          showMissingPanel([]);
+          revealOutputs();
+          updateStatusChip();
+          updateAdvancedVisibility();
+        }
         refreshStepperValidation();
         updateActiveScenarioBanner();
       }
@@ -4111,7 +4420,7 @@
         quickAltInputs.util.value = 80;
         quickAltInputs.capex.value = 900000;
         quickAltInputs.opex.value = 50000;
-        runCalculateAndReveal({ scroll: false });
+        runCalculation({ scroll: false });
       }
 
       function saveActiveScenario() {
@@ -4120,17 +4429,28 @@
         sc.inputs = captureScenarioInputs();
         sc.mode = appState.mode;
         sc.demandMode = appState.demandMode;
-        sc.savedAt = Date.now();
-        sc.updatedAt = Date.now();
+        const now = Date.now();
+        sc.savedAt = now;
+        sc.lastSavedAt = now;
+        sc.schemaVersion = SCHEMA_VERSION;
+        sc.updatedAt = now;
         persistState();
         renderScenarioList();
         updateActiveScenarioBanner();
       }
 
       function updateSensitivityUI() {
-        const showSens = appState.mode === "full" && lastAltSources.length > 0 && normalizeNumber(tariffWaterInput.value) >= 0 && normalizeNumber(analysisYearsInput.value) > 0;
+        const showSens =
+          hasCalculated &&
+          appState.mode === "full" &&
+          lastAltSources.length > 0 &&
+          normalizeNumber(tariffWaterInput.value) >= 0 &&
+          normalizeNumber(analysisYearsInput.value) > 0;
         if (sensEmpty) {
           sensEmpty.style.display = showSens ? "none" : "block";
+        }
+        if (sensPlaceholder) {
+          sensPlaceholder.style.display = showSens ? "none" : "block";
         }
         if (!showSens) {
           Object.values(sensitivityLabels).forEach((el) => {
@@ -4168,25 +4488,46 @@
         const computedCount = Object.values(appState.scenarios).filter(
           (sc) => sc.outputs?.summary
         ).length;
-        const showCompare = computedCount >= 2;
+        const showCompare = hasCalculated && computedCount >= 2;
         if (compareEmpty) compareEmpty.style.display = showCompare ? "none" : "block";
+        if (comparePlaceholder) comparePlaceholder.style.display = showCompare ? "none" : "block";
         if (compareCard) {
           compareCard.classList.toggle("muted", !showCompare);
-          compareCard.style.display = showCompare ? "" : "none";
+          compareCard.style.display = "";
           scenarioCompareTable.style.display = showCompare ? "table" : "none";
           const wrap = compareCard.closest(".output-section");
-          if (wrap) wrap.style.display = showCompare ? "" : "none";
+          if (wrap) wrap.style.display = "";
         }
         const hasDemand = summaryAvgMLDEl.textContent && summaryAvgMLDEl.textContent !== "–";
         if (!hasDemand) {
           summaryTextEl.innerHTML = "Belum ada data. Lengkapkan Langkah 3–5 dan tekan Kira.";
         }
         const sensCard = document.getElementById("section-sensitivity");
-        const showSens = appState.mode === "full" && lastAltSources.length > 0 && normalizeNumber(tariffWaterInput.value) >= 0 && normalizeNumber(analysisYearsInput.value) > 0;
+        const hasFinanceInputs =
+          normalizeNumber(tariffWaterInput.value) >= 0 &&
+          normalizeNumber(tariffSewerInput.value) >= 0 &&
+          normalizeNumber(analysisYearsInput.value) > 0 &&
+          normalizeNumber(discountRateInput.value) >= 0;
+        const showSens =
+          hasCalculated &&
+          appState.mode === "full" &&
+          lastAltSources.length > 0 &&
+          hasFinanceInputs;
         if (sensCard) {
-          sensCard.style.display = showSens ? "" : "none";
+          sensCard.style.display = "";
+          sensCard.classList.toggle("muted", !showSens);
+          const grid = sensCard.querySelector(".input-grid");
+          const tagline = sensCard.querySelector(".tagline");
+          if (grid) grid.style.display = showSens ? "grid" : "none";
+          if (tagline) tagline.style.display = showSens ? "" : "none";
           const wrap = sensCard.closest(".output-section");
-          if (wrap) wrap.style.display = showSens ? "" : "none";
+          if (wrap) wrap.style.display = "";
+        }
+        if (sensEmpty) {
+          sensEmpty.style.display = showSens ? "none" : "block";
+        }
+        if (sensPlaceholder) {
+          sensPlaceholder.style.display = showSens ? "none" : "block";
         }
       }
 
@@ -4200,65 +4541,131 @@
         validationBox.classList.remove("hidden");
       }
 
-      function validateInputs(mode) {
-        const errors = [];
-        const markInvalid = (el) => el && el.classList.add("invalid");
-        const clearInvalid = (el) => el && el.classList.remove("invalid");
+      function clearMissingHighlights() {
+        document.querySelectorAll(".field-missing").forEach((el) => el.classList.remove("field-missing"));
+        document.querySelectorAll(".missing-hint").forEach((node) => node.remove());
+        document.querySelectorAll(".row-error").forEach((row) => row.classList.remove("row-error"));
+      }
 
-        [...document.querySelectorAll("input")].forEach(clearInvalid);
+      function attachHint(el, text) {
+        if (!el) return;
+        el.classList.add("field-missing");
+        const container = el.parentElement;
+        if (container && !container.querySelector(".missing-hint")) {
+          const hint = document.createElement("div");
+          hint.className = "missing-hint";
+          hint.textContent = text || "WAJIB diisi untuk kiraan";
+          container.appendChild(hint);
+        }
+      }
 
-        if (appState.demandMode === "quick") {
+      function showMissingPanel(missing) {
+        if (!calcAlertBox) return;
+        if (!missing || !missing.length) {
+          calcAlertBox.classList.add("hidden");
+          calcAlertBox.innerHTML = "";
+          return;
+        }
+        const list = missing
+          .map((item) => `<li><strong>${item.label}</strong> — ${item.reason || "WAJIB diisi untuk kiraan"}</li>`)
+          .join("");
+        calcAlertBox.innerHTML = `
+          Input wajib belum lengkap (${missing.length}). Sila lengkapkan item berikut:
+          <ul>${list}</ul>
+        `;
+        calcAlertBox.classList.remove("hidden");
+      }
+
+      function resolveTarget(target) {
+        if (!target) return null;
+        if (target instanceof Element) return target;
+        if (typeof target === "string") {
+          try {
+            return document.querySelector(target);
+          } catch (e) {
+            return null;
+          }
+        }
+        return null;
+      }
+
+      function applyMissingHighlights(missing) {
+        clearMissingHighlights();
+        missing.forEach((item) => {
+          const el = resolveTarget(item?.target);
+          attachHint(el, item?.reason);
+        });
+      }
+
+      function validateInputs({ mode = appState.mode, demandMethod = appState.demandMode } = {}) {
+        const missing = [];
+        const warnings = [];
+        const addMissing = (target, label, reason) => {
+          missing.push({ target, label, reason: reason || "WAJIB diisi untuk kiraan" });
+        };
+
+        if (demandMethod === "quick") {
           const pop = normalizeNumber(quickInputs.pop.value);
           const percap = normalizeNumber(quickInputs.percap.value);
           const demand = normalizeNumber(quickInputs.demand.value);
           const peak = normalizeNumber(quickInputs.peak.value);
           if (!(demand > 0 || (pop > 0 && percap > 0))) {
-            errors.push("Isi sama ada jumlah permintaan harian atau populasi + per kapita untuk Quick Estimate.");
-            markInvalid(quickInputs.demand);
-            markInvalid(quickInputs.pop);
-            markInvalid(quickInputs.percap);
+            addMissing("#quick-demand", "Permintaan harian / populasi", "Isi jumlah permintaan atau populasi & per kapita");
+            addMissing("#quick-pop", "Populasi", "Isi jika tiada jumlah permintaan");
+            addMissing("#quick-percap", "Per kapita", "Isi jika tiada jumlah permintaan");
           }
-          if (peak <= 0) {
-            errors.push("Faktor puncak mesti melebihi 0.");
-            markInvalid(quickInputs.peak);
+          if (!(peak > 0)) {
+            addMissing("#quick-peak", "Faktor puncak", "Mesti lebih besar daripada 0");
           } else if (peak < 1.2 || peak > 1.5) {
-            errors.push("Amaran: faktor puncak disyorkan antara 1.2–1.5 (dibolehkan jika sengaja).");
+            warnings.push("Amaran: faktor puncak biasa antara 1.2–1.5.");
           }
         } else {
           const rows = Array.from(document.querySelectorAll(".category-row"));
-          const validRow = rows.some((r) => normalizeNumber(r.querySelector(".cat-pop").value) > 0 && normalizeNumber(r.querySelector(".cat-percap").value) > 0);
-          if (!validRow) {
-            errors.push("Isi sekurang-kurangnya satu baris kategori dengan populasi & kadar per kapita.");
-            rows.forEach((r) => {
-              markInvalid(r.querySelector(".cat-pop"));
-              markInvalid(r.querySelector(".cat-percap"));
-            });
-          }
-          rows.forEach((r) => {
-            const peak = normalizeNumber(r.querySelector(".cat-peak").value);
-            if (peak < 1.2 || peak > 1.5) {
-              errors.push("Amaran: faktor puncak biasa 1.2–1.5. Semak baris kategori jika perlu.");
+          let hasValidRow = false;
+          rows.forEach((row, idx) => {
+            const name = (row.querySelector(".cat-name")?.value || `Baris ${idx + 1}`).trim();
+            const popInput = row.querySelector(".cat-pop");
+            const percapInput = row.querySelector(".cat-percap");
+            const peakInput = row.querySelector(".cat-peak");
+            const pop = normalizeNumber(popInput?.value);
+            const percap = normalizeNumber(percapInput?.value);
+            const peak = normalizeNumber(peakInput?.value);
+            const hasAny = name || pop > 0 || percap > 0;
+            if (pop > 0 && percap > 0) {
+              hasValidRow = true;
+            } else if (hasAny) {
+              addMissing(popInput, `Kategori ${name}`, "Populasi dan per kapita wajib diisi");
+              addMissing(percapInput, `Kategori ${name}`, "Populasi dan per kapita wajib diisi");
+              row.classList.add("row-error");
+            }
+            if (!(peak > 0) && hasAny) {
+              addMissing(peakInput, `Kategori ${name}`, "Faktor puncak wajib diisi");
+            } else if (peak && (peak < 1.1 || peak > 1.6)) {
+              warnings.push(`Amaran faktor puncak (${name}) luar julat biasa 1.2–1.5.`);
             }
           });
-        }
-
-        if (normalizeNumber(supplyInput.value) < 0) {
-          errors.push("Bekalan asas tidak boleh negatif.");
-          markInvalid(supplyInput);
-        }
-        [tariffWaterInput, tariffSewerInput, analysisYearsInput, discountRateInput].forEach((el) => {
-          if (normalizeNumber(el.value) < 0) {
-            errors.push("Nilai tarif/parameter kewangan tidak boleh negatif.");
-            markInvalid(el);
+          if (!hasValidRow) {
+            addMissing("#category-input-table", "Jadual kategori", "Isi sekurang-kurangnya satu baris lengkap");
           }
-        });
+        }
 
-        const invalidEls = document.querySelectorAll(".invalid");
-        return {
-          ok: !errors.some((e) => !e.startsWith("Amaran")),
-          errors,
-          firstInvalid: invalidEls.length ? invalidEls[0] : null,
-        };
+        const supplyVal = normalizeNumber(supplyInput.value);
+        if (!(supplyVal > 0)) {
+          addMissing("#supply-mld", "Bekalan asas (JANS)", "Masukkan nilai MLD yang sah");
+        }
+
+        const tariffWaterVal = normalizeNumber(tariffWaterInput.value);
+        const tariffSewerVal = normalizeNumber(tariffSewerInput.value);
+        const analysisYearsVal = normalizeNumber(analysisYearsInput.value);
+        const discountVal = normalizeNumber(discountRateInput.value);
+
+        if (!(tariffWaterVal >= 0)) addMissing("#tariff-water", "Tarif air terawat", "Tidak boleh kosong");
+        if (!(tariffSewerVal >= 0)) addMissing("#tariff-sewer", "Tarif pembetungan", "Tidak boleh kosong");
+        if (!(analysisYearsVal > 0)) addMissing("#analysis-years", "Tempoh analisis", "Mesti lebih besar daripada 0");
+        if (!(discountVal >= 0)) addMissing("#discount-rate", "Kadar diskaun", "Tidak boleh negatif");
+
+        const ok = missing.length === 0;
+        return { ok, missing, warnings };
       }
 
       function blobToDataURL(blob) {
@@ -4314,16 +4721,7 @@
         return Promise.resolve();
       }
 
-      function calculate() {
-        const validation = validateInputs(appState.mode);
-        showValidation(validation.errors);
-        if (!validation.ok) {
-          if (validation.firstInvalid) {
-            validation.firstInvalid.focus();
-          }
-          return false;
-        }
-
+      function calculateCore({ mode = appState.mode, demandMethod = appState.demandMode } = {}) {
         const demandRows = [];
         const categoryNames = [];
         const peakDemands = [];
@@ -4334,7 +4732,7 @@
 
         resultsBody.innerHTML = "";
 
-        const useQuick = appState.demandMode === "quick";
+        const useQuick = demandMethod === "quick";
         if (useQuick) {
           const pop = normalizeNumber(quickInputs.pop.value);
           const percap = normalizeNumber(quickInputs.percap.value);
@@ -5051,7 +5449,7 @@
 
       async function collectReportData() {
         recalcCapexOpexItems();
-        runCalculateAndReveal({ scroll: false });
+        runCalculation({ scroll: false });
         await waitForNextFrame();
         await wait(80);
 
@@ -5769,7 +6167,7 @@
         if (!hasCalculated) {
           const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana laporan.\nPilih OK untuk Kira & Jana Laporan, atau Batal untuk kembali.");
           if (!proceed) return;
-          const ok = runCalculateAndReveal({ scroll: false });
+        const ok = runCalculation({ scroll: false });
           if (!ok) return;
         }
 
@@ -5881,7 +6279,7 @@
       });
 
       calcBtn.addEventListener("click", () => {
-        runCalculateAndReveal();
+        runCalculation();
         setStepperExpanded(false, { source: "calculate" });
       });
 
@@ -5894,7 +6292,7 @@
           }
 
           // Ensure latest calculations
-          runCalculateAndReveal({ scroll: false });
+          runCalculation({ scroll: false });
 
           const wb = XLSX.utils.book_new();
 
@@ -6068,11 +6466,27 @@
         }
       });
       if (wizardSkipBtn) wizardSkipBtn.addEventListener("click", () => goWizard(1));
-      document.addEventListener("input", () => {
+      document.addEventListener("input", (e) => {
+        if (e.target?.classList?.contains("field-missing")) {
+          e.target.classList.remove("field-missing");
+          const hint = e.target.parentElement?.querySelector(".missing-hint");
+          if (hint) hint.remove();
+        }
+        if (!calcAlertBox?.classList.contains("hidden")) {
+          const check = validateInputs({ mode: appState.mode, demandMethod: appState.demandMode });
+          if (check.ok) {
+            showMissingPanel([]);
+          }
+        }
         validateWizardStep();
         refreshStepperValidation();
       });
-      document.addEventListener("change", () => {
+      document.addEventListener("change", (e) => {
+        if (e.target?.classList?.contains("field-missing")) {
+          e.target.classList.remove("field-missing");
+          const hint = e.target.parentElement?.querySelector(".missing-hint");
+          if (hint) hint.remove();
+        }
         validateWizardStep();
         refreshStepperValidation();
       });
@@ -6081,7 +6495,13 @@
         const pill = e.target.closest(".pill");
         if (!pill) return;
         setMode(pill.dataset.mode);
-        calculate();
+        if (hasCalculated) {
+          runCalculation({ scroll: false });
+        } else {
+          clearMissingHighlights();
+          showMissingPanel([]);
+          updateAdvancedVisibility();
+        }
       });
 
       autofillBtn.addEventListener("click", () => {
@@ -6100,7 +6520,7 @@
         tariffSewerInput.value = 0.8;
         analysisYearsInput.value = 20;
         discountRateInput.value = 5;
-        runCalculateAndReveal({ scroll: false });
+        runCalculation({ scroll: false });
       });
 
       toggleAdvancedBtn?.addEventListener("click", () => {
@@ -6114,11 +6534,22 @@
           setDemandMode(e.target.value);
         });
       });
+      categoryInputToggle?.addEventListener("change", (e) => {
+        if (e.target.name !== "category-input-mode") return;
+        setCategoryInputMode(e.target.value);
+      });
+      downloadTemplateBtn?.addEventListener("click", downloadCategoryTemplate);
+      excelUpload?.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        importCategoryExcel(file);
+        e.target.value = "";
+      });
 
       fixInputBtn.addEventListener("click", () => {
-        const invalid = document.querySelector(".invalid");
+        const invalid = document.querySelector(".field-missing") || document.querySelector(".invalid");
         if (invalid) {
-          invalid.focus();
+          invalid.scrollIntoView({ behavior: "smooth", block: "center" });
+          invalid.focus({ preventScroll: true });
         } else {
           alert("Tiada input rosak dikesan. Anda boleh terus mengira.");
         }
@@ -6135,21 +6566,29 @@
       duplicateScenarioBtn.addEventListener("click", duplicateScenario);
       renameScenarioBtn.addEventListener("click", renameScenario);
       deleteScenarioBtn.addEventListener("click", deleteScenario);
-      saveScenarioBtn.addEventListener("click", () => {
+      const handleSaveScenario = () => {
         saveActiveScenario();
         alert("Senario disimpan dalam pelayar.");
-      });
+      };
+      saveScenarioBtn.addEventListener("click", handleSaveScenario);
+      saveScenarioCtaBtn?.addEventListener("click", handleSaveScenario);
       resetScenarioBtn?.addEventListener("click", resetScenario);
       presetBtn?.addEventListener("click", loadPreset);
 
-      globalCalcBtn?.addEventListener("click", () => runCalculateAndReveal());
+      jumpCalcBtn?.addEventListener("click", () => {
+        if (calcActionsSection) {
+          calcActionsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
       presetHeroBtn?.addEventListener("click", () => {
         loadPreset();
-        runCalculateAndReveal({ scroll: true });
+        runCalculation({ scroll: true });
       });
       resetInputsBtn?.addEventListener("click", () => {
         resetScenario();
         hasCalculated = false;
+        clearMissingHighlights();
+        showMissingPanel([]);
         revealOutputs();
         updateStatusChip();
       });
@@ -6167,11 +6606,19 @@
       setMode(appState.mode);
       setDemandMode(appState.demandMode || "quick", true);
       applyScenarioInputs(activeScenario().inputs);
+      const initialCatMode = document.querySelector("input[name='category-input-mode']:checked")?.value || "manual";
+      setCategoryInputMode(initialCatMode);
+      if (activeScenario()?.outputs?.summary) {
+        hasCalculated = true;
+        lastCalculatedAt = activeScenario().calculatedAt || Date.now();
+        revealOutputs();
+        updateStatusChip();
+        updateAdvancedVisibility();
+      }
       updateAdvancedVisibility();
       updateActiveScenarioBanner();
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
-      calculate();
       updateStatusChip();
     });
   </script>
