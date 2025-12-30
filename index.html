@@ -2554,7 +2554,7 @@
         </table>
       </div>
 
-      <div class="two-column" style="margin-top: 1rem;">
+      <div class="two-column stack" style="margin-top: 1rem;">
         <div>
           <h3 style="font-size:0.96rem; margin-top:0;">Ringkasan Kewangan Projek</h3>
           <table id="alt-summary-table">
@@ -5628,38 +5628,100 @@
           },
         });
 
-        shareChart = new Chart(shareChartCtx, {
-          type: "pie",
-          data: {
-            labels,
-            datasets: [
-              {
-                data: avgData,
-                backgroundColor: [
-                  "rgba(13, 110, 253, 0.85)",
-                  "rgba(0, 188, 212, 0.85)",
-                  "rgba(3, 169, 244, 0.85)",
-                  "rgba(0, 150, 136, 0.85)",
-                  "rgba(63, 81, 181, 0.85)",
-                  "rgba(33, 150, 243, 0.85)",
-                ],
+        const shareCanvas = shareChartCtx?.canvas;
+        const useShareBar = labels.length > 30;
+        if (shareCanvas) {
+          const baseHeight = useShareBar ? Math.min(2200, 140 + labels.length * 18) : 200;
+          shareCanvas.height = baseHeight;
+          shareCanvas.style.height = `${baseHeight}px`;
+        }
+
+        if (useShareBar) {
+          const sharePairs = labels.map((label, idx) => ({
+            label,
+            value: Number(avgData?.[idx]) || 0,
+          }));
+          sharePairs.sort((a, b) => b.value - a.value);
+          const totalAvg = sharePairs.reduce((sum, item) => sum + item.value, 0);
+          const percentData = sharePairs.map((item) =>
+            totalAvg > 0 ? (item.value / totalAvg) * 100 : 0
+          );
+          shareChart = new Chart(shareChartCtx, {
+            type: "bar",
+            data: {
+              labels: sharePairs.map((item) => item.label),
+              datasets: [
+                {
+                  label: "Sumbangan (%)",
+                  data: percentData,
+                  backgroundColor: "rgba(0, 188, 212, 0.75)",
+                  borderRadius: 6,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              indexAxis: "y",
+              animation: false,
+              layout: { padding: 16 },
+              plugins: {
+                legend: { display: false },
+                title: {
+                  display: true,
+                  text: "Agihan Permintaan Purata Mengikut Kategori",
+                },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => `${ctx.parsed.x?.toFixed(1) || 0}%`,
+                  },
+                },
               },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            layout: { padding: 18 },
-            plugins: {
-              legend: { position: "bottom" },
-              title: {
-                display: true,
-                text: "Agihan Permintaan Purata Mengikut Kategori",
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  title: { display: true, text: "% daripada jumlah" },
+                },
+                y: {
+                  ticks: { autoSkip: false },
+                },
               },
             },
-          },
-        });
+          });
+        } else {
+          shareChart = new Chart(shareChartCtx, {
+            type: "pie",
+            data: {
+              labels,
+              datasets: [
+                {
+                  data: avgData,
+                  backgroundColor: [
+                    "rgba(13, 110, 253, 0.85)",
+                    "rgba(0, 188, 212, 0.85)",
+                    "rgba(3, 169, 244, 0.85)",
+                    "rgba(0, 150, 136, 0.85)",
+                    "rgba(63, 81, 181, 0.85)",
+                    "rgba(33, 150, 243, 0.85)",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              layout: { padding: 18 },
+              plugins: {
+                legend: { position: "bottom" },
+                title: {
+                  display: true,
+                  text: "Agihan Permintaan Purata Mengikut Kategori",
+                },
+              },
+            },
+          });
+        }
       }
 
       function updateChartNarratives(demandRows, summary, finance) {
@@ -5676,8 +5738,12 @@
         }
         if (chartExplainShare) {
           const surplusText = summary?.surplusAvg >= 0 ? "bekalan mencukupi" : "terdapat defisit yang perlu ditutup";
+          const categoryCount = (demandRows || []).length;
+          const shareChartTypeText = categoryCount > 30
+            ? "Bar mendatar menunjukkan peratus sumbangan kerana bilangan kategori melebihi 30."
+            : "Carta pai menunjukkan peratus sumbangan bagi setiap kategori.";
           chartExplainShare.innerHTML = `
-            <strong>Apa yang ditunjukkan:</strong> Peratus sumbangan permintaan mengikut kategori.
+            <strong>Apa yang ditunjukkan:</strong> ${shareChartTypeText}
             <br><strong>Maksud/Implikasi:</strong> ${surplusText}. Kategori terbesar memberi impak besar kepada strategi penjimatan.
             <br><strong>Tindakan dicadangkan:</strong> Prioritikan program penjimatan di 2–3 kategori teratas dan semak peluang sumber alternatif.
           `;
@@ -7254,21 +7320,23 @@
           const data = await collectReportData();
           const pptx = new PptxGenJS();
           let pptLayoutSet = false;
-          try {
-            const layoutWide = (PptxGenJS?.Layouts && PptxGenJS.Layouts.LAYOUT_WIDE) || "LAYOUT_WIDE";
-            pptx.layout = layoutWide;
-            pptLayoutSet = true;
-          } catch (layoutErr) {
-            console.warn("[PPTX] gagal set layout wide, cuba fallback", layoutErr);
+          const layoutCandidates = [
+            PptxGenJS?.Layouts?.LAYOUT_WIDE,
+            "LAYOUT_WIDE",
+            PptxGenJS?.Layouts?.LAYOUT_16X9,
+            "LAYOUT_16X9",
+          ].filter(Boolean);
+          for (const layoutName of layoutCandidates) {
+            try {
+              pptx.layout = layoutName;
+              pptLayoutSet = true;
+              break;
+            } catch (layoutErr) {
+              console.warn(`[PPTX] gagal set layout ${layoutName}`, layoutErr);
+            }
           }
           if (!pptLayoutSet) {
-            try {
-              pptx.defineLayout({ name: "WIDE_16X9", width: 13.333, height: 7.5 });
-              pptx.layout = "WIDE_16X9";
-              pptLayoutSet = true;
-            } catch (fallbackErr) {
-              console.error("[PPTX] gagal fallback layout custom", fallbackErr);
-            }
+            console.info("[PPTX] guna layout lalai (fallback gagal set layout eksplisit)");
           }
 
           const primary = "0c8ed9";
