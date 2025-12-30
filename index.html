@@ -6783,7 +6783,6 @@
         setStepperExpanded(false, { source: "calculate" });
       };
       calcBtn?.addEventListener("click", handleKiraClick);
-      document.getElementById("sticky-calc-btn")?.addEventListener("click", handleKiraClick);
       document.addEventListener("click", (e) => {
         if (e.target.closest("#sticky-calc-btn") || e.target.closest("#calculate-btn")) {
           handleKiraClick();
