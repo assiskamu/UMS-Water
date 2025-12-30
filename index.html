@@ -1435,7 +1435,8 @@
       border-radius: 0.95rem;
       background: #ffffff;
       box-shadow: 0 8px 20px rgba(13, 110, 253, 0.05);
-      overflow: hidden;
+      overflow: visible;
+      min-height: 0;
     }
 
     .input-step summary {
@@ -1453,7 +1454,7 @@
 
     .input-step summary::-webkit-details-marker { display: none; }
 
-    .input-step .step-body { padding: 0.9rem 1rem 1rem; background: #ffffff; }
+    .input-step .step-body { padding: 0.9rem 1rem 1rem; background: #ffffff; overflow: visible; }
 
     .input-step .step-label { font-size: 0.82rem; font-weight: 700; color: #0d6efd; }
     .input-step .step-meta { color: #48607a; font-size: 0.86rem; margin: 0.15rem 0 0.45rem; }
@@ -3133,7 +3134,7 @@
         steps.forEach((step, idx) => {
           const details = document.createElement("details");
           details.className = "input-step";
-          details.open = idx === 0;
+          details.open = false;
           details.innerHTML = `
             <summary>
               <div>
@@ -3500,7 +3501,7 @@
         );
       }
 
-      function renderOffscreenChart({ type, data, options, width = 920, height = 520 }) {
+      function renderOffscreenChart({ type, data, options, width = 780, height = 460, quality = 0.72 }) {
         if (typeof Chart === "undefined") return "";
         const canvas = document.createElement("canvas");
         canvas.width = width;
@@ -3521,7 +3522,7 @@
             ...options,
           },
         });
-        const url = canvas.toDataURL("image/jpeg", 0.78);
+        const url = canvas.toDataURL("image/jpeg", quality);
         chart.destroy();
         return url;
       }
@@ -5202,13 +5203,25 @@
       }
 
       function ensurePptxLoaded() {
-        if (window.PptxGenJS) return Promise.resolve(window.PptxGenJS);
+        if (window.PptxGenJS || window.pptxgen) {
+          const lib = window.PptxGenJS || window.pptxgen;
+          window.PptxGenJS = lib;
+          return Promise.resolve(lib);
+        }
         if (pptxLibPromise) return pptxLibPromise;
         pptxLibPromise = new Promise((resolve, reject) => {
           const script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js";
           script.async = true;
-          script.onload = () => resolve(window.PptxGenJS);
+          script.onload = () => {
+            const lib = window.PptxGenJS || window.pptxgen;
+            if (lib) {
+              window.PptxGenJS = lib;
+              resolve(lib);
+            } else {
+              reject(new Error("PptxGenJS gagal dimuat"));
+            }
+          };
           script.onerror = () => reject(new Error("PptxGenJS gagal dimuat"));
           document.head.appendChild(script);
         }).catch((err) => {
@@ -6703,6 +6716,7 @@
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         const usableWidth = pageWidth - margin * 2;
+        const bottomLimit = pageHeight - margin;
         const scenarioLabel = data.activeScenarioName || `Senario ${data.activeScenarioId || "Aktif"}`;
         const headerText = `Laporan Permintaan & Bekalan Air UMS | ${scenarioLabel} | ${data.generatedDate}`;
         const tocEntries = [];
@@ -6723,7 +6737,7 @@
         };
 
         const ensureSpace = (height = 12) => {
-          if (cursorY + height > pageHeight - margin) {
+          if (cursorY + height > bottomLimit) {
             doc.addPage();
             cursorY = margin;
           }
@@ -6750,15 +6764,22 @@
           doc.setTextColor(30, 50, 70);
         };
 
-        const addParagraphs = (paragraphs = []) => {
-          doc.setFontSize(10.5);
-          doc.setTextColor(32, 50, 70);
+        const addParagraphs = (
+          paragraphs = [],
+          { fontSize = 10.5, lineHeight = 5.2, color = [32, 50, 70], bullet = false } = {}
+        ) => {
+          doc.setFontSize(fontSize);
+          doc.setTextColor(...color);
           paragraphs.forEach((p) => {
-            const lines = doc.splitTextToSize(p, usableWidth);
-            ensureSpace(lines.length * 5.4 + 2);
+            if (!p) return;
+            const text = bullet ? `• ${p}` : p;
+            const lines = doc.splitTextToSize(text, usableWidth);
+            const height = lines.length * lineHeight + 1.5;
+            ensureSpace(height);
             doc.text(lines, margin, cursorY, { maxWidth: usableWidth });
-            cursorY += lines.length * 5.4 + 4;
+            cursorY += height;
           });
+          doc.setTextColor(30, 50, 70);
         };
 
         const addBand = () => {
@@ -6768,21 +6789,24 @@
           doc.rect(0, 32, pageWidth, 14, "F");
         };
 
-        const addChartImage = (title, img, caption) => {
+        const addChartImage = (title, img, caption, notes = []) => {
           if (!img) return;
-          ensureSpace(80);
+          const props = doc.getImageProperties(img);
+          const maxWidth = usableWidth;
+          const maxHeight = bottomLimit - cursorY - 20;
+          const safeMaxHeight = Math.max(maxHeight, 24);
+          const scale = Math.min(maxWidth / props.width, safeMaxHeight / props.height, 1);
+          const finalW = props.width * scale;
+          const finalH = props.height * scale;
+          ensureSpace(finalH + 18);
           doc.setFontSize(12);
           doc.setTextColor(25, 70, 110);
           doc.text(title, margin, cursorY);
           cursorY += 5;
-          const props = doc.getImageProperties(img);
-          const maxWidth = usableWidth;
-          const scaledHeight = Math.min((props.height * maxWidth) / props.width, 100);
-          doc.addImage(img, "JPEG", margin, cursorY, maxWidth, scaledHeight, undefined, "FAST");
-          cursorY += scaledHeight + 4;
-          if (caption) {
-            addParagraphs([caption]);
-          }
+          doc.addImage(img, "JPEG", margin, cursorY, finalW, finalH, undefined, "FAST");
+          cursorY += finalH + 4;
+          if (caption) addParagraphs([caption], { fontSize: 9.5, lineHeight: 4.8 });
+          if (notes?.length) addParagraphs(notes, { fontSize: 9.5, lineHeight: 4.8 });
         };
 
         const renderTOC = (tocPage) => {
@@ -6793,23 +6817,32 @@
           doc.setFontSize(10.5);
           doc.setTextColor(30, 50, 70);
           let y = margin + 10;
-          tocEntries.forEach((entry) => {
+          tocEntries.forEach((entry, idx) => {
             const pageStr = String(entry.page);
-            const titleWidth = doc.getTextWidth(entry.title);
+            const label = `${idx + 1}. ${entry.title}`;
+            const titleWidth = doc.getTextWidth(label);
             const pageWidthTxt = doc.getTextWidth(pageStr);
             const dotWidth = doc.getTextWidth(".");
             const maxDots = Math.max(2, Math.floor((usableWidth - titleWidth - pageWidthTxt - 6) / dotWidth));
             const dotStr = ".".repeat(maxDots);
-            doc.text(entry.title, margin, y, { maxWidth: usableWidth - 24 });
-            doc.text(dotStr, margin + titleWidth + 2, y);
+            doc.text(label, margin, y, { maxWidth: usableWidth - 24 });
+            doc.text(dotStr, margin + Math.min(titleWidth, usableWidth - 28) + 2, y);
             doc.text(pageStr, pageWidth - margin, y, { align: "right" });
             y += 7;
-            if (y > pageHeight - margin) {
+            if (y > bottomLimit) {
               doc.addPage();
               doc.setPage(doc.getNumberOfPages());
               y = margin + 4;
             }
           });
+        };
+
+        const financeValue = (val) => {
+          const num = parseNumberFromText(val);
+          if (!data.financeComplete) return "N/A (input belum diisi)";
+          if (!isFinite(num)) return val || "N/A (input belum diisi)";
+          if (Math.abs(num) < 0.000001) return "N/A (input belum diisi)";
+          return val || "–";
         };
 
         // COVER
@@ -6825,11 +6858,17 @@
         }
         doc.setTextColor(18, 50, 80);
         doc.setFontSize(12);
-        cursorY = 52;
+        cursorY = 50;
+        const coverBullets = [
+          `Permintaan purata: ${data.summary.text.avg || "–"} | Bekalan efektif: ${data.summary.text.effective || "–"}`,
+          `Lebihan/Defisit purata: ${data.summary.text.surplusAvg || "–"} | Puncak: ${data.summary.text.surplusPeak || "–"}`,
+          `Sorotan kewangan: BCR ${data.financeSummary?.bcr || "–"}, NPV ${data.financeSummary?.npv || "–"}, Payback ${data.financeSummary?.payback || "N/A"}`,
+        ];
         addParagraphs([
-          "Laporan ini memberikan gambaran eksekutif mengenai permintaan dan bekalan air kampus UMS, termasuk sumbangan sumber alternatif, implikasi kewangan dan cadangan tindakan pantas.",
-          `Versi pantas (Top Management). Skop laporan: ${data.scenarioScope === "all" ? "Semua senario A–C" : "Senario terpilih"}. Tahap: ${data.reportLevel}.`,
+          "Laporan rasmi ini diringkaskan untuk pengurusan tertinggi dengan fokus pada keseimbangan permintaan–bekalan, kesan sumber alternatif dan kebolehlaksanaan kewangan.",
+          `Skop: ${data.scenarioScope === "all" ? "Semua senario A–C" : "Senario terpilih"} · Tahap: ${data.reportLevel} · Disediakan oleh: ${data.preparedBy || "Auto-jana Kalkulator UMS"}.`,
         ]);
+        addParagraphs(coverBullets, { bullet: true, fontSize: 11, lineHeight: 5.4, color: [26, 62, 98] });
 
         // TOC placeholder
         doc.addPage();
@@ -6841,14 +6880,16 @@
         cursorY = margin;
         addTitle("Ringkasan Eksekutif", "Status permintaan, bekalan & risiko");
         addParagraphs([
-          "Apa yang ditunjukkan: ringkasan cepat permintaan purata/puncak berbanding bekalan efektif (JANS + alternatif).",
-          "Kenapa penting: menentukan sama ada operasi harian dan tempoh puncak mempunyai margin keselamatan mencukupi.",
-          "Implikasi keputusan: jika defisit dikesan, tindakan mitigasi perlu diprioritikan sebelum musim kering / puncak penginapan.",
-          "Cadangan: gunakan jadual KPI di bawah untuk memantau lebihan/defisit dan sasarkan intervensi di kategori permintaan tertinggi.",
+          "Bahagian ini merumuskan kedudukan permintaan purata dan puncak berbanding bekalan efektif (JANS + sumber alternatif). Nilai dibentangkan dalam KPI yang boleh terus digunakan sebagai bahan mesyuarat pengurusan.",
+          "Penilaian dibuat terhadap margin keselamatan operasi harian, keupayaan menghadapi puncak semester dan kesan segera kepada perkhidmatan. Gabungan bekalan alternatif yang tidak stabil akan ditandakan supaya tindakan mitigasi boleh dirancang.",
+          "Sekiranya defisit muncul, risiko operasi termasuk gangguan bekalan, penurunan tekanan dan peningkatan aduan pelanggan. Defisit puncak juga menandakan keperluan storan atau penjadualan beban untuk mengelak kejutan permintaan.",
+          "Bagi kes yang menunjukkan lebihan, analisis ini tetap menekankan penjajaran dengan sasaran kebolehpercayaan dan penyenggaraan sumber alternatif supaya lebihan kekal konsisten sepanjang tahun.",
+          "Cadangan tindakan segera dinyatakan dalam seksyen cadangan; pengurus boleh menggunakan KPI di bawah sebagai senarai semak pantas sebelum meluluskan intervensi atau pembiayaan tambahan.",
         ]);
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 9.5, overflow: "linebreak", cellPadding: 2.2 },
           headStyles: { fillColor: [12, 142, 217], textColor: 255 },
@@ -6858,8 +6899,8 @@
             ["Permintaan purata (MLD)", data.summary.text.avg, data.summary.status.avg || "–"],
             ["Permintaan puncak (MLD)", data.summary.text.peak, data.summary.status.peak || "–"],
             ["Bekalan efektif (MLD)", data.summary.text.effective, "Termasuk sumber alternatif"],
-            ["Lebihan/Defisit purata", data.summary.text.surplusAvg, "≥0 bermakna margin harian memadai"],
-            ["Lebihan/Defisit puncak", data.summary.text.surplusPeak, "≥0 bermakna mampu tampung puncak"],
+            ["Lebihan/Defisit purata", data.summary.text.surplusAvg, "\u2265 0 bermakna margin harian memadai"],
+            ["Lebihan/Defisit puncak", data.summary.text.surplusPeak, "\u2265 0 bermakna mampu tampung puncak"],
           ],
         });
         cursorY = doc.lastAutoTable.finalY + 6;
@@ -6867,12 +6908,14 @@
         // INPUT & ANDAIAN
         addTitle("Input & Andaian Utama", "Ringkasan Langkah 1–3");
         addParagraphs([
-          "Input permintaan: berdasarkan mod yang dipilih (Quick atau Kategori). Nilai populasi, kadar per kapita dan faktor puncak digunakan untuk mengira permintaan purata dan puncak.",
-          "Bekalan asas JANS dan parameter kewangan (tarif air/pembetungan, tempoh analisis, kadar diskaun) menentukan kemampuan projek alternatif menghasilkan penjimatan bersih.",
+          "Permintaan dibina daripada mod Quick atau Kategori. Populasi, kadar per kapita dan faktor puncak diterjemahkan terus kepada permintaan purata dan puncak yang digunakan dalam semua graf dan jadual.",
+          "Bekalan asas JANS dan utiliti sumber alternatif menentukan bekalan efektif. Parameter ini penting untuk menguji margin keselamatan, terutama apabila puncak semester atau acara besar berlaku serentak.",
+          "Tarif air/pembetungan, tempoh analisis dan kadar diskaun menentukan kepekaan NPV/BCR. Jika mana-mana input kewangan kosong, nilai kewangan dalam jadual akan dipaparkan sebagai N/A supaya pembaca tidak tersalah tafsir angka kosong sebagai sifar.",
         ]);
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "plain",
           styles: { fontSize: 9.5, overflow: "linebreak", cellPadding: 2 },
           columnStyles: {
@@ -6895,9 +6938,10 @@
         // DEMAND & SUPPLY
         addTitle("Analisis Permintaan & Bekalan", "Kapasiti semasa & sumber alternatif");
         addParagraphs([
-          "Apa yang ditunjukkan: permintaan mengikut kategori dan gabungan bekalan efektif.",
-          "Kenapa penting: mengenal pasti jurang purata/puncak untuk tindakan operasi.",
-          "Implikasi keputusan: kategori dominan dan sumber alternatif utama perlu diberi keutamaan dalam program penjimatan dan kebolehpercayaan.",
+          "Jadual pertama memaparkan permintaan mengikut kategori yang pengguna isi. Nilai purata dan puncak dikira secara automatik supaya jurang dapat dilihat tanpa perlu membuka semula kalkulator.",
+          "Kedua-dua permintaan dan bekalan dipaparkan dalam unit yang sama (m³/hari) untuk mengelakkan salah tafsir. Kategori dengan populasinya tinggi menunjukkan ruang intervensi penjimatan.",
+          "Bahagian sumber alternatif menekankan kapasiti, utiliti, kos operasi dan indikator kewangan ringkas. Baris kosong tidak ditunjukkan; ini mengelakkan pembaca menganggap kosong sebagai sifar yang sah.",
+          "Interpretasi jurang: jika permintaan puncak melebihi bekalan efektif, tindakan segera ialah penjadualan beban, peningkatan storan atau menambah sumber alternatif dengan payback pantas.",
         ]);
         const demandRows = data.demandByCategory.length
           ? data.demandByCategory.map((r) => [r.name, r.pop, r.percap, r.avg, r.peak])
@@ -6905,11 +6949,13 @@
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
           headStyles: { fillColor: [230, 244, 255], textColor: 18 },
           head: [["Kategori", "Populasi", "Per kapita", "Purata (m³/hari)", "Puncak (m³/hari)"]],
           body: demandRows.slice(0, 12),
+          rowPageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 6;
         const altRows = data.altSources.length
@@ -6918,59 +6964,70 @@
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
           headStyles: { fillColor: [12, 142, 217], textColor: 255 },
           head: [["Sumber alternatif", "Kapasiti (m³/hari)", "Utilisasi (% hari)", "OPEX (RM/tahun)", "NPV (RM)", "BCR"]],
           body: altRows,
+          rowPageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 6;
 
         // FINANCIALS
         addTitle("Analisis Kewangan", "NPV, BCR, Payback & Sensitiviti");
         addParagraphs([
-          "Apa yang ditunjukkan: ringkasan CAPEX/OPEX, penjimatan tahunan dan indikator kelayakan (NPV, BCR, IRR, payback).",
-          "Kenapa penting: membantu pengurusan memutuskan keutamaan pelaburan berdasarkan pulangan dan risiko kos.",
-          "Implikasi keputusan: jika BCR < 1 atau NPV negatif, pertimbangkan fasa pelaksanaan atau penstrukturan semula kos/faedah.",
-          "Cadangan: fokus sumber dengan payback terpantas dan BCR tertinggi; semak sensitiviti ±10% kos/faedah di bawah.",
+          "Ringkasan kewangan menumpukan kepada CAPEX, OPEX, penjimatan tahunan dan indikator kelayakan (NPV, BCR, IRR, payback). Semua nilai dikira terus daripada input semasa.",
+          "Jika mana-mana input kewangan belum lengkap, jadual akan memaparkan \"N/A (input belum diisi)\" untuk mengelakkan kekeliruan. Ini mengingatkan pembaca bahawa angka sifar bukanlah hasil kiraan sebenar.",
+          "Keputusan utama: BCR < 1 atau NPV negatif menunjukkan projek perlu dipakej semula, dikurangkan skop atau ditambah nilai faedah. Payback panjang meningkatkan risiko aliran tunai dan memerlukan strategi fasa.",
+          "Sensitiviti ±10% kos/faedah membantu menilai daya tahan projek terhadap ketidakpastian harga, kos operasi atau volum air. Jadual di bawah boleh digunakan sebagai rujukan pantas sebelum pembentangan bajet.",
         ]);
+        const sensVal = (val) => financeValue(isFinite(val) ? formatNumber(val) : val);
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
           headStyles: { fillColor: [230, 244, 255], textColor: 18 },
           head: [["Metrik", "Nilai"]],
           body: [
-            ["Jumlah CAPEX (RM)", data.financeSummary.capex || "–"],
-            ["Jumlah OPEX (RM/tahun)", data.financeSummary.opex || "–"],
-            ["Penjimatan (RM/tahun)", data.financeSummary.saving || "–"],
-            ["Aliran tunai bersih (RM/tahun)", data.financeSummary.netcf || "–"],
-            ["NPV (RM)", data.financeSummary.npv || "–"],
-            ["BCR", data.financeSummary.bcr || "–"],
-            ["IRR anggaran (%)", data.financeSummary.irr || "–"],
+            ["Jumlah CAPEX (RM)", financeValue(data.financeSummary.capex)],
+            ["Jumlah OPEX (RM/tahun)", financeValue(data.financeSummary.opex)],
+            ["Penjimatan (RM/tahun)", financeValue(data.financeSummary.saving)],
+            ["Aliran tunai bersih (RM/tahun)", financeValue(data.financeSummary.netcf)],
+            ["NPV (RM)", financeValue(data.financeSummary.npv)],
+            ["BCR", financeValue(data.financeSummary.bcr)],
+            ["IRR anggaran (%)", financeValue(data.financeSummary.irr)],
           ],
+          rowPageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 6;
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
           headStyles: { fillColor: [12, 142, 217], textColor: 255 },
           head: [["Sensitiviti", "NPV (RM)", "BCR"]],
           body: [
-            ["Asas", formatNumber(data.sensitivity.base?.npv ?? NaN), isFinite(data.sensitivity.base?.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"],
-            ["CAPEX +10%", formatNumber(data.sensitivity.capex?.npv ?? NaN), isFinite(data.sensitivity.capex?.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"],
-            ["OPEX +10%", formatNumber(data.sensitivity.opex?.npv ?? NaN), isFinite(data.sensitivity.opex?.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"],
-            ["Manfaat +10%", formatNumber(data.sensitivity.benefit?.npv ?? NaN), isFinite(data.sensitivity.benefit?.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"],
+            ["Asas", sensVal(data.sensitivity.base?.npv ?? NaN), sensVal(data.sensitivity.base?.bcr)],
+            ["CAPEX +10%", sensVal(data.sensitivity.capex?.npv ?? NaN), sensVal(data.sensitivity.capex?.bcr)],
+            ["OPEX +10%", sensVal(data.sensitivity.opex?.npv ?? NaN), sensVal(data.sensitivity.opex?.bcr)],
+            ["Manfaat +10%", sensVal(data.sensitivity.benefit?.npv ?? NaN), sensVal(data.sensitivity.benefit?.bcr)],
           ],
+          rowPageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 8;
 
         // SCENARIO COMPARISON
         if (data.scenarioScope === "all" && (data.scenariosForReport || []).length) {
           addTitle("Perbandingan Senario A–C", "KPI permintaan & kewangan");
+          addParagraphs([
+            "Setiap senario disimpan terus daripada kalkulator dan dibandingkan pada jadual berikut. Nilai yang kosong akan kekal \"–\" supaya perbezaan jelas kelihatan.",
+            "Gunakan perbandingan ini untuk memilih kombinasi sumber atau permintaan yang paling seimbang sebelum difailkan sebagai cadangan rasmi.",
+          ]);
           const compareBody = data.scenariosForReport.map((s) => [
             s.name || s.id,
             formatNumber(s.summary?.avgMLD ?? NaN),
@@ -6984,11 +7041,13 @@
           doc.autoTable({
             startY: cursorY,
             margin: { left: margin, right: margin },
+            tableWidth: usableWidth,
             theme: "grid",
             styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
             headStyles: { fillColor: [12, 142, 217], textColor: 255 },
             head: [["Senario", "Avg (MLD)", "Peak (MLD)", "Bekalan efektif (MLD)", "Lebihan/Defisit", "NPV (RM)", "BCR", "Payback (tahun)"]],
             body: compareBody,
+            rowPageBreak: "auto",
           });
           cursorY = doc.lastAutoTable.finalY + 8;
         }
@@ -6996,35 +7055,63 @@
         // VISUALS
         if (data.includeCharts) {
           addTitle("Graf & Visual", "Interpretasi visual permintaan, bekalan dan kewangan");
+          addParagraphs([
+            "Setiap rajah dikompres dalam format JPEG berkualiti 0.72 untuk mengekalkan saiz fail kecil tanpa menjejaskan keterbacaan. Lebar imej dihadkan kepada ruang kandungan A4 supaya tiada elemen terkeluar margin.",
+            "Gunakan catatan di bawah setiap rajah untuk memahami maksud data dan tindakan pantas yang disyorkan. Rajah menggunakan data semasa; kemas kini input akan menukar grafik secara automatik.",
+          ]);
           addChartImage(
             "Rajah 1: Permintaan vs Bekalan Efektif",
             data.charts.supplyDemand,
-            "Apa yang ditunjukkan: permintaan purata/puncak berbanding bekalan efektif. Implikasi: jika bar permintaan puncak melebihi bekalan, tambah sumber atau kawal puncak. Cadangan: optimakan storan, jadualkan beban, atau tambah sumber alternatif berpayback pantas."
+            "Permintaan purata/puncak dibandingkan terus dengan bekalan efektif.",
+            [
+              "Implikasi: jika bar permintaan puncak melebihi bekalan, risiko gangguan meningkat semasa pendaftaran pelajar atau acara besar.",
+              "Tindakan: optimakan storan, jadualkan penggunaan tinggi di luar puncak dan tambah sumber alternatif berpayback pantas.",
+            ]
           );
           addChartImage(
             "Rajah 2: Komposisi Sumber Alternatif",
             data.charts.altComposition,
-            "Apa yang ditunjukkan: sumbangan setiap sumber alternatif (m³/hari berkesan). Implikasi: sumber dominan perlu diberi keutamaan penyelenggaraan. Cadangan: wujudkan pelan redundansi untuk sumber teratas."
+            "Sumbangan setiap sumber alternatif (m³/hari berkesan).",
+            [
+              "Implikasi: sumber dengan bar terbesar ialah penentu kebolehpercayaan; jadualkan penyelenggaraan dan pemantauan untuk sumber ini terlebih dahulu.",
+              "Tindakan: wujudkan redundansi dan stok alat ganti bagi dua sumber teratas, dan semak utiliti jika prestasi tidak konsisten.",
+            ]
           );
           addChartImage(
             "Rajah 3: Permintaan Mengikut Kategori",
             data.charts.demandByCategory,
-            "Apa yang ditunjukkan: purata dan puncak bagi kategori utama. Implikasi: kategori tertinggi memacu keperluan infrastruktur. Cadangan: laksanakan audit kebocoran / kecekapan bagi kategori >20% sumbangan."
+            "Purata dan puncak bagi kategori utama.",
+            [
+              "Implikasi: kategori dengan permintaan tertinggi memacu keperluan infrastruktur dan menjadi calon utama audit kebocoran/kecekapan.",
+              "Tindakan: sasarkan kategori yang menyumbang >20% permintaan untuk program penggantian peralatan dan kempen kesedaran.",
+            ]
           );
           addChartImage(
             "Rajah 4: Agihan Permintaan (%)",
             data.charts.demandShare,
-            "Apa yang ditunjukkan: peratusan sumbangan permintaan. Implikasi: kecekapan pada kategori dominan memberi impak besar. Cadangan: kempen penjimatan dan penukaran peralatan berfokus kategori tertinggi."
+            "Peratusan sumbangan permintaan.",
+            [
+              "Implikasi: kategori dominan memberikan pulangan tertinggi bagi setiap inisiatif penjimatan air.",
+              "Tindakan: rancang intervensi fasa mengikut ranking peratus sumbangan supaya pelaburan lebih fokus.",
+            ]
           );
           addChartImage(
             "Rajah 5: NPV Mengikut Sumber Alternatif",
             data.charts.cbaNPV,
-            "Apa yang ditunjukkan: nilai kini bersih setiap sumber. Implikasi: sumber dengan NPV negatif memerlukan pelarasan kos/faedah. Cadangan: fasa pelaksanaan atau runding kos untuk sumber hampir neutral."
+            "Nilai kini bersih setiap sumber.",
+            [
+              "Implikasi: NPV negatif menunjukkan kos melebihi faedah; semak semula kos CAPEX/OPEX atau manfaat yang diandaikan.",
+              "Tindakan: fasa pelaksanaan bermula dengan sumber bernilai tertinggi sambil menegosiasi kos untuk sumber hampir neutral.",
+            ]
           );
           addChartImage(
             "Rajah 6: Payback Mengikut Sumber Alternatif",
             data.charts.cbaPayback,
-            "Apa yang ditunjukkan: tempoh pulangan modal. Implikasi: payback panjang meningkatkan risiko aliran tunai. Cadangan: utamakan sumber payback <5 tahun untuk fasa awal."
+            "Tempoh pulangan modal.",
+            [
+              "Implikasi: payback panjang meningkatkan risiko aliran tunai dan kebolehbiayaan projek.",
+              "Tindakan: utamakan sumber dengan payback <5 tahun untuk fasa awal dan jadualkan semakan tarif secara berkala.",
+            ]
           );
         }
 
@@ -7039,27 +7126,38 @@
         // APPENDIX TABLES (AUTOTABLE – kecil)
         addTitle("Lampiran Jadual", "Butiran sumber & CAPEX/OPEX");
         const appendixStartY = cursorY;
+        const altBody = data.altSources.length
+          ? data.altSources.map((r) => [r.name, r.capacity, r.util, r.capex, r.opex, r.npv, r.bcr])
+          : [["Tiada sumber alternatif", "–", "–", "–", "–", "–", "–"]];
         doc.autoTable({
           startY: appendixStartY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 8.5, overflow: "linebreak", cellPadding: 1.6 },
           headStyles: { fillColor: [230, 244, 255], textColor: 18 },
           head: [["Sumber", "Kapasiti", "Utilisasi (% hari)", "CAPEX (RM)", "OPEX (RM/tahun)", "NPV (RM)", "BCR"]],
-          body: data.altSources.map((r) => [r.name, r.capacity, r.util, r.capex, r.opex, r.npv, r.bcr]),
+          body: altBody,
+          rowPageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 6;
+        const capexOpexBody = data.capexOpexItems.length
+          ? data.capexOpexItems.map((r) => [r.type, r.name, r.qty, r.cost, r.total, r.note || "-"])
+          : [["Tiada pecahan CAPEX/OPEX", "–", "–", "–", "–", "–"]];
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
+          tableWidth: usableWidth,
           theme: "grid",
           styles: { fontSize: 8.5, overflow: "linebreak", cellPadding: 1.6 },
           headStyles: { fillColor: [12, 142, 217], textColor: 255 },
           head: [["Jenis", "Item / Komponen", "Kuantiti", "Kos seunit (RM)", "Jumlah (RM)", "Catatan"]],
-          body: data.capexOpexItems.map((r) => [r.type, r.name, r.qty, r.cost, r.total, r.note || "-"]),
+          body: capexOpexBody,
+          rowPageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 6;
         addParagraphs([
+          "Data diperlukan untuk analisis kewangan: tarif air & pembetungan, tempoh analisis, kadar diskaun, CAPEX, OPEX dan penjimatan tahunan. Masukkan nilai sebenar untuk menggantikan paparan N/A dalam jadual kewangan.",
           data.disclaimerText,
           data.confidential ? "Status: Sulit – untuk kegunaan dalaman pengurusan UMS sahaja." : "",
         ]);
@@ -7073,13 +7171,14 @@
       }
 
       async function downloadTopMgmtPptx() {
-        let PptxGenJS = window.PptxGenJS;
+        let PptxGenJS = window.PptxGenJS || window.pptxgen;
         try {
           PptxGenJS = await ensurePptxLoaded();
           if (!PptxGenJS) {
             alert("Library PowerPoint (PptxGenJS) tidak dimuatkan. Sila cuba lagi selepas semak sambungan internet.");
             return;
           }
+          window.PptxGenJS = PptxGenJS;
           if (!hasCalculated) {
             const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana PowerPoint.\nPilih OK untuk Kira & Jana PPTX, atau Batal untuk kembali.");
             if (!proceed) return;
