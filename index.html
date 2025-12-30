@@ -5150,19 +5150,19 @@
           rows.forEach((row) => {
             const nameInput = row.querySelector(".cat-name");
             const popInput = row.querySelector(".cat-pop");
-            const perCapInput = row.querySelector(".cat-percap");
+            const percapInput = row.querySelector(".cat-percap");
             const peakInput = row.querySelector(".cat-peak");
 
             const name = (nameInput.value || "").trim();
             const pop = parseFloat(popInput.value);
-            const perCap = parseFloat(perCapInput.value);
+            const percap = parseFloat(percapInput.value);
             const peak = parseFloat(peakInput.value);
 
-            if (!name || !isFinite(pop) || pop <= 0 || !isFinite(perCap)) {
+            if (!name || !isFinite(pop) || pop <= 0 || !isFinite(percap)) {
               return;
             }
 
-            const avgM3 = (pop * perCap) / 1000;
+            const avgM3 = (pop * percap) / 1000;
             const peakM3 = avgM3 * (isFinite(peak) && peak > 0 ? peak : 1);
 
             totalPop += pop;
