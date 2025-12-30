@@ -6946,16 +6946,29 @@
         const demandRows = data.demandByCategory.length
           ? data.demandByCategory.map((r) => [r.name, r.pop, r.percap, r.avg, r.peak])
           : [["Tiada data kategori", "–", "–", "–", "–"]];
+        const categoryTableBody = demandRows;
+        console.log("[PDF] categories count:", categoryTableBody.length);
+        if (categoryTableBody.length) {
+          console.log("[PDF] first/last:", categoryTableBody[0], categoryTableBody[categoryTableBody.length - 1]);
+        }
         doc.autoTable({
           startY: cursorY,
           margin: { left: margin, right: margin },
           tableWidth: usableWidth,
           theme: "grid",
-          styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
+          styles: { fontSize: 8, overflow: "linebreak", cellPadding: 1.5 },
           headStyles: { fillColor: [230, 244, 255], textColor: 18 },
+          columnStyles: {
+            0: { cellWidth: usableWidth * 0.44 },
+            1: { halign: "right", cellWidth: usableWidth * 0.14 },
+            2: { halign: "right", cellWidth: usableWidth * 0.14 },
+            3: { halign: "right", cellWidth: usableWidth * 0.14 },
+            4: { halign: "right", cellWidth: usableWidth * 0.14 },
+          },
           head: [["Kategori", "Populasi", "Per kapita", "Purata (m³/hari)", "Puncak (m³/hari)"]],
-          body: demandRows.slice(0, 12),
+          body: categoryTableBody,
           rowPageBreak: "auto",
+          pageBreak: "auto",
         });
         cursorY = doc.lastAutoTable.finalY + 6;
         const altRows = data.altSources.length
