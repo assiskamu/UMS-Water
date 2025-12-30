@@ -1634,6 +1634,7 @@
             <span class="pill-badge">Isi INPUT dahulu sebelum OUTPUT.</span>
           </div>
         </div>
+        <div id="calc-inline-alert" class="calc-alert hidden" role="alert"></div>
         <div id="hero-mode-holder"></div>
         <div id="hero-scenario-holder"></div>
       </div>
@@ -2629,6 +2630,7 @@
       const exportSlot = document.getElementById("export-slot");
       const jumpCalcBtn = document.getElementById("btn-jump-calc");
       const calcStatusChip = document.getElementById("calc-status-chip");
+      const calcInlineAlert = document.getElementById("calc-inline-alert");
       const resetInputsBtn = document.getElementById("btn-reset-inputs");
       const presetHeroBtn = document.getElementById("btn-load-preset-hero");
       const calcActionsSection = document.getElementById("section-calc-actions");
@@ -3270,7 +3272,31 @@
 
       // Pusatkan logik KIRA supaya semua butang rujuk handler yang sama.
       function handleKiraClick() {
-        runCalculation();
+        console.log("KIRA clicked", { mode: appState.mode, demandMode: appState.demandMode });
+        console.log("inputs:", {
+          quick: {
+            pop: quickInputs.pop.value,
+            percap: quickInputs.percap.value,
+            demand: quickInputs.demand.value,
+            peak: quickInputs.peak.value,
+            baseSupply: quickInputs.baseSupply.value,
+          },
+          supply: supplyInput.value,
+          tariffWater: tariffWaterInput.value,
+          tariffSewer: tariffSewerInput.value,
+          analysisYears: analysisYearsInput.value,
+          discountRate: discountRateInput.value,
+          demandMode: appState.demandMode,
+        });
+        const ok = runCalculation();
+        if (ok) {
+          console.log("results:", {
+            summary: activeScenario()?.outputs?.summary,
+            finance: activeScenario()?.outputs?.finance,
+          });
+        } else {
+          console.log("results:", "validation failed");
+        }
         setStepperExpanded(false, { source: "calculate" });
       }
 
@@ -4866,20 +4892,26 @@
       }
 
       function showMissingPanel(missing) {
-        if (!calcAlertBox) return;
+        const targets = [calcAlertBox, calcInlineAlert].filter(Boolean);
+        if (!targets.length) return;
         if (!missing || !missing.length) {
-          calcAlertBox.classList.add("hidden");
-          calcAlertBox.innerHTML = "";
+          targets.forEach((box) => {
+            box.classList.add("hidden");
+            box.innerHTML = "";
+          });
           return;
         }
         const list = missing
           .map((item) => `<li><strong>${item.label}</strong> — ${item.reason || "WAJIB diisi untuk kiraan"}</li>`)
           .join("");
-        calcAlertBox.innerHTML = `
+        const html = `
           Input wajib belum lengkap (${missing.length}). Sila lengkapkan item berikut:
           <ul>${list}</ul>
         `;
-        calcAlertBox.classList.remove("hidden");
+        targets.forEach((box) => {
+          box.innerHTML = html;
+          box.classList.remove("hidden");
+        });
       }
 
       function resolveTarget(target) {
