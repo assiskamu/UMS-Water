@@ -15,6 +15,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- jsPDF AutoTable untuk jadual berbilang halaman -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- Dependency untuk PptxGenJS -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
   <!-- PptxGenJS (penjanaan PowerPoint) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js"></script>
 
@@ -5209,25 +5212,36 @@
           return Promise.resolve(lib);
         }
         if (pptxLibPromise) return pptxLibPromise;
-        pptxLibPromise = new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js";
-          script.async = true;
-          script.onload = () => {
-            const lib = window.PptxGenJS || window.pptxgen;
-            if (lib) {
-              window.PptxGenJS = lib;
-              resolve(lib);
-            } else {
-              reject(new Error("PptxGenJS gagal dimuat"));
-            }
-          };
-          script.onerror = () => reject(new Error("PptxGenJS gagal dimuat"));
-          document.head.appendChild(script);
-        }).catch((err) => {
-          pptxLibPromise = null;
-          throw err;
-        });
+        const loadScript = (src, name) =>
+          new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = src;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error(`${name || "Skrip"} gagal dimuat`));
+            document.head.appendChild(script);
+          });
+        pptxLibPromise = (async () => {
+          if (!window.JSZip) {
+            await loadScript("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip");
+          }
+          if (!window.saveAs) {
+            await loadScript("https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js", "FileSaver");
+          }
+          if (!window.PptxGenJS && !window.pptxgen) {
+            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js", "PptxGenJS");
+          }
+          const lib = window.PptxGenJS || window.pptxgen;
+          if (lib) {
+            window.PptxGenJS = lib;
+            return lib;
+          }
+          throw new Error("PptxGenJS gagal dimuat");
+        })()
+          .catch((err) => {
+            pptxLibPromise = null;
+            throw err;
+          });
         return pptxLibPromise;
       }
 
@@ -7185,213 +7199,229 @@
 
       async function downloadTopMgmtPptx() {
         let PptxGenJS = window.PptxGenJS || window.pptxgen;
+        const defaultPptxLabel = "📑 Muat turun PowerPoint (Top Mgmt)";
+        const setPptxBtnState = (isLoading, label) => {
+          if (!pptxBtn) return;
+          pptxBtn.disabled = !!isLoading;
+          pptxBtn.textContent = label || defaultPptxLabel;
+        };
         try {
+          setPptxBtnState(true, "⏳ Menjana PPTX…");
           PptxGenJS = await ensurePptxLoaded();
           if (!PptxGenJS) {
             alert("Library PowerPoint (PptxGenJS) tidak dimuatkan. Sila cuba lagi selepas semak sambungan internet.");
+            setPptxBtnState(false);
             return;
           }
           window.PptxGenJS = PptxGenJS;
           if (!hasCalculated) {
             const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana PowerPoint.\nPilih OK untuk Kira & Jana PPTX, atau Batal untuk kembali.");
-            if (!proceed) return;
+            if (!proceed) {
+              setPptxBtnState(false);
+              return;
+            }
             const ok = runCalculation({ scroll: false });
-            if (!ok) return;
+            if (!ok) {
+              setPptxBtnState(false);
+              return;
+            }
           }
         } catch (err) {
           console.error("[PPTX] gagal memuat library atau mengira sebelum eksport", err);
           showErrorBanner(err?.message || "Ralat semasa memuat library / pengiraan sebelum jana PPTX. Sila semak sambungan dan cuba lagi.");
+          setPptxBtnState(false);
           return;
         }
 
-        await loadUmsLogoDataUrl();
-        const data = await collectReportData();
-        const pptx = new PptxGenJS();
-        pptx.layout = "16x9";
+        try {
+          await loadUmsLogoDataUrl();
+          const data = await collectReportData();
+          const pptx = new PptxGenJS();
+          pptx.layout = "16x9";
 
-        const primary = "0c8ed9";
-        const dark = "12324a";
-        const soft = "e6f4ff";
-        const scenarioLabel = data.activeScenarioName || `Senario ${data.activeScenarioId || "Aktif"}`;
-        const today = data.fileDate || new Date().toISOString().slice(0, 10);
-        const safeScenario = (data.activeScenarioId || "Aktif").replace(/\W+/g, "_");
-        const headerOpts = { bold: true, color: dark, fill: soft, fontSize: 12 };
-        const safeNumber = (val) =>
-          isFinite(val) ? formatNumber(val) : val || "–";
+          const primary = "0c8ed9";
+          const dark = "12324a";
+          const soft = "e6f4ff";
+          const scenarioLabel = data.activeScenarioName || `Senario ${data.activeScenarioId || "Aktif"}`;
+          const today = data.fileDate || new Date().toISOString().slice(0, 10);
+          const safeScenario = (data.activeScenarioId || "Aktif").replace(/\W+/g, "_");
+          const headerOpts = { bold: true, color: dark, fill: soft, fontSize: 12 };
+          const safeNumber = (val) =>
+            isFinite(val) ? formatNumber(val) : val || "–";
 
-        const summary = data.summary || {};
-        const financeSummary = data.financeSummary || {};
-        const demandByCategory = data.demandByCategory || [];
-        const altSources = data.altSources?.length ? data.altSources : [];
-        const altTotals = data.altTotals || {};
-        const assumptions = data.assumptions || {};
-        const surplusAvg = summary.surplusAvg;
-        const surplusPeak = summary.surplusPeak;
-        const statusAvg = summary.status?.avg || "–";
-        const statusPeak = summary.status?.peak || "–";
-        const paybackText = isFinite(lastAltSummary.payback)
-          ? formatNumber(lastAltSummary.payback)
-          : financeSummary.payback || "–";
-        const titleSlide = pptx.addSlide();
-        titleSlide.background = { color: "f7fbff" };
-        titleSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 5.6, w: "100%", h: 1.4, fill: { color: soft } });
-        titleSlide.addText("UMS Water Demand–Supply Analysis", {
-          x: 0.5,
-          y: 0.7,
-          w: 9,
-          h: 1.2,
-          fontSize: 28,
-          bold: true,
-          color: dark,
-        });
-        titleSlide.addText(`Senario: ${scenarioLabel}`, { x: 0.5, y: 2.0, fontSize: 16, color: primary, bold: true });
-        titleSlide.addText(`Tarikh: ${today}`, { x: 0.5, y: 2.55, fontSize: 14, color: dark });
-        titleSlide.addText("Fokus: keseimbangan permintaan–bekalan, kesan sumber alternatif dan KPI kewangan.", {
-          x: 0.5,
-          y: 3.05,
-          w: 9,
-          fontSize: 13,
-          color: "#245070",
-        });
-        if (data.preparedBy) {
-          titleSlide.addText(`Disediakan oleh: ${data.preparedBy}`, { x: 0.5, y: 3.55, fontSize: 12, color: "#245070" });
-        }
-        if (umsLogoDataUrl) {
-          titleSlide.addImage({ data: umsLogoDataUrl, x: 8.4, y: 0.45, w: 1.5, h: 1.5 });
-        }
+          const summary = data.summary || {};
+          const financeSummary = data.financeSummary || {};
+          const demandByCategory = data.demandByCategory || [];
+          const altSources = data.altSources?.length ? data.altSources : [];
+          const altTotals = data.altTotals || {};
+          const assumptions = data.assumptions || {};
+          const surplusAvg = summary.surplusAvg;
+          const surplusPeak = summary.surplusPeak;
+          const statusAvg = summary.status?.avg || "–";
+          const statusPeak = summary.status?.peak || "–";
+          const paybackText = isFinite(lastAltSummary.payback)
+            ? formatNumber(lastAltSummary.payback)
+            : financeSummary.payback || "–";
+          const titleSlide = pptx.addSlide();
+          titleSlide.background = { color: "f7fbff" };
+          titleSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 5.6, w: "100%", h: 1.4, fill: { color: soft } });
+          titleSlide.addText("UMS Water Demand–Supply Analysis", {
+            x: 0.5,
+            y: 0.7,
+            w: 9,
+            h: 1.2,
+            fontSize: 28,
+            bold: true,
+            color: dark,
+          });
+          titleSlide.addText(`Senario: ${scenarioLabel}`, { x: 0.5, y: 2.0, fontSize: 16, color: primary, bold: true });
+          titleSlide.addText(`Tarikh: ${today}`, { x: 0.5, y: 2.55, fontSize: 14, color: dark });
+          titleSlide.addText("Fokus: keseimbangan permintaan–bekalan, kesan sumber alternatif dan KPI kewangan.", {
+            x: 0.5,
+            y: 3.05,
+            w: 9,
+            fontSize: 13,
+            color: "#245070",
+          });
+          if (data.preparedBy) {
+            titleSlide.addText(`Disediakan oleh: ${data.preparedBy}`, { x: 0.5, y: 3.55, fontSize: 12, color: "#245070" });
+          }
+          if (umsLogoDataUrl) {
+            titleSlide.addImage({ data: umsLogoDataUrl, x: 8.4, y: 0.45, w: 1.5, h: 1.5 });
+          }
 
-        const execSlide = pptx.addSlide();
-        execSlide.background = { color: "#ffffff" };
-        execSlide.addText("Executive Summary", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
-        const execTable = [
-          [{ text: "Metrik Utama", options: headerOpts }, { text: "Nilai", options: headerOpts }],
-          ["Permintaan purata (MLD)", safeNumber(summary.avgMLD)],
-          ["Permintaan puncak (MLD)", safeNumber(summary.peakMLD)],
-          ["Bekalan efektif (MLD)", safeNumber(summary.effectiveMLD)],
-          ["Lebihan/Defisit purata (MLD)", safeNumber(surplusAvg)],
-          ["Lebihan/Defisit puncak (MLD)", safeNumber(surplusPeak)],
-          ["Status (purata / puncak)", `${statusAvg} / ${statusPeak}`],
-        ];
-        execSlide.addTable(execTable, {
-          x: 0.5,
-          y: 0.9,
-          w: 5,
-          colW: [3.1, 1.9],
-          border: { color: primary, pt: 0.9 },
-          fontSize: 12,
-        });
-        const insights = [];
-        if (isFinite(surplusAvg)) {
-          insights.push(
-            surplusAvg >= 0
-              ? "Surplus purata boleh menampung variasi operasi; optimakan storan & agihan."
-              : "Defisit purata perlu mitigasi segera (pengurangan NRW atau tambah sumber)."
-          );
-        }
-        if (isFinite(surplusPeak)) {
-          insights.push(
-            surplusPeak >= 0
-              ? "Semasa puncak masih ada ruang keselamatan; semak kebolehpercayaan sumber alternatif."
-              : "Puncak defisit: rancang penjadualan beban, perkuat storan & sumber alternatif."
-          );
-        }
-        if (financeSummary.bcr && financeSummary.bcr !== "–") {
-          insights.push(`Kelayakan kewangan (BCR): ${financeSummary.bcr}. Utamakan sumber dengan BCR tertinggi.`);
-        }
-        execSlide.addText(insights, {
-          x: 5.7,
-          y: 1.0,
-          w: 3.6,
-          fontSize: 12.5,
-          color: dark,
-          bullet: true,
-          lineSpacing: 20,
-        });
-
-        const kpiSlide = pptx.addSlide();
-        kpiSlide.background = { color: "ffffff" };
-        kpiSlide.addText("KPI & Visual", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
-        const kpiTable = [
-          [{ text: "KPI", options: headerOpts }, { text: "Nilai", options: headerOpts }],
-          ["BCR projek alternatif", financeSummary.bcr || "–"],
-          ["NPV projek alternatif (RM)", financeSummary.npv || "–"],
-          ["Payback anggaran (tahun)", paybackText],
-          ["Jumlah CAPEX (RM)", financeSummary.capex || "–"],
-          ["Jumlah OPEX (RM/tahun)", financeSummary.opex || "–"],
-        ];
-        kpiSlide.addTable(kpiTable, {
-          x: 0.5,
-          y: 1.0,
-          w: 4.6,
-          colW: [2.8, 1.8],
-          border: { color: primary, pt: 0.75 },
-          fontSize: 12,
-        });
-        const shareChartImg =
-          chartToImage(shareChart, "demand-share-chart") ||
-          chartToImage(categoryChart, "demand-by-category-chart");
-        const supplyDemandImg = buildSupplyDemandChartImage(summary);
-        const chartImg = shareChartImg || supplyDemandImg || data.charts?.supplyDemand;
-        if (chartImg) {
-          kpiSlide.addImage({
-            data: chartImg,
-            x: 5.4,
+          const execSlide = pptx.addSlide();
+          execSlide.background = { color: "#ffffff" };
+          execSlide.addText("Executive Summary", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+          const execTable = [
+            [{ text: "Metrik Utama", options: headerOpts }, { text: "Nilai", options: headerOpts }],
+            ["Permintaan purata (MLD)", safeNumber(summary.avgMLD)],
+            ["Permintaan puncak (MLD)", safeNumber(summary.peakMLD)],
+            ["Bekalan efektif (MLD)", safeNumber(summary.effectiveMLD)],
+            ["Lebihan/Defisit purata (MLD)", safeNumber(surplusAvg)],
+            ["Lebihan/Defisit puncak (MLD)", safeNumber(surplusPeak)],
+            ["Status (purata / puncak)", `${statusAvg} / ${statusPeak}`],
+          ];
+          execSlide.addTable(execTable, {
+            x: 0.5,
+            y: 0.9,
+            w: 5,
+            colW: [3.1, 1.9],
+            border: { color: primary, pt: 0.9 },
+            fontSize: 12,
+          });
+          const insights = [];
+          if (isFinite(surplusAvg)) {
+            insights.push(
+              surplusAvg >= 0
+                ? "Surplus purata boleh menampung variasi operasi; optimakan storan & agihan."
+                : "Defisit purata perlu mitigasi segera (pengurangan NRW atau tambah sumber)."
+            );
+          }
+          if (isFinite(surplusPeak)) {
+            insights.push(
+              surplusPeak >= 0
+                ? "Semasa puncak masih ada ruang keselamatan; semak kebolehpercayaan sumber alternatif."
+                : "Puncak defisit: rancang penjadualan beban, perkuat storan & sumber alternatif."
+            );
+          }
+          if (financeSummary.bcr && financeSummary.bcr !== "–") {
+            insights.push(`Kelayakan kewangan (BCR): ${financeSummary.bcr}. Utamakan sumber dengan BCR tertinggi.`);
+          }
+          execSlide.addText(insights, {
+            x: 5.7,
             y: 1.0,
-            w: 4.4,
-            h: 3.2,
+            w: 3.6,
+            fontSize: 12.5,
+            color: dark,
+            bullet: true,
+            lineSpacing: 20,
           });
-          kpiSlide.addText("Graf diambil terus daripada kalkulator (Chart.js).", {
-            x: 5.4,
-            y: 4.25,
-            w: 4.4,
-            fontSize: 10,
-            color: "#4b6885",
-          });
-        }
-        kpiSlide.addText(
-          [
-            "Senario A/B/C kekal untuk perbandingan pantas.",
-            "Eksport terus: Excel, PDF & PPTX untuk mesyuarat pengurusan.",
-            "Kira semula bila input dikemas kini – tiada muat semula halaman.",
-          ],
-          { x: 0.5, y: 4.9, w: 9.2, fontSize: 12, color: dark, bullet: true, lineSpacing: 20 }
-        );
 
-        const demandSlide = pptx.addSlide();
-        demandSlide.background = { color: "ffffff" };
-        demandSlide.addText("Agihan Permintaan Mengikut Kategori", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
-        const topDemand = demandByCategory.slice(0, 6);
-        const demandTable = [
-          [
-            { text: "Kategori", options: headerOpts },
-            { text: "Populasi", options: headerOpts },
-            { text: "Per kapita", options: headerOpts },
-            { text: "Purata (m³/hari)", options: headerOpts },
-            { text: "Puncak (m³/hari)", options: headerOpts },
-          ],
-        ];
-        if (topDemand.length) {
-          topDemand.forEach((row) => {
-            demandTable.push([row.name, row.pop, row.percap, row.avg, row.peak]);
+          const kpiSlide = pptx.addSlide();
+          kpiSlide.background = { color: "ffffff" };
+          kpiSlide.addText("KPI & Visual", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+          const kpiTable = [
+            [{ text: "KPI", options: headerOpts }, { text: "Nilai", options: headerOpts }],
+            ["BCR projek alternatif", financeSummary.bcr || "–"],
+            ["NPV projek alternatif (RM)", financeSummary.npv || "–"],
+            ["Payback anggaran (tahun)", paybackText],
+            ["Jumlah CAPEX (RM)", financeSummary.capex || "–"],
+            ["Jumlah OPEX (RM/tahun)", financeSummary.opex || "–"],
+          ];
+          kpiSlide.addTable(kpiTable, {
+            x: 0.5,
+            y: 1.0,
+            w: 4.6,
+            colW: [2.8, 1.8],
+            border: { color: primary, pt: 0.75 },
+            fontSize: 12,
           });
-        } else {
-          demandTable.push(["Tiada data kategori", "–", "–", "–", "–"]);
-        }
-        demandSlide.addTable(demandTable, {
-          x: 0.5,
-          y: 1.0,
-          w: 9.2,
-          colW: [2.6, 1.4, 1.4, 1.9, 1.9],
-          fontSize: 11,
-          border: { color: "#c9deef", pt: 0.75 },
-        });
-        demandSlide.addText("Kategori tambahan boleh dimuat naik melalui Excel; jadual membaca terus struktur jadual semasa.", {
-          x: 0.5,
-          y: 5.9,
-          w: 9.2,
-          fontSize: 11,
-          color: "#3e5875",
-        });
+          const shareChartImg =
+            chartToImage(shareChart, "demand-share-chart") ||
+            chartToImage(categoryChart, "demand-by-category-chart");
+          const supplyDemandImg = buildSupplyDemandChartImage(summary);
+          const chartImg = shareChartImg || supplyDemandImg || data.charts?.supplyDemand;
+          if (chartImg) {
+            kpiSlide.addImage({
+              data: chartImg,
+              x: 5.4,
+              y: 1.0,
+              w: 4.4,
+              h: 3.2,
+            });
+            kpiSlide.addText("Graf diambil terus daripada kalkulator (Chart.js).", {
+              x: 5.4,
+              y: 4.25,
+              w: 4.4,
+              fontSize: 10,
+              color: "#4b6885",
+            });
+          }
+          kpiSlide.addText(
+            [
+              "Senario A/B/C kekal untuk perbandingan pantas.",
+              "Eksport terus: Excel, PDF & PPTX untuk mesyuarat pengurusan.",
+              "Kira semula bila input dikemas kini – tiada muat semula halaman.",
+            ],
+            { x: 0.5, y: 4.9, w: 9.2, fontSize: 12, color: dark, bullet: true, lineSpacing: 20 }
+          );
+
+          const demandSlide = pptx.addSlide();
+          demandSlide.background = { color: "ffffff" };
+          demandSlide.addText("Agihan Permintaan Mengikut Kategori", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+          const topDemand = demandByCategory.slice(0, 6);
+          const demandTable = [
+            [
+              { text: "Kategori", options: headerOpts },
+              { text: "Populasi", options: headerOpts },
+              { text: "Per kapita", options: headerOpts },
+              { text: "Purata (m³/hari)", options: headerOpts },
+              { text: "Puncak (m³/hari)", options: headerOpts },
+            ],
+          ];
+          if (topDemand.length) {
+            topDemand.forEach((row) => {
+              demandTable.push([row.name, row.pop, row.percap, row.avg, row.peak]);
+            });
+          } else {
+            demandTable.push(["Tiada data kategori", "–", "–", "–", "–"]);
+          }
+          demandSlide.addTable(demandTable, {
+            x: 0.5,
+            y: 1.0,
+            w: 9.2,
+            colW: [2.6, 1.4, 1.4, 1.9, 1.9],
+            fontSize: 11,
+            border: { color: "#c9deef", pt: 0.75 },
+          });
+          demandSlide.addText("Kategori tambahan boleh dimuat naik melalui Excel; jadual membaca terus struktur jadual semasa.", {
+            x: 0.5,
+            y: 5.9,
+            w: 9.2,
+            fontSize: 11,
+            color: "#3e5875",
+          });
 
         const supplySlide = pptx.addSlide();
         supplySlide.background = { color: "#ffffff" };
@@ -7521,7 +7551,13 @@
           appendixSlide.addImage({ data: umsLogoDataUrl, x: 8.6, y: 5.8, w: 1.2, h: 1.2, transparency: 10 });
         }
 
-        await pptx.writeFile(`UMS_Water_TopMgmt_${safeScenario}_${today}.pptx`);
+          await pptx.writeFile(`UMS_Water_TopMgmt_${safeScenario}_${today}.pptx`);
+        } catch (err) {
+          console.error("[PPTX] gagal menjana fail PPTX", err);
+          showErrorBanner(err?.message || "Ralat semasa menjana PPTX. Sila cuba lagi selepas semak sambungan internet.");
+        } finally {
+          setPptxBtnState(false);
+        }
       }
       // END REPORT UPDATE
 
