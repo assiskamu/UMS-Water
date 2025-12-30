@@ -27,6 +27,8 @@
       --danger: #ff1744;
       --success: #00c853;
       --bg: #f5fbff;
+      --sticky-top-offset: 120px;
+      --sticky-bottom-padding: 96px;
     }
 
     * { box-sizing: border-box; }
@@ -357,6 +359,7 @@
       max-width: 1100px;
       margin: 1.5rem auto 2.5rem;
       padding: 0 1rem;
+      scroll-padding-top: var(--sticky-top-offset);
     }
 
     .card {
@@ -1542,6 +1545,20 @@
       font-size: 0.85rem;
     }
 
+    #section-demand {
+      position: relative;
+      z-index: 5;
+      scroll-margin-top: var(--sticky-top-offset);
+      scroll-margin-bottom: calc(var(--sticky-bottom-padding) + 8px);
+    }
+
+    .demand-table-wrap {
+      overflow-x: auto;
+      margin-top: 0.6rem;
+      position: relative;
+      z-index: 6;
+    }
+
     .sticky-action-bar {
       position: fixed;
       left: 0;
@@ -1574,7 +1591,7 @@
 
     body.has-sticky-bar,
     main.has-sticky-bar {
-      padding-bottom: 6rem;
+      padding-bottom: var(--sticky-bottom-padding);
     }
 
     @media (max-width: 720px) {
@@ -1598,7 +1615,7 @@
 
       body.has-sticky-bar,
       main.has-sticky-bar {
-        padding-bottom: 7.2rem;
+        padding-bottom: calc(var(--sticky-bottom-padding) + 12px);
       }
     }
   </style>
@@ -1967,7 +1984,7 @@
         & kawasan tumpuan pelajar.
       </div>
 
-      <div style="overflow-x: auto; margin-top: 0.6rem;">
+      <div class="demand-table-wrap">
         <table id="category-input-table">
           <thead>
             <tr>
@@ -3174,6 +3191,17 @@
         exportSlot.appendChild(container);
       }
 
+      function updateStickyOffsets() {
+        const headerEl = document.querySelector("header");
+        const stickyBar = document.getElementById("sticky-action-bar");
+        const stepperBarEl = document.getElementById("stepper-bar");
+        const barHeight = stickyBar?.offsetHeight || 0;
+        const bottomPad = (barHeight || 0) + 16;
+        const topOffset = (headerEl?.offsetHeight || 0) + (stepperBarEl?.offsetHeight || 0) + 12;
+        document.documentElement.style.setProperty("--sticky-bottom-padding", `${bottomPad}px`);
+        document.documentElement.style.setProperty("--sticky-top-offset", `${topOffset}px`);
+      }
+
       function renderStickyActionBar() {
         if (document.getElementById("sticky-action-bar")) return;
         const bar = document.createElement("div");
@@ -3220,6 +3248,7 @@
         document.body.appendChild(bar);
         document.body.classList.add("has-sticky-bar");
         mainEl?.classList.add("has-sticky-bar");
+        updateStickyOffsets();
       }
 
       function updateStatusChip() {
@@ -7220,6 +7249,8 @@
       loadUmsLogoDataUrl();
       recalcCapexOpexItems();
       updateStatusChip();
+      updateStickyOffsets();
+      window.addEventListener("resize", updateStickyOffsets);
     });
   </script>
 </body>
