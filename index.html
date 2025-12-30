@@ -15,11 +15,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- jsPDF AutoTable untuk jadual berbilang halaman -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <!-- Dependency untuk PptxGenJS -->
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-  <!-- PptxGenJS (penjanaan PowerPoint) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js"></script>
+  <!-- PptxGenJS (bundle termasuk JSZip) -->
+  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
 
   <style>
     :root {
@@ -5206,10 +5204,10 @@
       }
 
       function ensurePptxLoaded() {
-        if (window.PptxGenJS || window.pptxgen) {
-          const lib = window.PptxGenJS || window.pptxgen;
-          window.PptxGenJS = lib;
-          return Promise.resolve(lib);
+        const existing = window.PptxGenJS || window.pptxgen;
+        if (existing) {
+          window.PptxGenJS = existing;
+          return Promise.resolve(existing);
         }
         if (pptxLibPromise) return pptxLibPromise;
         const loadScript = (src, name) =>
@@ -5221,23 +5219,15 @@
             script.onerror = () => reject(new Error(`${name || "Skrip"} gagal dimuat`));
             document.head.appendChild(script);
           });
-        pptxLibPromise = (async () => {
-          if (!window.JSZip) {
-            await loadScript("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip");
-          }
-          if (!window.saveAs) {
-            await loadScript("https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js", "FileSaver");
-          }
-          if (!window.PptxGenJS && !window.pptxgen) {
-            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js", "PptxGenJS");
-          }
-          const lib = window.PptxGenJS || window.pptxgen;
-          if (lib) {
-            window.PptxGenJS = lib;
-            return lib;
-          }
-          throw new Error("PptxGenJS gagal dimuat");
-        })()
+        pptxLibPromise = loadScript("https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js", "PptxGenJS")
+          .then(() => {
+            const lib = window.PptxGenJS || window.pptxgen;
+            if (lib) {
+              window.PptxGenJS = lib;
+              return lib;
+            }
+            throw new Error("PptxGenJS gagal dimuat");
+          })
           .catch((err) => {
             pptxLibPromise = null;
             throw err;
@@ -7198,6 +7188,7 @@
       }
 
       async function downloadTopMgmtPptx() {
+        console.log("[PPTX] click");
         let PptxGenJS = window.PptxGenJS || window.pptxgen;
         const defaultPptxLabel = "📑 Muat turun PowerPoint (Top Mgmt)";
         const setPptxBtnState = (isLoading, label) => {
@@ -7228,7 +7219,9 @@
           }
         } catch (err) {
           console.error("[PPTX] gagal memuat library atau mengira sebelum eksport", err);
-          showErrorBanner(err?.message || "Ralat semasa memuat library / pengiraan sebelum jana PPTX. Sila semak sambungan dan cuba lagi.");
+          const msg = err?.message || "Ralat semasa memuat library / pengiraan sebelum jana PPTX. Sila semak sambungan dan cuba lagi.";
+          showErrorBanner(msg);
+          alert(msg);
           setPptxBtnState(false);
           return;
         }
@@ -7262,6 +7255,7 @@
           const paybackText = isFinite(lastAltSummary.payback)
             ? formatNumber(lastAltSummary.payback)
             : financeSummary.payback || "–";
+          const fileName = `UMS_Water_TopMgmt_${safeScenario}_${today}.pptx`;
           const titleSlide = pptx.addSlide();
           titleSlide.background = { color: "f7fbff" };
           titleSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 5.6, w: "100%", h: 1.4, fill: { color: soft } });
@@ -7551,10 +7545,38 @@
           appendixSlide.addImage({ data: umsLogoDataUrl, x: 8.6, y: 5.8, w: 1.2, h: 1.2, transparency: 10 });
         }
 
-          await pptx.writeFile(`UMS_Water_TopMgmt_${safeScenario}_${today}.pptx`);
+          const runFallbackDownload = async (reason) => {
+            console.warn(`[PPTX] menggunakan fallback download (${reason})`);
+            const blob = await pptx.write({ outputType: "blob", compression: true });
+            if (window.saveAs) {
+              window.saveAs(blob, fileName);
+              return;
+            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          };
+
+          let wrote = false;
+          try {
+            await pptx.writeFile({ fileName, compression: true });
+            wrote = true;
+          } catch (err) {
+            console.warn("[PPTX] writeFile gagal, cuba fallback", err);
+          }
+          if (!wrote) {
+            await runFallbackDownload("writeFile gagal atau tidak memulakan muat turun");
+          }
         } catch (err) {
           console.error("[PPTX] gagal menjana fail PPTX", err);
-          showErrorBanner(err?.message || "Ralat semasa menjana PPTX. Sila cuba lagi selepas semak sambungan internet.");
+          const msg = err?.message || "Ralat semasa menjana PPTX. Sila cuba lagi selepas semak sambungan internet.";
+          showErrorBanner(msg);
+          alert(msg);
         } finally {
           setPptxBtnState(false);
         }
