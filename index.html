@@ -1548,15 +1548,31 @@
     #section-demand {
       position: relative;
       z-index: 5;
-      scroll-margin-top: var(--sticky-top-offset);
-      scroll-margin-bottom: calc(var(--sticky-bottom-padding) + 8px);
+      scroll-margin-top: calc(var(--sticky-top-offset) + 12px);
+      scroll-margin-bottom: calc(var(--sticky-bottom-padding) + 12px);
+      isolation: isolate;
+      overflow: visible;
     }
+
+    #section-demand.card { overflow: visible; }
 
     .demand-table-wrap {
       overflow-x: auto;
+      overflow-y: visible;
       margin-top: 0.6rem;
       position: relative;
       z-index: 6;
+      min-height: 0;
+      padding-bottom: 0.2rem;
+    }
+
+    #category-input-table { margin-bottom: 0; }
+
+    #category-input-table thead th {
+      position: sticky;
+      top: var(--sticky-top-offset);
+      z-index: 3;
+      background: #fff;
     }
 
     .sticky-action-bar {
@@ -4196,23 +4212,30 @@
       function createCategoryRow(data = {}) {
         const tr = document.createElement("tr");
         tr.className = "category-row";
+        tr.dataset.category = data.name || "";
         if (data.errorReason) {
           tr.classList.add("row-error");
         }
+        const peakVal = data.peak ?? data.peakFactor ?? "1.3";
         tr.innerHTML = `
           <td>
-            <input type="text" class="cat-name" value="${data.name || ""}" placeholder="Nama kategori" />
+            <input type="text" class="cat-name" data-field="category-name" value="${data.name || ""}" placeholder="Nama kategori" />
             ${data.errorReason ? `<span class="error-hint">${data.errorReason}</span>` : ""}
           </td>
-          <td><input type="number" class="cat-pop" value="${data.pop || ""}" min="0" /></td>
-          <td><input type="number" class="cat-percap" value="${data.percap || ""}" min="0" /></td>
-          <td><input type="number" class="cat-peak" value="${data.peak || "1.3"}" min="1" step="0.05" /></td>
+          <td><input type="number" class="cat-pop" data-field="category-pop" value="${data.pop || ""}" min="0" /></td>
+          <td><input type="number" class="cat-percap" data-field="category-percap" value="${data.percap || ""}" min="0" /></td>
+          <td><input type="number" class="cat-peak" data-field="category-peak" value="${peakVal || "1.3"}" min="1" step="0.05" /></td>
         `;
         return tr;
       }
 
       function setCategoryRows(rows) {
         clearElement(categoryBody);
+        const wrap = categoryBody?.closest(".demand-table-wrap");
+        if (wrap) {
+          wrap.style.minHeight = "0";
+          wrap.style.height = "auto";
+        }
         if (!rows || !rows.length) {
           ["Asrama", "Fakulti & Pentadbiran", "Masjid & Surau"].forEach((name) => {
             categoryBody.appendChild(
@@ -4310,10 +4333,12 @@
       function createAltRow(data = {}) {
         const tr = document.createElement("tr");
         tr.className = "alt-row";
+        const reliabilityVal = data.reliability ?? data.reliabilityPercent ?? 90;
         tr.innerHTML = `
           <td><input type="text" class="alt-name" placeholder="Nama sumber" value="${data.name || ""}" /></td>
           <td><input type="number" class="alt-capacity" min="0" value="${data.capacity || ""}" /></td>
           <td><input type="number" class="alt-util" min="0" max="100" value="${data.util || ""}" /></td>
+          <td><input type="number" class="alt-reliability" min="0" max="100" value="${reliabilityVal ?? ""}" /></td>
           <td><input type="number" class="alt-capex" min="0" value="${data.capex || ""}" /></td>
           <td><input type="text" class="alt-capex-note" placeholder="Butiran CAPEX (jika ada)" value="${data.capexNote || ""}" /></td>
           <td><input type="number" class="alt-opex-fixed" min="0" value="${data.opexFixed || ""}" /></td>
@@ -4379,6 +4404,7 @@
             name: row.querySelector(".alt-name")?.value || "",
             capacity: row.querySelector(".alt-capacity")?.value || "",
             util: row.querySelector(".alt-util")?.value || "",
+            reliability: row.querySelector(".alt-reliability")?.value || "",
             capex: row.querySelector(".alt-capex")?.value || "",
             capexNote: row.querySelector(".alt-capex-note")?.value || "",
             opexFixed: row.querySelector(".alt-opex-fixed")?.value || "",
@@ -5016,6 +5042,67 @@
         });
       }
 
+      function getCategoryRowData() {
+        const tbody = categoryBody || document.querySelector("#category-input-table tbody");
+        if (!tbody) throw new Error("Jadual permintaan kategori tidak ditemui atau belum dimuat.");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        if (!rows.length) throw new Error("Tiada baris dalam jadual permintaan kategori untuk dikira.");
+        return rows.map((row, idx) => {
+          const nameInput = row.querySelector(".cat-name, [data-field='category-name']");
+          const popInput = row.querySelector(".cat-pop, [data-field='category-pop']");
+          const percapInput = row.querySelector(".cat-percap, [data-field='category-percap']");
+          const peakInput = row.querySelector(".cat-peak, [data-field='category-peak']");
+          if (!nameInput || !popInput || !percapInput || !peakInput) {
+            throw new Error(
+              `Baris ${idx + 1} jadual permintaan tidak lengkap. Sila semak semula lajur kategori/populasi/per kapita/peak.`
+            );
+          }
+          const name =
+            (row.dataset.category || nameInput.value || nameInput.textContent || `Baris ${idx + 1}`).trim();
+          const pop = normalizeNumber(popInput.value);
+          const percap = normalizeNumber(percapInput.value);
+          const peak = normalizeNumber(peakInput.value);
+          const hasAny = name || pop > 0 || percap > 0 || peak > 0;
+          return { row, nameInput, popInput, percapInput, peakInput, name, pop, percap, peak, hasAny };
+        });
+      }
+
+      function getAltRowData() {
+        const rows = Array.from(document.querySelectorAll(".alt-row"));
+        return rows.map((row, idx) => {
+          const grab = (sel) => row.querySelector(sel);
+          const nameInput = grab(".alt-name");
+          const capacityInput = grab(".alt-capacity");
+          const utilInput = grab(".alt-util");
+          const reliabilityInput = grab(".alt-reliability");
+          const capexInput = grab(".alt-capex");
+          const capexNoteInput = grab(".alt-capex-note");
+          const opexFixedInput = grab(".alt-opex-fixed");
+          const opexVarInput = grab(".alt-opex-var");
+          const opexNoteInput = grab(".alt-opex-note");
+          const lifeInput = grab(".alt-life");
+          if (!reliabilityInput) {
+            throw new Error(`Lajur kebolehpercayaan hilang pada baris sumber alternatif ${idx + 1}.`);
+          }
+          if (!nameInput || !capacityInput || !utilInput) {
+            throw new Error(`Baris ${idx + 1} sumber alternatif tidak lengkap (nama/kapasiti/util).`);
+          }
+          return {
+            row,
+            nameInput,
+            capacityInput,
+            utilInput,
+            reliabilityInput,
+            capexInput,
+            capexNoteInput,
+            opexFixedInput,
+            opexVarInput,
+            opexNoteInput,
+            lifeInput,
+          };
+        });
+      }
+
       function validateInputs({ mode = appState.mode, demandMethod = appState.demandMode } = {}) {
         const missing = [];
         const warnings = [];
@@ -5039,23 +5126,23 @@
             warnings.push("Amaran: faktor puncak biasa antara 1.2–1.5.");
           }
         } else {
-          const rows = Array.from(document.querySelectorAll(".category-row"));
+          const rows = getCategoryRowData();
           let hasValidRow = false;
           rows.forEach((row, idx) => {
-            const name = (row.querySelector(".cat-name")?.value || `Baris ${idx + 1}`).trim();
-            const popInput = row.querySelector(".cat-pop");
-            const percapInput = row.querySelector(".cat-percap");
-            const peakInput = row.querySelector(".cat-peak");
-            const pop = normalizeNumber(popInput?.value);
-            const percap = normalizeNumber(percapInput?.value);
-            const peak = normalizeNumber(peakInput?.value);
-            const hasAny = name || pop > 0 || percap > 0;
+            const name = row.name || `Baris ${idx + 1}`;
+            const popInput = row.popInput;
+            const percapInput = row.percapInput;
+            const peakInput = row.peakInput;
+            const pop = row.pop;
+            const percap = row.percap;
+            const peak = row.peak;
+            const hasAny = row.hasAny;
             if (pop > 0 && percap > 0) {
               hasValidRow = true;
             } else if (hasAny) {
               addMissing(popInput, `Kategori ${name}`, "Populasi dan per kapita wajib diisi");
               addMissing(percapInput, `Kategori ${name}`, "Populasi dan per kapita wajib diisi");
-              row.classList.add("row-error");
+              row.row.classList.add("row-error");
             }
             if (!(peak > 0) && hasAny) {
               addMissing(peakInput, `Kategori ${name}`, "Faktor puncak wajib diisi");
@@ -5175,19 +5262,14 @@
           avgDemands.push(avgM3);
           peakDemands.push(peakM3);
         } else {
-          const rows = Array.from(document.querySelectorAll(".category-row"));
-          rows.forEach((row) => {
-            const nameInput = row.querySelector(".cat-name");
-            const popInput = row.querySelector(".cat-pop");
-            const percapInput = row.querySelector(".cat-percap");
-            const peakInput = row.querySelector(".cat-peak");
+          const rows = getCategoryRowData();
+          rows.forEach((entry, idx) => {
+            const name = entry.name || entry.row.dataset.category || `Kategori ${idx + 1}`;
+            const pop = entry.pop;
+            const percap = entry.percap;
+            const peak = entry.peak;
 
-            const name = (nameInput.value || "").trim();
-            const pop = parseFloat(popInput.value);
-            const percap = parseFloat(percapInput.value);
-            const peak = parseFloat(peakInput.value);
-
-            if (!name || !isFinite(pop) || pop <= 0 || !isFinite(percap)) {
+            if (!entry.hasAny || !isFinite(pop) || pop <= 0 || !isFinite(percap)) {
               return;
             }
 
@@ -5273,22 +5355,19 @@
             });
           }
         } else {
-          const altRows = Array.from(document.querySelectorAll(".alt-row"));
-          altRows.forEach((row) => {
-            const name = (row.querySelector(".alt-name").value || "").trim();
-            const cap = parseFloat(row.querySelector(".alt-capacity").value);
-            const util = parseFloat(row.querySelector(".alt-util").value);
-            const reliability = parseFloat(row.querySelector(".alt-reliability").value) || 100;
-            const capex = parseFloat(row.querySelector(".alt-capex").value);
-            const capexNote = (row.querySelector(".alt-capex-note")?.value || "").trim();
-            const opexFixed = parseFloat(
-              row.querySelector(".alt-opex-fixed").value
-            );
-            const opexVar = parseFloat(
-              row.querySelector(".alt-opex-var").value
-            );
-            const opexNote = (row.querySelector(".alt-opex-note")?.value || "").trim();
-            const lifeYears = parseFloat(row.querySelector(".alt-life").value);
+          const altRows = getAltRowData();
+          altRows.forEach((entry, idx) => {
+            const name = (entry.nameInput.value || "").trim() || `Sumber ${idx + 1}`;
+            const cap = parseFloat(entry.capacityInput.value);
+            const util = parseFloat(entry.utilInput.value);
+            const reliabilityRaw = normalizeNumber(entry.reliabilityInput.value, NaN);
+            const reliability = isFinite(reliabilityRaw) ? reliabilityRaw : 100;
+            const capex = parseFloat(entry.capexInput?.value);
+            const capexNote = (entry.capexNoteInput?.value || "").trim();
+            const opexFixed = parseFloat(entry.opexFixedInput?.value);
+            const opexVar = parseFloat(entry.opexVarInput?.value);
+            const opexNote = (entry.opexNoteInput?.value || "").trim();
+            const lifeYears = parseFloat(entry.lifeInput?.value);
 
             if (!name || !isFinite(cap) || cap <= 0 || !isFinite(util) || util <= 0) {
               return;
@@ -6674,11 +6753,17 @@
           alert("Library PowerPoint (PptxGenJS) tidak dimuatkan.");
           return;
         }
-        if (!hasCalculated) {
-          const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana PowerPoint.\nPilih OK untuk Kira & Jana PPTX, atau Batal untuk kembali.");
-          if (!proceed) return;
-          const ok = runCalculation({ scroll: false });
-          if (!ok) return;
+        try {
+          if (!hasCalculated) {
+            const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana PowerPoint.\nPilih OK untuk Kira & Jana PPTX, atau Batal untuk kembali.");
+            if (!proceed) return;
+            const ok = runCalculation({ scroll: false });
+            if (!ok) return;
+          }
+        } catch (err) {
+          console.error("[PPTX] gagal mengira sebelum eksport", err);
+          showErrorBanner(err?.message || "Ralat semasa pengiraan sebelum jana PPTX.");
+          return;
         }
 
         await loadUmsLogoDataUrl();
@@ -6698,13 +6783,21 @@
 
         const summary = data.summary || {};
         const financeSummary = data.financeSummary || {};
+        const demandByCategory = data.demandByCategory || [];
+        const altSources = data.altSources?.length ? data.altSources : [];
+        const altTotals = data.altTotals || {};
+        const assumptions = data.assumptions || {};
+        const surplusAvg = summary.surplusAvg;
+        const surplusPeak = summary.surplusPeak;
+        const statusAvg = summary.status?.avg || "–";
+        const statusPeak = summary.status?.peak || "–";
         const paybackText = isFinite(lastAltSummary.payback)
           ? formatNumber(lastAltSummary.payback)
           : financeSummary.payback || "–";
         const titleSlide = pptx.addSlide();
         titleSlide.background = { color: "f7fbff" };
         titleSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 5.6, w: "100%", h: 1.4, fill: { color: soft } });
-        titleSlide.addText("UMS Water Demand–Supply & CBA Summary", {
+        titleSlide.addText("UMS Water Demand–Supply Analysis", {
           x: 0.5,
           y: 0.7,
           w: 9,
@@ -6715,38 +6808,78 @@
         });
         titleSlide.addText(`Senario: ${scenarioLabel}`, { x: 0.5, y: 2.0, fontSize: 16, color: primary, bold: true });
         titleSlide.addText(`Tarikh: ${today}`, { x: 0.5, y: 2.55, fontSize: 14, color: dark });
-        titleSlide.addText(`Konteks: Ringkasan pengurusan tertinggi (demand–supply + CBA)`, { x: 0.5, y: 3.05, fontSize: 13, color: "#245070" });
+        titleSlide.addText("Fokus: keseimbangan permintaan–bekalan, kesan sumber alternatif dan KPI kewangan.", {
+          x: 0.5,
+          y: 3.05,
+          w: 9,
+          fontSize: 13,
+          color: "#245070",
+        });
         if (data.preparedBy) {
           titleSlide.addText(`Disediakan oleh: ${data.preparedBy}`, { x: 0.5, y: 3.55, fontSize: 12, color: "#245070" });
         }
         if (umsLogoDataUrl) {
           titleSlide.addImage({ data: umsLogoDataUrl, x: 8.4, y: 0.45, w: 1.5, h: 1.5 });
         }
-        titleSlide.addText("Fokus: status terkini permintaan & bekalan, kesan sumber alternatif, dan KPI kewangan utama untuk keputusan pantas.", {
+
+        const execSlide = pptx.addSlide();
+        execSlide.background = { color: "#ffffff" };
+        execSlide.addText("Executive Summary", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+        const execTable = [
+          [{ text: "Metrik Utama", options: headerOpts }, { text: "Nilai", options: headerOpts }],
+          ["Permintaan purata (MLD)", safeNumber(summary.avgMLD)],
+          ["Permintaan puncak (MLD)", safeNumber(summary.peakMLD)],
+          ["Bekalan efektif (MLD)", safeNumber(summary.effectiveMLD)],
+          ["Lebihan/Defisit purata (MLD)", safeNumber(surplusAvg)],
+          ["Lebihan/Defisit puncak (MLD)", safeNumber(surplusPeak)],
+          ["Status (purata / puncak)", `${statusAvg} / ${statusPeak}`],
+        ];
+        execSlide.addTable(execTable, {
           x: 0.5,
-          y: 4.2,
-          w: 9,
+          y: 0.9,
+          w: 5,
+          colW: [3.1, 1.9],
+          border: { color: primary, pt: 0.9 },
+          fontSize: 12,
+        });
+        const insights = [];
+        if (isFinite(surplusAvg)) {
+          insights.push(
+            surplusAvg >= 0
+              ? "Surplus purata boleh menampung variasi operasi; optimakan storan & agihan."
+              : "Defisit purata perlu mitigasi segera (pengurangan NRW atau tambah sumber)."
+          );
+        }
+        if (isFinite(surplusPeak)) {
+          insights.push(
+            surplusPeak >= 0
+              ? "Semasa puncak masih ada ruang keselamatan; semak kebolehpercayaan sumber alternatif."
+              : "Puncak defisit: rancang penjadualan beban, perkuat storan & sumber alternatif."
+          );
+        }
+        if (financeSummary.bcr && financeSummary.bcr !== "–") {
+          insights.push(`Kelayakan kewangan (BCR): ${financeSummary.bcr}. Utamakan sumber dengan BCR tertinggi.`);
+        }
+        execSlide.addText(insights, {
+          x: 5.7,
+          y: 1.0,
+          w: 3.6,
           fontSize: 12.5,
           color: dark,
+          bullet: true,
+          lineSpacing: 20,
         });
 
         const kpiSlide = pptx.addSlide();
         kpiSlide.background = { color: "ffffff" };
-        kpiSlide.addText("Sorotan KPI & Graf", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
-
+        kpiSlide.addText("KPI & Visual", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
         const kpiTable = [
-          [
-            { text: "KPI", options: headerOpts },
-            { text: "Nilai", options: headerOpts },
-          ],
-          ["Permintaan purata (MLD)", safeNumber(summary.avgMLD)],
-          ["Permintaan puncak (MLD)", safeNumber(summary.peakMLD)],
-          ["Bekalan efektif (MLD)", safeNumber(summary.effectiveMLD)],
-          ["Lebihan/Defisit purata (MLD)", safeNumber(summary.surplusAvg)],
-          ["Lebihan/Defisit puncak (MLD)", safeNumber(summary.surplusPeak)],
+          [{ text: "KPI", options: headerOpts }, { text: "Nilai", options: headerOpts }],
           ["BCR projek alternatif", financeSummary.bcr || "–"],
           ["NPV projek alternatif (RM)", financeSummary.npv || "–"],
           ["Payback anggaran (tahun)", paybackText],
+          ["Jumlah CAPEX (RM)", financeSummary.capex || "–"],
+          ["Jumlah OPEX (RM/tahun)", financeSummary.opex || "–"],
         ];
         kpiSlide.addTable(kpiTable, {
           x: 0.5,
@@ -6756,7 +6889,6 @@
           border: { color: primary, pt: 0.75 },
           fontSize: 12,
         });
-
         const shareChartImg =
           chartToImage(shareChart, "demand-share-chart") ||
           chartToImage(categoryChart, "demand-by-category-chart");
@@ -6778,90 +6910,178 @@
             color: "#4b6885",
           });
         }
+        kpiSlide.addText(
+          [
+            "Senario A/B/C kekal untuk perbandingan pantas.",
+            "Eksport terus: Excel, PDF & PPTX untuk mesyuarat pengurusan.",
+            "Kira semula bila input dikemas kini – tiada muat semula halaman.",
+          ],
+          { x: 0.5, y: 4.9, w: 9.2, fontSize: 12, color: dark, bullet: true, lineSpacing: 20 }
+        );
 
-        const highlightBullets = [
-          "Kira semula cepat: bar KIRA kekal di bawah skrin.",
-          "Gunakan bekalan efektif (JANS + alternatif) untuk keputusan tahap kampus.",
-          "Semak BCR/NPV sebelum komit CAPEX; gunakan fasa jika payback panjang.",
-          "Kekalkan senario A/B/C untuk perbandingan cepat tanpa kehilangan data disimpan.",
-          "Eksport Excel/PDF/PPTX terus untuk mesyuarat pengurusan.",
+        const demandSlide = pptx.addSlide();
+        demandSlide.background = { color: "ffffff" };
+        demandSlide.addText("Agihan Permintaan Mengikut Kategori", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+        const topDemand = demandByCategory.slice(0, 6);
+        const demandTable = [
+          [
+            { text: "Kategori", options: headerOpts },
+            { text: "Populasi", options: headerOpts },
+            { text: "Per kapita", options: headerOpts },
+            { text: "Purata (m³/hari)", options: headerOpts },
+            { text: "Puncak (m³/hari)", options: headerOpts },
+          ],
         ];
-        kpiSlide.addText(highlightBullets, {
+        if (topDemand.length) {
+          topDemand.forEach((row) => {
+            demandTable.push([row.name, row.pop, row.percap, row.avg, row.peak]);
+          });
+        } else {
+          demandTable.push(["Tiada data kategori", "–", "–", "–", "–"]);
+        }
+        demandSlide.addTable(demandTable, {
           x: 0.5,
-          y: 5.0,
+          y: 1.0,
           w: 9.2,
-          fontSize: 12,
-          color: dark,
-          bullet: true,
-          lineSpacing: 20,
+          colW: [2.6, 1.4, 1.4, 1.9, 1.9],
+          fontSize: 11,
+          border: { color: "#c9deef", pt: 0.75 },
+        });
+        demandSlide.addText("Kategori tambahan boleh dimuat naik melalui Excel; jadual membaca terus struktur jadual semasa.", {
+          x: 0.5,
+          y: 5.9,
+          w: 9.2,
+          fontSize: 11,
+          color: "#3e5875",
         });
 
-        const altSlide = pptx.addSlide();
-        altSlide.background = { color: "ffffff" };
-        altSlide.addText("Sumber Alternatif & Cadangan", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
-
-        const altSources = data.altSources?.length ? data.altSources : [];
+        const supplySlide = pptx.addSlide();
+        supplySlide.background = { color: "#ffffff" };
+        supplySlide.addText("Bekalan Sedia Ada & Sumber Alternatif", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+        supplySlide.addTable(
+          [
+            [{ text: "Komponen", options: headerOpts }, { text: "Nilai", options: headerOpts }],
+            ["Bekalan asas (MLD)", safeNumber(summary.supplyMLD)],
+            ["Bekalan alternatif (MLD)", safeNumber(summary.altSupplyMLD)],
+            ["Bekalan efektif (MLD)", safeNumber(summary.effectiveMLD)],
+            ["Status purata / puncak", `${statusAvg} / ${statusPeak}`],
+          ],
+          { x: 0.5, y: 1.0, w: 4.6, colW: [2.7, 1.9], fontSize: 12, border: { color: primary, pt: 0.75 } }
+        );
         const altTableRows = [
           [
             { text: "Sumber", options: headerOpts },
             { text: "Vol. tahunan (m³/tahun)", options: headerOpts },
             { text: "CAPEX (RM)", options: headerOpts },
             { text: "OPEX (RM/tahun)", options: headerOpts },
-            { text: "Saving (RM/tahun)", options: headerOpts },
             { text: "Payback (tahun)", options: headerOpts },
-            { text: "NPV (RM)", options: headerOpts },
-            { text: "BCR", options: headerOpts },
           ],
         ];
-        if (altSources.length) {
-          altSources.forEach((r) => {
-            altTableRows.push([
-              r.name || "-",
-              r.volume || "–",
-              r.capex || "–",
-              r.opex || "–",
-              r.saving || "–",
-              r.payback || "–",
-              r.npv || "–",
-              r.bcr || "–",
-            ]);
-          });
-        } else {
-          altTableRows.push(["Tiada data sumber alternatif", "–", "–", "–", "–", "–", "–", "–"]);
+        (altSources.slice(0, 5)).forEach((r) => {
+          altTableRows.push([r.name || "-", r.volume || "–", r.capex || "–", r.opex || "–", r.payback || "–"]);
+        });
+        if (altTableRows.length === 1) {
+          altTableRows.push(["Tiada data sumber alternatif", "–", "–", "–", "–"]);
         }
-        altSlide.addTable(altTableRows, {
-          x: 0.5,
+        supplySlide.addTable(altTableRows, {
+          x: 5.3,
           y: 1.0,
-          w: 9.3,
-          colW: [1.8, 1.5, 1.3, 1.25, 1.25, 1.2, 1.3, 0.8],
+          w: 4.4,
+          colW: [1.9, 1.0, 0.9, 0.85, 0.75],
           fontSize: 11,
           border: { color: "#c9deef", pt: 0.75 },
-          fill: "ffffff",
+        });
+        supplySlide.addText(
+          `Jumlah volum alternatif: ${altTotals.volume || "–"} | Jumlah CAPEX: ${altTotals.capex || "–"} | BCR: ${financeSummary.bcr || "–"}`,
+          { x: 0.5, y: 5.9, w: 9.2, fontSize: 11, color: "#3e5875" }
+        );
+
+        const gapSlide = pptx.addSlide();
+        gapSlide.background = { color: "#ffffff" };
+        gapSlide.addText("Jurang & Cadangan", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+        const gapBullets = [
+          surplusAvg >= 0
+            ? "Surplus purata: kekalkan pemantauan kebolehpercayaan, optimakan tangki/storan."
+            : "Defisit purata: keutamaan kepada pengurangan NRW dan sumber alternatif dengan utiliti tinggi.",
+          surplusPeak >= 0
+            ? "Puncak terkawal: semak SOP operasi puncak dan redundansi pam."
+            : "Defisit puncak: jadualkan permintaan puncak, sediakan storan tambahan / by-pass kecemasan.",
+        ];
+        gapBullets.push(
+          financeSummary.bcr && financeSummary.bcr !== "–"
+            ? `BCR portfolio: ${financeSummary.bcr}. Fokus sumber dengan payback ${paybackText} tahun atau lebih pantas.`
+            : "Lengkapkan parameter kewangan untuk melihat BCR/NPV."
+        );
+        gapSlide.addText(gapBullets, {
+          x: 0.5,
+          y: 1.0,
+          w: 9.2,
+          fontSize: 12.5,
+          color: dark,
+          bullet: true,
+          lineSpacing: 22,
         });
 
-        const nextSteps = [
-          "Kemaskan tarif & utiliti sumber alternatif setiap 6–12 bulan.",
-          "Utamakan sumber dengan BCR > 1 & payback singkat untuk fasa awal.",
-          "Audit data meter/kebocoran bagi kategori demand tertinggi.",
-          "Rancang capex/opex berfasa jika NPV negatif atau defisit puncak besar.",
+        const financeSlide = pptx.addSlide();
+        financeSlide.background = { color: "#ffffff" };
+        financeSlide.addText("Sorotan Kewangan & Sensitiviti", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+        financeSlide.addTable(
+          [
+            [{ text: "Metrik", options: headerOpts }, { text: "Nilai", options: headerOpts }],
+            ["NPV (RM)", financeSummary.npv || "–"],
+            ["BCR", financeSummary.bcr || "–"],
+            ["Payback (tahun)", paybackText],
+            ["Jumlah CAPEX (RM)", financeSummary.capex || "–"],
+            ["Jumlah OPEX (RM/tahun)", financeSummary.opex || "–"],
+            ["Penjimatan (RM/tahun)", financeSummary.saving || "–"],
+          ],
+          { x: 0.5, y: 1.0, w: 4.6, colW: [2.8, 1.8], fontSize: 12, border: { color: primary, pt: 0.75 } }
+        );
+        const sensitivity = data.sensitivity || {};
+        const sensitivityTable = [
+          [{ text: "Sensitiviti", options: headerOpts }, { text: "NPV", options: headerOpts }, { text: "BCR", options: headerOpts }],
+          ["Asas", formatNumber(sensitivity.base?.npv ?? NaN), isFinite(sensitivity.base?.bcr) ? formatNumber(sensitivity.base.bcr) : "–"],
+          ["CAPEX +10%", formatNumber(sensitivity.capex?.npv ?? NaN), isFinite(sensitivity.capex?.bcr) ? formatNumber(sensitivity.capex.bcr) : "–"],
+          ["OPEX +10%", formatNumber(sensitivity.opex?.npv ?? NaN), isFinite(sensitivity.opex?.bcr) ? formatNumber(sensitivity.opex.bcr) : "–"],
+          ["Benefit +10%", formatNumber(sensitivity.benefit?.npv ?? NaN), isFinite(sensitivity.benefit?.bcr) ? formatNumber(sensitivity.benefit.bcr) : "–"],
         ];
-        altSlide.addText("Cadangan ringkas (boleh dikemas kini):", { x: 0.5, y: 5.8, fontSize: 13, bold: true, color: dark });
-        altSlide.addText(nextSteps, {
+        financeSlide.addTable(sensitivityTable, {
+          x: 5.3,
+          y: 1.0,
+          w: 4.2,
+          colW: [1.7, 1.2, 1.1],
+          fontSize: 11,
+          border: { color: "#c9deef", pt: 0.75 },
+        });
+        financeSlide.addText("Nota: NPV/BCR dikira terus daripada input semasa; semak tarif & tempoh analisis jika angka kelihatan luar biasa.", {
           x: 0.5,
-          y: 6.2,
+          y: 5.9,
+          w: 9.2,
+          fontSize: 11,
+          color: "#3e5875",
+        });
+
+        const appendixSlide = pptx.addSlide();
+        appendixSlide.background = { color: "#ffffff" };
+        appendixSlide.addText("Lampiran Ringkas (Andaian Utama)", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+        const assumptionList = [
+          `Bekalan asas diisi: ${assumptions.supply || "–"} MLD; Tarif air RM${assumptions.tariffWater || "–"} /m³, pembetungan RM${assumptions.tariffSewer || "–"} /m³.`,
+          `Tempoh analisis: ${assumptions.years || "–"} tahun; kadar diskaun ${assumptions.discount || "–"}%.`,
+          `Mod permintaan: ${data.demandMode || "quick"}; input Excel disokong tanpa mengubah struktur jadual kategori.`,
+          "Graf & jadual diambil terus daripada kalkulator untuk kekal selari dengan PDF/Excel.",
+        ];
+        appendixSlide.addText(assumptionList, {
+          x: 0.5,
+          y: 1.0,
           w: 9.2,
           fontSize: 12,
           color: dark,
           bullet: true,
           lineSpacing: 22,
         });
-        altSlide.addText("Nota: Anggaran tahap perancangan; sahkan dengan audit teknikal, data meter rasmi dan semakan kewangan terperinci.", {
-          x: 0.5,
-          y: 7.4,
-          w: 9.2,
-          fontSize: 10.5,
-          color: "#3e5875",
-        });
+        if (umsLogoDataUrl) {
+          appendixSlide.addImage({ data: umsLogoDataUrl, x: 8.6, y: 5.8, w: 1.2, h: 1.2, transparency: 10 });
+        }
 
         await pptx.writeFile(`UMS_Water_TopMgmt_${safeScenario}_${today}.pptx`);
       }
