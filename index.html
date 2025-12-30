@@ -512,6 +512,7 @@
       grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr);
       gap: 1.2rem;
     }
+    .two-column.stack { grid-template-columns: 1fr; }
 
     .status-pill {
       display: inline-flex;
@@ -1489,6 +1490,7 @@
     #cba-payback-chart {
       max-height: 320px;
     }
+    #demand-by-category-chart.long { max-height: none; }
 
     .status-badge {
       display: inline-flex;
@@ -2811,9 +2813,8 @@
       const resetScenarioBtn = document.getElementById("btn-reset-scenario");
       const presetBtn = document.getElementById("btn-load-preset");
 
-      const categoryChartCtx = document
-        .getElementById("demand-by-category-chart")
-        .getContext("2d");
+      const demandByCategoryCanvas = document.getElementById("demand-by-category-chart");
+      const categoryChartCtx = demandByCategoryCanvas.getContext("2d");
       const shareChartCtx = document
         .getElementById("demand-share-chart")
         .getContext("2d");
@@ -2834,6 +2835,8 @@
       const sensEmpty = document.getElementById("sens-empty");
       const comparePlaceholder = document.getElementById("compare-placeholder");
       const sensPlaceholder = document.getElementById("sens-placeholder");
+      const balanceTwoColumn = document.querySelector("#section-balance .two-column");
+      const demandByCategoryParent = demandByCategoryCanvas?.parentElement;
       const scenarioSaveStatus = document.getElementById("scenario-save-status");
       const defaultSummaryText = summaryTextEl?.innerHTML || "";
       const defaultChartExplainers = {
@@ -5563,7 +5566,23 @@
         if (categoryChart) categoryChart.destroy();
         if (shareChart) shareChart.destroy();
 
+        const isLongList = labels.length > 30;
+        if (balanceTwoColumn) {
+          balanceTwoColumn.classList.toggle("stack", isLongList);
+        }
+        if (demandByCategoryCanvas) {
+          demandByCategoryCanvas.classList.toggle("long", isLongList);
+        }
+        if (demandByCategoryParent) {
+          demandByCategoryParent.style.height = isLongList
+            ? `${Math.min(1700, 240 + labels.length * 24)}px`
+            : "";
+        }
+
         if (!labels.length) return;
+
+        const valueAxis = isLongList ? "x" : "y";
+        const categoryAxis = isLongList ? "y" : "x";
 
         categoryChart = new Chart(categoryChartCtx, {
           type: "bar",
@@ -5587,6 +5606,7 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            indexAxis: isLongList ? "y" : "x",
             animation: false,
             layout: { padding: 16 },
             plugins: {
@@ -5597,9 +5617,12 @@
               },
             },
             scales: {
-              y: {
+              [valueAxis]: {
                 beginAtZero: true,
                 title: { display: true, text: "m³/hari" },
+              },
+              [categoryAxis]: {
+                ticks: { autoSkip: !isLongList },
               },
             },
           },
@@ -7230,7 +7253,23 @@
           await loadUmsLogoDataUrl();
           const data = await collectReportData();
           const pptx = new PptxGenJS();
-          pptx.layout = "16x9";
+          let pptLayoutSet = false;
+          try {
+            const layoutWide = (PptxGenJS?.Layouts && PptxGenJS.Layouts.LAYOUT_WIDE) || "LAYOUT_WIDE";
+            pptx.layout = layoutWide;
+            pptLayoutSet = true;
+          } catch (layoutErr) {
+            console.warn("[PPTX] gagal set layout wide, cuba fallback", layoutErr);
+          }
+          if (!pptLayoutSet) {
+            try {
+              pptx.defineLayout({ name: "WIDE_16X9", width: 13.333, height: 7.5 });
+              pptx.layout = "WIDE_16X9";
+              pptLayoutSet = true;
+            } catch (fallbackErr) {
+              console.error("[PPTX] gagal fallback layout custom", fallbackErr);
+            }
+          }
 
           const primary = "0c8ed9";
           const dark = "12324a";
