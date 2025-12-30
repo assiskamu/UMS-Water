@@ -1447,6 +1447,10 @@
 
     .output-block { display: grid; gap: 1rem; }
     .output-hidden { display: none; }
+    /* Sembunyikan seksyen CTA lama (diganti bar melekat) tanpa tinggal ruang. */
+    #section-calc-actions.calc-removed { display: none !important; margin: 0 !important; padding: 0 !important; }
+    /* Padam ruang berganda di bawah kad output (termasuk jadual kategori). */
+    .output-section > .card { margin-bottom: 0; }
 
     .empty-output {
       border: 1px dashed #b5cdea;
@@ -2070,7 +2074,8 @@
       </div>
     </section>
 
-    <section class="card" id="section-calc-actions">
+    <section class="card calc-removed" id="section-calc-actions">
+      <!-- Disimpan untuk keserasian JS tetapi disembunyikan di CSS; bar melekat mengendalikan KIRA & simpan. -->
       <h2><span class="icon">🚀</span> Jalankan Kiraan & Simpan Senario</h2>
       <div id="calc-alert" class="calc-alert hidden"></div>
       <div class="btn-row">
@@ -3071,14 +3076,7 @@
           },
         ];
 
-        const calcStep = {
-          title: "Langkah Kira & Simpan (WAJIB)",
-          meta: "Tekan KIRA SEKARANG selepas input wajib, kemudian Simpan Senario.",
-          badge: "WAJIB",
-          nodes: [sectionMap.calc].filter(Boolean),
-        };
-        const insertIndex = appState.mode === "full" ? steps.length : 3;
-        steps.splice(insertIndex, 0, calcStep);
+        // Kiraan kini diuruskan oleh bar melekat & butang lain, jadi tiada seksyen tersendiri di sini.
         steps.forEach((step, idx) => {
           const details = document.createElement("details");
           details.className = "input-step";
@@ -6779,9 +6777,16 @@
         altBody.appendChild(tr);
       });
 
-      calcBtn.addEventListener("click", () => {
+      // Lindungi pemilih KIRA jika seksyen CTA disembunyikan.
+      const handleKiraClick = () => {
         runCalculation();
         setStepperExpanded(false, { source: "calculate" });
+      };
+      calcBtn?.addEventListener("click", handleKiraClick);
+      document.addEventListener("click", (e) => {
+        if (e.target.closest("#sticky-calc-btn") || e.target.closest("#calculate-btn")) {
+          handleKiraClick();
+        }
       });
 
       // Export Excel
@@ -7085,6 +7090,13 @@
       presetBtn?.addEventListener("click", loadPreset);
 
       jumpCalcBtn?.addEventListener("click", () => {
+        const stickyBar = document.getElementById("sticky-action-bar");
+        if (stickyBar) {
+          stickyBar.scrollIntoView({ behavior: "smooth", block: "center" });
+          stickyBar.classList.add("section-highlight");
+          setTimeout(() => stickyBar.classList.remove("section-highlight"), 900);
+          return;
+        }
         if (calcActionsSection) {
           calcActionsSection.scrollIntoView({ behavior: "smooth", block: "start" });
         }
