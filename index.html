@@ -1692,6 +1692,9 @@
 
     <section class="card output-hidden" id="output-wrapper">
       <h2><span class="icon">📤</span> OUTPUT & Analisis</h2>
+      <div class="btn-row" style="margin-top:0;">
+        <button type="button" class="secondary" id="btn-back-to-input">⬆️ Kembali ke Input</button>
+      </div>
       <div id="error-banner" class="error-banner" role="alert"></div>
       <div id="output-empty" class="empty-output">Belum ada hasil. Lengkapkan INPUT dan tekan <strong>KIRA SEKARANG</strong>.</div>
       <div id="output-block" class="output-block"></div>
@@ -2700,6 +2703,7 @@
       const exportBtn = document.getElementById("export-excel-btn");
       const pptxBtn = document.getElementById("btn-download-pptx");
       const generateReportBtn = document.getElementById("btn-generate-report");
+      const backToInputBtn = document.getElementById("btn-back-to-input");
       const confidentialToggle = document.getElementById("confidential-toggle");
       const modeSelector = document.getElementById("mode-selector");
       const modeNote = document.getElementById("mode-note");
@@ -2856,6 +2860,7 @@
 
       const umsLogoPath = "UMS logo.png";
       let umsLogoDataUrl = "";
+      let pptxLibPromise = null;
 
       let categoryChart = null;
       let shareChart = null;
@@ -3394,7 +3399,6 @@
           showErrorBanner(err?.message || "Ralat tidak diketahui semasa kiraan.");
           showOutputSectionAndScroll();
         }
-        setStepperExpanded(false, { source: "calculate" });
       }
 
       function formatNumber(num) {
@@ -3414,7 +3418,7 @@
         const canvas = document.getElementById(canvasId);
         if (!canvas) return "";
         try {
-          return canvas.toDataURL("image/png", 1);
+          return canvas.toDataURL("image/jpeg", 0.78);
         } catch (err) {
           console.warn("Gagal eksport canvas", canvasId, err);
           return "";
@@ -3424,7 +3428,7 @@
       function chartToImage(chart, fallbackId) {
         if (chart && typeof chart.toBase64Image === "function") {
           try {
-            return chart.toBase64Image("image/png", 1);
+            return chart.toBase64Image("image/jpeg", 0.8);
           } catch (err) {
             console.warn("Gagal eksport chart melalui toBase64Image", err);
           }
@@ -3496,7 +3500,7 @@
         );
       }
 
-      function renderOffscreenChart({ type, data, options, width = 1000, height = 520 }) {
+      function renderOffscreenChart({ type, data, options, width = 920, height = 520 }) {
         if (typeof Chart === "undefined") return "";
         const canvas = document.createElement("canvas");
         canvas.width = width;
@@ -3517,7 +3521,7 @@
             ...options,
           },
         });
-        const url = canvas.toDataURL("image/png", 1);
+        const url = canvas.toDataURL("image/jpeg", 0.78);
         chart.destroy();
         return url;
       }
@@ -5197,6 +5201,23 @@
         return umsLogoDataUrl;
       }
 
+      function ensurePptxLoaded() {
+        if (window.PptxGenJS) return Promise.resolve(window.PptxGenJS);
+        if (pptxLibPromise) return pptxLibPromise;
+        pptxLibPromise = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
+          script.async = true;
+          script.onload = () => resolve(window.PptxGenJS);
+          script.onerror = () => reject(new Error("PptxGenJS gagal dimuat"));
+          document.head.appendChild(script);
+        }).catch((err) => {
+          pptxLibPromise = null;
+          throw err;
+        });
+        return pptxLibPromise;
+      }
+
       function waitForNextFrame() {
         return new Promise((resolve) => requestAnimationFrame(() => resolve()));
       }
@@ -6665,95 +6686,400 @@
         if (!hasCalculated) {
           const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana laporan.\nPilih OK untuk Kira & Jana Laporan, atau Batal untuk kembali.");
           if (!proceed) return;
-        const ok = runCalculation({ scroll: false });
+          const ok = runCalculation({ scroll: false });
           if (!ok) return;
         }
 
         await loadUmsLogoDataUrl();
         const data = await collectReportData();
-        reportRoot.innerHTML = renderReportHTML(data);
-        reportRoot.classList.remove("hidden");
-        reportRoot.classList.add("offscreen");
+        const doc = new jsPDF({
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+          compress: true,
+        });
 
-        await waitForFonts();
-        await waitForImages(reportRoot);
-        applyPageNumbers(reportRoot);
-
-        const pages = Array.from(reportRoot.querySelectorAll(".report-page"));
-        const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+        const margin = 18;
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
+        const usableWidth = pageWidth - margin * 2;
+        const scenarioLabel = data.activeScenarioName || `Senario ${data.activeScenarioId || "Aktif"}`;
+        const headerText = `Laporan Permintaan & Bekalan Air UMS | ${scenarioLabel} | ${data.generatedDate}`;
+        const tocEntries = [];
+        let cursorY = margin;
 
-        for (let i = 0; i < pages.length; i += 1) {
-          const canvas = await html2canvas(pages[i], {
-            scale: 2.5,
-            useCORS: true,
-            backgroundColor: "#ffffff",
+        const addHeaderFooter = () => {
+          const total = doc.getNumberOfPages();
+          for (let i = 1; i <= total; i += 1) {
+            doc.setPage(i);
+            const isCover = i === 1;
+            doc.setFontSize(9);
+            doc.setTextColor(isCover ? 255 : 60);
+            if (!isCover) {
+              doc.text(headerText, margin, 12, { maxWidth: usableWidth });
+            }
+            doc.text(`Halaman ${i} daripada ${total}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+          }
+        };
+
+        const ensureSpace = (height = 12) => {
+          if (cursorY + height > pageHeight - margin) {
+            doc.addPage();
+            cursorY = margin;
+          }
+        };
+
+        const addTitle = (title, subtitle) => {
+          ensureSpace(20);
+          const pageNumber = doc.getNumberOfPages();
+          tocEntries.push({ title, page: pageNumber });
+          doc.setFontSize(16);
+          doc.setTextColor(18, 78, 118);
+          doc.text(title, margin, cursorY);
+          cursorY += 7;
+          if (subtitle) {
+            doc.setFontSize(11);
+            doc.setTextColor(60, 90, 110);
+            doc.text(subtitle, margin, cursorY);
+            cursorY += 7;
+          }
+          doc.setDrawColor(12, 142, 217);
+          doc.setLineWidth(0.4);
+          doc.line(margin, cursorY, margin + 36, cursorY);
+          cursorY += 6;
+          doc.setTextColor(30, 50, 70);
+        };
+
+        const addParagraphs = (paragraphs = []) => {
+          doc.setFontSize(10.5);
+          doc.setTextColor(32, 50, 70);
+          paragraphs.forEach((p) => {
+            const lines = doc.splitTextToSize(p, usableWidth);
+            ensureSpace(lines.length * 5.4 + 2);
+            doc.text(lines, margin, cursorY, { maxWidth: usableWidth });
+            cursorY += lines.length * 5.4 + 4;
           });
-          const imgData = canvas.toDataURL("image/png", 1);
-          const imgProps = doc.getImageProperties(imgData);
-          const pdfWidth = pageWidth;
-          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          if (i > 0) doc.addPage();
-          doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        }
+        };
 
-        if (doc.autoTable) {
-          doc.addPage();
+        const addBand = () => {
+          doc.setFillColor(12, 142, 217);
+          doc.rect(0, 0, pageWidth, 32, "F");
+          doc.setFillColor(230, 244, 255);
+          doc.rect(0, 32, pageWidth, 14, "F");
+        };
+
+        const addChartImage = (title, img, caption) => {
+          if (!img) return;
+          ensureSpace(80);
           doc.setFontSize(12);
-          doc.text("Lampiran Jadual Terperinci (AutoTable)", 14, 14);
-          const altRows = data.altSources.map((r) => [
-            r.name,
-            r.capacity,
-            r.util,
-            r.capex,
-            r.opex,
-            r.npv,
-            r.bcr,
-          ]);
-          if (altRows.length) {
-            doc.autoTable({
-              head: [["Sumber", "Kapasiti (m³/hari)", "Utilisasi (% hari)", "CAPEX (RM)", "OPEX (RM/tahun)", "NPV (RM)", "BCR"]],
-              body: altRows,
-              theme: "grid",
-              styles: { fontSize: 8 },
-              startY: 20,
-              margin: { left: 14, right: 14 },
-            });
+          doc.setTextColor(25, 70, 110);
+          doc.text(title, margin, cursorY);
+          cursorY += 5;
+          const props = doc.getImageProperties(img);
+          const maxWidth = usableWidth;
+          const scaledHeight = Math.min((props.height * maxWidth) / props.width, 100);
+          doc.addImage(img, "JPEG", margin, cursorY, maxWidth, scaledHeight, undefined, "FAST");
+          cursorY += scaledHeight + 4;
+          if (caption) {
+            addParagraphs([caption]);
           }
+        };
 
-          const capexRows = data.capexOpexItems.map((r) => [
-            r.type,
-            r.name,
-            r.qty,
-            r.cost,
-            r.total,
-            r.note || "-",
+        const renderTOC = (tocPage) => {
+          doc.setPage(tocPage);
+          doc.setFontSize(16);
+          doc.setTextColor(18, 78, 118);
+          doc.text("Kandungan", margin, margin);
+          doc.setFontSize(10.5);
+          doc.setTextColor(30, 50, 70);
+          let y = margin + 10;
+          tocEntries.forEach((entry) => {
+            const pageStr = String(entry.page);
+            const titleWidth = doc.getTextWidth(entry.title);
+            const pageWidthTxt = doc.getTextWidth(pageStr);
+            const dotWidth = doc.getTextWidth(".");
+            const maxDots = Math.max(2, Math.floor((usableWidth - titleWidth - pageWidthTxt - 6) / dotWidth));
+            const dotStr = ".".repeat(maxDots);
+            doc.text(entry.title, margin, y, { maxWidth: usableWidth - 24 });
+            doc.text(dotStr, margin + titleWidth + 2, y);
+            doc.text(pageStr, pageWidth - margin, y, { align: "right" });
+            y += 7;
+            if (y > pageHeight - margin) {
+              doc.addPage();
+              doc.setPage(doc.getNumberOfPages());
+              y = margin + 4;
+            }
+          });
+        };
+
+        // COVER
+        addBand();
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("Laporan Permintaan & Bekalan Air UMS", margin, 18);
+        doc.setFontSize(13);
+        doc.text(`Senario: ${scenarioLabel}`, margin, 26);
+        doc.text(`Tarikh: ${data.generatedDate}`, margin, 32);
+        if (umsLogoDataUrl) {
+          doc.addImage(umsLogoDataUrl, "PNG", pageWidth - margin - 26, 10, 22, 22, undefined, "FAST");
+        }
+        doc.setTextColor(18, 50, 80);
+        doc.setFontSize(12);
+        cursorY = 52;
+        addParagraphs([
+          "Laporan ini memberikan gambaran eksekutif mengenai permintaan dan bekalan air kampus UMS, termasuk sumbangan sumber alternatif, implikasi kewangan dan cadangan tindakan pantas.",
+          `Versi pantas (Top Management). Skop laporan: ${data.scenarioScope === "all" ? "Semua senario A–C" : "Senario terpilih"}. Tahap: ${data.reportLevel}.`,
+        ]);
+
+        // TOC placeholder
+        doc.addPage();
+        const tocPage = doc.getNumberOfPages();
+        cursorY = margin;
+
+        // EXEC SUMMARY
+        doc.addPage();
+        cursorY = margin;
+        addTitle("Ringkasan Eksekutif", "Status permintaan, bekalan & risiko");
+        addParagraphs([
+          "Apa yang ditunjukkan: ringkasan cepat permintaan purata/puncak berbanding bekalan efektif (JANS + alternatif).",
+          "Kenapa penting: menentukan sama ada operasi harian dan tempoh puncak mempunyai margin keselamatan mencukupi.",
+          "Implikasi keputusan: jika defisit dikesan, tindakan mitigasi perlu diprioritikan sebelum musim kering / puncak penginapan.",
+          "Cadangan: gunakan jadual KPI di bawah untuk memantau lebihan/defisit dan sasarkan intervensi di kategori permintaan tertinggi.",
+        ]);
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 9.5, overflow: "linebreak", cellPadding: 2.2 },
+          headStyles: { fillColor: [12, 142, 217], textColor: 255 },
+          bodyStyles: { cellWidth: "wrap" },
+          head: [["Item", "Nilai", "Status / Catatan"]],
+          body: [
+            ["Permintaan purata (MLD)", data.summary.text.avg, data.summary.status.avg || "–"],
+            ["Permintaan puncak (MLD)", data.summary.text.peak, data.summary.status.peak || "–"],
+            ["Bekalan efektif (MLD)", data.summary.text.effective, "Termasuk sumber alternatif"],
+            ["Lebihan/Defisit purata", data.summary.text.surplusAvg, "≥0 bermakna margin harian memadai"],
+            ["Lebihan/Defisit puncak", data.summary.text.surplusPeak, "≥0 bermakna mampu tampung puncak"],
+          ],
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+
+        // INPUT & ANDAIAN
+        addTitle("Input & Andaian Utama", "Ringkasan Langkah 1–3");
+        addParagraphs([
+          "Input permintaan: berdasarkan mod yang dipilih (Quick atau Kategori). Nilai populasi, kadar per kapita dan faktor puncak digunakan untuk mengira permintaan purata dan puncak.",
+          "Bekalan asas JANS dan parameter kewangan (tarif air/pembetungan, tempoh analisis, kadar diskaun) menentukan kemampuan projek alternatif menghasilkan penjimatan bersih.",
+        ]);
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "plain",
+          styles: { fontSize: 9.5, overflow: "linebreak", cellPadding: 2 },
+          columnStyles: {
+            0: { cellWidth: 55 },
+            1: { cellWidth: usableWidth - 55 },
+          },
+          body: [
+            ["Mod permintaan", data.demandMode === "quick" ? "Quick Estimate" : "Kategori terperinci"],
+            ["Populasi", `${data.quickInput.pop || "-"} orang`],
+            ["Per kapita", `${data.quickInput.percap || "-"} L/org/hari`],
+            ["Permintaan override", `${data.quickInput.demand || "-"} m³/hari`],
+            ["Faktor puncak", data.quickInput.peak || "–"],
+            ["Bekalan asas (JANS)", `${data.assumptions.supply || "-"} MLD`],
+            ["Tarif air/pembetungan", `${data.assumptions.tariffWater || "-"} / ${data.assumptions.tariffSewer || "-"} RM/m³`],
+            ["Tempoh & diskaun", `${data.assumptions.years || "-"} tahun; ${data.assumptions.discount || "-"}% diskaun`],
+          ],
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+
+        // DEMAND & SUPPLY
+        addTitle("Analisis Permintaan & Bekalan", "Kapasiti semasa & sumber alternatif");
+        addParagraphs([
+          "Apa yang ditunjukkan: permintaan mengikut kategori dan gabungan bekalan efektif.",
+          "Kenapa penting: mengenal pasti jurang purata/puncak untuk tindakan operasi.",
+          "Implikasi keputusan: kategori dominan dan sumber alternatif utama perlu diberi keutamaan dalam program penjimatan dan kebolehpercayaan.",
+        ]);
+        const demandRows = data.demandByCategory.length
+          ? data.demandByCategory.map((r) => [r.name, r.pop, r.percap, r.avg, r.peak])
+          : [["Tiada data kategori", "–", "–", "–", "–"]];
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
+          headStyles: { fillColor: [230, 244, 255], textColor: 18 },
+          head: [["Kategori", "Populasi", "Per kapita", "Purata (m³/hari)", "Puncak (m³/hari)"]],
+          body: demandRows.slice(0, 12),
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+        const altRows = data.altSources.length
+          ? data.altSources.map((r) => [r.name, r.capacity, r.util, r.opex, r.npv, r.bcr])
+          : [["Tiada sumber alternatif", "–", "–", "–", "–", "–"]];
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
+          headStyles: { fillColor: [12, 142, 217], textColor: 255 },
+          head: [["Sumber alternatif", "Kapasiti (m³/hari)", "Utilisasi (% hari)", "OPEX (RM/tahun)", "NPV (RM)", "BCR"]],
+          body: altRows,
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+
+        // FINANCIALS
+        addTitle("Analisis Kewangan", "NPV, BCR, Payback & Sensitiviti");
+        addParagraphs([
+          "Apa yang ditunjukkan: ringkasan CAPEX/OPEX, penjimatan tahunan dan indikator kelayakan (NPV, BCR, IRR, payback).",
+          "Kenapa penting: membantu pengurusan memutuskan keutamaan pelaburan berdasarkan pulangan dan risiko kos.",
+          "Implikasi keputusan: jika BCR < 1 atau NPV negatif, pertimbangkan fasa pelaksanaan atau penstrukturan semula kos/faedah.",
+          "Cadangan: fokus sumber dengan payback terpantas dan BCR tertinggi; semak sensitiviti ±10% kos/faedah di bawah.",
+        ]);
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
+          headStyles: { fillColor: [230, 244, 255], textColor: 18 },
+          head: [["Metrik", "Nilai"]],
+          body: [
+            ["Jumlah CAPEX (RM)", data.financeSummary.capex || "–"],
+            ["Jumlah OPEX (RM/tahun)", data.financeSummary.opex || "–"],
+            ["Penjimatan (RM/tahun)", data.financeSummary.saving || "–"],
+            ["Aliran tunai bersih (RM/tahun)", data.financeSummary.netcf || "–"],
+            ["NPV (RM)", data.financeSummary.npv || "–"],
+            ["BCR", data.financeSummary.bcr || "–"],
+            ["IRR anggaran (%)", data.financeSummary.irr || "–"],
+          ],
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
+          headStyles: { fillColor: [12, 142, 217], textColor: 255 },
+          head: [["Sensitiviti", "NPV (RM)", "BCR"]],
+          body: [
+            ["Asas", formatNumber(data.sensitivity.base?.npv ?? NaN), isFinite(data.sensitivity.base?.bcr) ? formatNumber(data.sensitivity.base.bcr) : "–"],
+            ["CAPEX +10%", formatNumber(data.sensitivity.capex?.npv ?? NaN), isFinite(data.sensitivity.capex?.bcr) ? formatNumber(data.sensitivity.capex.bcr) : "–"],
+            ["OPEX +10%", formatNumber(data.sensitivity.opex?.npv ?? NaN), isFinite(data.sensitivity.opex?.bcr) ? formatNumber(data.sensitivity.opex.bcr) : "–"],
+            ["Manfaat +10%", formatNumber(data.sensitivity.benefit?.npv ?? NaN), isFinite(data.sensitivity.benefit?.bcr) ? formatNumber(data.sensitivity.benefit.bcr) : "–"],
+          ],
+        });
+        cursorY = doc.lastAutoTable.finalY + 8;
+
+        // SCENARIO COMPARISON
+        if (data.scenarioScope === "all" && (data.scenariosForReport || []).length) {
+          addTitle("Perbandingan Senario A–C", "KPI permintaan & kewangan");
+          const compareBody = data.scenariosForReport.map((s) => [
+            s.name || s.id,
+            formatNumber(s.summary?.avgMLD ?? NaN),
+            formatNumber(s.summary?.peakMLD ?? NaN),
+            formatNumber(s.summary?.effectiveMLD ?? NaN),
+            formatNumber(s.summary?.surplusAvg ?? NaN),
+            formatNumber(s.finance?.npv ?? NaN),
+            isFinite(s.finance?.bcr) ? formatNumber(s.finance.bcr) : "–",
+            isFinite(s.finance?.payback) ? formatNumber(s.finance.payback) : "–",
           ]);
-          if (capexRows.length) {
-            doc.autoTable({
-              head: [["Jenis", "Item / Komponen", "Kuantiti", "Kos seunit (RM)", "Jumlah (RM)", "Catatan"]],
-              body: capexRows,
-              theme: "grid",
-              styles: { fontSize: 8 },
-              margin: { left: 14, right: 14 },
-              startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : undefined,
-            });
-          }
+          doc.autoTable({
+            startY: cursorY,
+            margin: { left: margin, right: margin },
+            theme: "grid",
+            styles: { fontSize: 9, overflow: "linebreak", cellPadding: 2 },
+            headStyles: { fillColor: [12, 142, 217], textColor: 255 },
+            head: [["Senario", "Avg (MLD)", "Peak (MLD)", "Bekalan efektif (MLD)", "Lebihan/Defisit", "NPV (RM)", "BCR", "Payback (tahun)"]],
+            body: compareBody,
+          });
+          cursorY = doc.lastAutoTable.finalY + 8;
         }
 
-        reportRoot.classList.add("hidden");
+        // VISUALS
+        if (data.includeCharts) {
+          addTitle("Graf & Visual", "Interpretasi visual permintaan, bekalan dan kewangan");
+          addChartImage(
+            "Rajah 1: Permintaan vs Bekalan Efektif",
+            data.charts.supplyDemand,
+            "Apa yang ditunjukkan: permintaan purata/puncak berbanding bekalan efektif. Implikasi: jika bar permintaan puncak melebihi bekalan, tambah sumber atau kawal puncak. Cadangan: optimakan storan, jadualkan beban, atau tambah sumber alternatif berpayback pantas."
+          );
+          addChartImage(
+            "Rajah 2: Komposisi Sumber Alternatif",
+            data.charts.altComposition,
+            "Apa yang ditunjukkan: sumbangan setiap sumber alternatif (m³/hari berkesan). Implikasi: sumber dominan perlu diberi keutamaan penyelenggaraan. Cadangan: wujudkan pelan redundansi untuk sumber teratas."
+          );
+          addChartImage(
+            "Rajah 3: Permintaan Mengikut Kategori",
+            data.charts.demandByCategory,
+            "Apa yang ditunjukkan: purata dan puncak bagi kategori utama. Implikasi: kategori tertinggi memacu keperluan infrastruktur. Cadangan: laksanakan audit kebocoran / kecekapan bagi kategori >20% sumbangan."
+          );
+          addChartImage(
+            "Rajah 4: Agihan Permintaan (%)",
+            data.charts.demandShare,
+            "Apa yang ditunjukkan: peratusan sumbangan permintaan. Implikasi: kecekapan pada kategori dominan memberi impak besar. Cadangan: kempen penjimatan dan penukaran peralatan berfokus kategori tertinggi."
+          );
+          addChartImage(
+            "Rajah 5: NPV Mengikut Sumber Alternatif",
+            data.charts.cbaNPV,
+            "Apa yang ditunjukkan: nilai kini bersih setiap sumber. Implikasi: sumber dengan NPV negatif memerlukan pelarasan kos/faedah. Cadangan: fasa pelaksanaan atau runding kos untuk sumber hampir neutral."
+          );
+          addChartImage(
+            "Rajah 6: Payback Mengikut Sumber Alternatif",
+            data.charts.cbaPayback,
+            "Apa yang ditunjukkan: tempoh pulangan modal. Implikasi: payback panjang meningkatkan risiko aliran tunai. Cadangan: utamakan sumber payback <5 tahun untuk fasa awal."
+          );
+        }
+
+        // RECOMMENDATIONS
+        addTitle("Cadangan & Tindakan", "Prioriti pengurusan");
+        addParagraphs([
+          "Tindakan segera: tutup defisit puncak melalui penjadualan beban, penguatan storan dan pemeriksaan kebolehpercayaan sumber alternatif.",
+          "Keutamaan pelaburan: fokus kepada sumber alternatif dengan BCR tertinggi dan payback terpantas; semak tarif dan kos operasi sebenar setiap 12 bulan.",
+          "Pengurusan risiko: sediakan pelan kontingensi untuk kegagalan sumber dominan; laksanakan audit NRW dan pemasangan meter sub-zon bagi menala faktor puncak.",
+        ]);
+
+        // APPENDIX TABLES (AUTOTABLE – kecil)
+        addTitle("Lampiran Jadual", "Butiran sumber & CAPEX/OPEX");
+        const appendixStartY = cursorY;
+        doc.autoTable({
+          startY: appendixStartY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 8.5, overflow: "linebreak", cellPadding: 1.6 },
+          headStyles: { fillColor: [230, 244, 255], textColor: 18 },
+          head: [["Sumber", "Kapasiti", "Utilisasi (% hari)", "CAPEX (RM)", "OPEX (RM/tahun)", "NPV (RM)", "BCR"]],
+          body: data.altSources.map((r) => [r.name, r.capacity, r.util, r.capex, r.opex, r.npv, r.bcr]),
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+        doc.autoTable({
+          startY: cursorY,
+          margin: { left: margin, right: margin },
+          theme: "grid",
+          styles: { fontSize: 8.5, overflow: "linebreak", cellPadding: 1.6 },
+          headStyles: { fillColor: [12, 142, 217], textColor: 255 },
+          head: [["Jenis", "Item / Komponen", "Kuantiti", "Kos seunit (RM)", "Jumlah (RM)", "Catatan"]],
+          body: data.capexOpexItems.map((r) => [r.type, r.name, r.qty, r.cost, r.total, r.note || "-"]),
+        });
+        cursorY = doc.lastAutoTable.finalY + 6;
+        addParagraphs([
+          data.disclaimerText,
+          data.confidential ? "Status: Sulit – untuk kegunaan dalaman pengurusan UMS sahaja." : "",
+        ]);
+
+        // RENDER TOC & HEADER/FOOTER
+        renderTOC(tocPage);
+        addHeaderFooter();
+
         const safeScenario = (data.activeScenarioId || "Aktif").replace(/\W+/g, "_");
         doc.save(`Laporan_UMS_Water_${safeScenario}_${data.fileDate}.pdf`);
       }
 
       async function downloadTopMgmtPptx() {
-        const PptxGenJS = window.PptxGenJS;
-        if (!PptxGenJS) {
-          alert("Library PowerPoint (PptxGenJS) tidak dimuatkan.");
-          return;
-        }
+        let PptxGenJS = window.PptxGenJS;
         try {
+          PptxGenJS = await ensurePptxLoaded();
+          if (!PptxGenJS) {
+            alert("Library PowerPoint (PptxGenJS) tidak dimuatkan. Sila cuba lagi selepas semak sambungan internet.");
+            return;
+          }
           if (!hasCalculated) {
             const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana PowerPoint.\nPilih OK untuk Kira & Jana PPTX, atau Batal untuk kembali.");
             if (!proceed) return;
@@ -6761,8 +7087,8 @@
             if (!ok) return;
           }
         } catch (err) {
-          console.error("[PPTX] gagal mengira sebelum eksport", err);
-          showErrorBanner(err?.message || "Ralat semasa pengiraan sebelum jana PPTX.");
+          console.error("[PPTX] gagal memuat library atau mengira sebelum eksport", err);
+          showErrorBanner(err?.message || "Ralat semasa memuat library / pengiraan sebelum jana PPTX. Sila semak sambungan dan cuba lagi.");
           return;
         }
 
@@ -7440,6 +7766,15 @@
         runCalculation({ scroll: true });
       });
       resetInputsBtn?.addEventListener("click", handleResetAction);
+      backToInputBtn?.addEventListener("click", () => {
+        const target = document.getElementById("input-wrapper") || inputStepsContainer || document.body;
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        setStepperExpanded(true, { source: "back-to-input", scrollIntoView: false });
+        const firstStep = inputStepsContainer?.querySelector(".input-step");
+        if (firstStep) firstStep.open = true;
+      });
 
       attachHero();
       buildInputSteps();
