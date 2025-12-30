@@ -3178,8 +3178,7 @@
         stickyCalc.id = "sticky-calc-btn";
         stickyCalc.textContent = "🚀 KIRA SEKARANG";
         stickyCalc.addEventListener("click", () => {
-          runCalculation({ scroll: false });
-          setStepperExpanded(false, { source: "calculate" });
+          handleKiraClick();
         });
 
         const stickySave = document.createElement("button");
@@ -3267,6 +3266,12 @@
           if (scroll) scrollToOutput();
         }
         return ok !== false;
+      }
+
+      // Pusatkan logik KIRA supaya semua butang rujuk handler yang sama.
+      function handleKiraClick() {
+        runCalculation();
+        setStepperExpanded(false, { source: "calculate" });
       }
 
       function formatNumber(num) {
@@ -6778,10 +6783,6 @@
       });
 
       // Lindungi pemilih KIRA jika seksyen CTA disembunyikan.
-      const handleKiraClick = () => {
-        runCalculation();
-        setStepperExpanded(false, { source: "calculate" });
-      };
       calcBtn?.addEventListener("click", handleKiraClick);
       document.addEventListener("click", (e) => {
         if (e.target.closest("#sticky-calc-btn") || e.target.closest("#calculate-btn")) {
