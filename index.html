@@ -15,6 +15,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- jsPDF AutoTable untuk jadual berbilang halaman -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- PptxGenJS (penjanaan PowerPoint) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PptxGenJS/3.12.0/pptxgen.min.js"></script>
 
   <style>
     :root {
@@ -1524,6 +1526,66 @@
       color: #476582;
       font-size: 0.85rem;
     }
+
+    .sticky-action-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      background: linear-gradient(90deg, #f3f9ff 0%, #f0f7ff 50%, #f3f9ff 100%);
+      border-top: 1px solid #cfe1f5;
+      box-shadow: 0 -8px 24px rgba(18, 50, 74, 0.08);
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.75rem 1.15rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .sticky-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .sticky-helper {
+      color: #34526e;
+      font-size: 0.86rem;
+      line-height: 1.25;
+    }
+
+    body.has-sticky-bar,
+    main.has-sticky-bar {
+      padding-bottom: 6rem;
+    }
+
+    @media (max-width: 720px) {
+      .sticky-action-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
+        padding: 0.85rem 0.9rem 1rem;
+      }
+
+      .sticky-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+      }
+
+      .sticky-actions button {
+        flex: 1;
+        min-height: 46px;
+      }
+
+      body.has-sticky-bar,
+      main.has-sticky-bar {
+        padding-bottom: 7.2rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2350,6 +2412,9 @@
             <button id="export-excel-btn" type="button" class="export">
               📤 Eksport Excel (.xlsx)
             </button>
+            <button id="btn-download-pptx" type="button" class="secondary">
+              📑 Muat turun PowerPoint (Top Mgmt)
+            </button>
             <button id="btn-generate-report" type="button" class="primary">
               Jana Laporan (PDF)
             </button>
@@ -2580,6 +2645,7 @@
       const addRowBtn = document.getElementById("add-row-btn");
       const calcBtn = document.getElementById("calculate-btn");
       const exportBtn = document.getElementById("export-excel-btn");
+      const pptxBtn = document.getElementById("btn-download-pptx");
       const generateReportBtn = document.getElementById("btn-generate-report");
       const confidentialToggle = document.getElementById("confidential-toggle");
       const modeSelector = document.getElementById("mode-selector");
@@ -2710,6 +2776,22 @@
       const comparePlaceholder = document.getElementById("compare-placeholder");
       const sensPlaceholder = document.getElementById("sens-placeholder");
       const scenarioSaveStatus = document.getElementById("scenario-save-status");
+      const defaultSummaryText = summaryTextEl?.innerHTML || "";
+      const defaultChartExplainers = {
+        category: chartExplainCategory?.innerHTML || "",
+        share: chartExplainShare?.innerHTML || "",
+        npv: chartExplainNPV?.innerHTML || "",
+        payback: chartExplainPayback?.innerHTML || "",
+      };
+      const defaultInputValues = {
+        supply: supplyInput.value,
+        tariffWater: tariffWaterInput.value,
+        tariffSewer: tariffSewerInput.value,
+        analysisYears: analysisYearsInput.value,
+        discountRate: discountRateInput.value,
+        quickPeak: quickInputs.peak.value || "1.3",
+        quickBaseSupply: quickInputs.baseSupply.value || "",
+      };
 
       if (window.Chart && Chart.defaults) {
         Chart.defaults.animation = false;
@@ -3077,6 +3159,55 @@
         if (btnRow) container.appendChild(btnRow);
         if (conf) container.appendChild(conf);
         exportSlot.appendChild(container);
+      }
+
+      function renderStickyActionBar() {
+        if (document.getElementById("sticky-action-bar")) return;
+        const bar = document.createElement("div");
+        bar.id = "sticky-action-bar";
+        bar.className = "sticky-action-bar";
+
+        const helper = document.createElement("div");
+        helper.className = "sticky-helper";
+        helper.innerHTML = "<strong>Kiraan sentiasa tersedia.</strong><br />Gunakan bar ini untuk kira & simpan tanpa skrol.";
+
+        const actions = document.createElement("div");
+        actions.className = "sticky-actions";
+
+        const stickyCalc = document.createElement("button");
+        stickyCalc.type = "button";
+        stickyCalc.className = "primary";
+        stickyCalc.id = "sticky-calc-btn";
+        stickyCalc.textContent = "🚀 KIRA SEKARANG";
+        stickyCalc.addEventListener("click", () => {
+          runCalculation({ scroll: false });
+          setStepperExpanded(false, { source: "calculate" });
+        });
+
+        const stickySave = document.createElement("button");
+        stickySave.type = "button";
+        stickySave.className = "secondary";
+        stickySave.id = "sticky-save-btn";
+        stickySave.textContent = "💾 SIMPAN SENARIO";
+        stickySave.addEventListener("click", () => {
+          if (saveScenarioCtaBtn) {
+            saveScenarioCtaBtn.click();
+          } else if (saveScenarioBtn) {
+            saveScenarioBtn.click();
+          } else {
+            saveActiveScenario();
+            alert("Senario disimpan dalam pelayar.");
+          }
+        });
+
+        actions.appendChild(stickySave);
+        actions.appendChild(stickyCalc);
+
+        bar.appendChild(helper);
+        bar.appendChild(actions);
+        document.body.appendChild(bar);
+        document.body.classList.add("has-sticky-bar");
+        mainEl?.classList.add("has-sticky-bar");
       }
 
       function updateStatusChip() {
@@ -4396,12 +4527,184 @@
         applyScenarioInputs(activeScenario().inputs);
       }
 
-      function resetScenario() {
-        const id = appState.activeScenarioId || "A";
-        appState.scenarios[id] = createEmptyScenario(id, `Senario ${id}`);
+      function clearChartInstance(chartRef, canvasId) {
+        if (chartRef && typeof chartRef.destroy === "function") {
+          chartRef.destroy();
+        }
+        if (canvasId) {
+          const canvas = document.getElementById(canvasId);
+          const ctx = canvas?.getContext("2d");
+          if (canvas && ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+      }
+
+      function resetOutputsUI() {
+        clearElement(resultsBody);
+        clearElement(altResultsBody);
+        summaryAvgMLDEl.textContent = "–";
+        summaryPeakMLDEl.textContent = "–";
+        supplyAvgMLDEl.textContent = "–";
+        altSupplyMLDEl.textContent = "–";
+        effectiveSupplyMLDEl.textContent = "–";
+        surplusAvgMLDEl.textContent = "–";
+        surplusPeakMLDEl.textContent = "–";
+        statusAvgEl.textContent = "–";
+        statusPeakEl.textContent = "–";
+        rowAvg.classList.remove("summary-row-surplus", "summary-row-deficit");
+        rowPeak.classList.remove("summary-row-surplus", "summary-row-deficit");
+
+        totalPopEl.textContent = "–";
+        totalAvgM3El.textContent = "–";
+        totalPeakM3El.textContent = "–";
+        totalAvgMLDEl.textContent = "–";
+        totalPeakMLDEl.textContent = "–";
+
+        altTotalCapacityEl.textContent = "–";
+        altTotalVolumeEl.textContent = "–";
+        altTotalCapexEl.textContent = "–";
+        altTotalOpexEl.textContent = "–";
+        altTotalSavingEl.textContent = "–";
+        altTotalNetCFEl.textContent = "–";
+        altTotalNPVEl.textContent = "–";
+        altTotalBCREl.textContent = "–";
+
+        sumCapexEl.textContent = "–";
+        sumSavingEl.textContent = "–";
+        sumOpexEl.textContent = "–";
+        sumNetCFEl.textContent = "–";
+        sumNPVEl.textContent = "–";
+        sumBCREl.textContent = "–";
+        sumIRREl.textContent = "–";
+        capexItemsTotalEl.textContent = "0.00";
+        opexItemsTotalEl.textContent = "0.00";
+
+        Object.values(sensitivityLabels).forEach((el) => {
+          if (el) el.textContent = "NPV: –, BCR: –";
+        });
+
+        summaryTextEl.innerHTML = defaultSummaryText;
+        chartExplainCategory.innerHTML = defaultChartExplainers.category;
+        chartExplainShare.innerHTML = defaultChartExplainers.share;
+        chartExplainNPV.innerHTML = defaultChartExplainers.npv;
+        chartExplainPayback.innerHTML = defaultChartExplainers.payback;
+
+        calcStatusChip.textContent = "Belum dikira";
+        if (calcAlertBox) {
+          calcAlertBox.classList.add("hidden");
+          calcAlertBox.innerHTML = "";
+        }
+        if (validationBox) {
+          validationBox.classList.add("hidden");
+          validationList.innerHTML = "";
+        }
+
+        clearChartInstance(categoryChart, "demand-by-category-chart");
+        clearChartInstance(shareChart, "demand-share-chart");
+        clearChartInstance(cbaNpvChart, "cba-npv-chart");
+        clearChartInstance(cbaPaybackChart, "cba-payback-chart");
+        categoryChart = null;
+        shareChart = null;
+        cbaNpvChart = null;
+        cbaPaybackChart = null;
+      }
+
+      function resetAllInputs({ includeSavedScenarios = false } = {}) {
+        const activeId = appState.activeScenarioId || "A";
+        const preservedName = appState.scenarios[activeId]?.name || `Senario ${activeId}`;
+
+        if (includeSavedScenarios) {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(LEGACY_KEY);
+          appState = {
+            version: SCHEMA_VERSION,
+            schemaVersion: SCHEMA_VERSION,
+            mode: "quick",
+            demandMode: "quick",
+            activeScenarioId: "A",
+            scenarios: { A: createEmptyScenario("A", "Senario A") },
+          };
+        } else {
+          appState.scenarios[activeId] = createEmptyScenario(activeId, preservedName);
+        }
+
+        const targetScenario = activeScenario();
+        if (targetScenario) {
+          targetScenario.inputs = {
+            mode: appState.mode || "quick",
+            demandMode: "quick",
+            quick: {
+              pop: "",
+              percap: "",
+              demand: "",
+              peak: defaultInputValues.quickPeak || "1.3",
+              baseSupply: defaultInputValues.quickBaseSupply || "",
+              alt: {
+                name: "",
+                capacity: "",
+                util: "",
+                capex: "",
+                opex: "",
+              },
+            },
+            supply: defaultInputValues.supply,
+            tariffWater: defaultInputValues.tariffWater,
+            tariffSewer: defaultInputValues.tariffSewer,
+            analysisYears: defaultInputValues.analysisYears,
+            discount: defaultInputValues.discountRate,
+            categories: [],
+            altRows: [],
+            capexRows: [],
+          };
+          targetScenario.savedAt = null;
+          targetScenario.calculatedAt = null;
+          targetScenario.updatedAt = Date.now();
+        }
+
+        setMode("quick");
+        setDemandMode("quick", true);
+
+        pdfScopeSelect.value = "active";
+        pdfLevelSelect.value = "ringkas";
+        preparedByInput.value = "";
+        pdfChartsToggle.value = "yes";
+        confidentialToggle.checked = false;
+
+        const manualCatRadio = document.querySelector("input[name='category-input-mode'][value='manual']");
+        if (manualCatRadio) {
+          manualCatRadio.checked = true;
+          setCategoryInputMode("manual");
+        }
+
+        applyScenarioInputs(activeScenario()?.inputs || {});
+        resetOutputsUI();
+        hasCalculated = false;
+        lastCalculatedAt = null;
+        lastAltSources = [];
+        lastAltSummary = {
+          totalPVBenefits: 0,
+          totalPVCosts: 0,
+          pvCapex: 0,
+          pvOpex: 0,
+          payback: NaN,
+        };
+
         renderScenarioList();
-        applyScenarioInputs(appState.scenarios[id].inputs);
         persistState();
+        clearMissingHighlights();
+        showMissingPanel([]);
+        revealOutputs();
+        updateStatusChip();
+        updateActiveScenarioBanner();
+        updateScenarioSaveStatus();
+        updateCompareTable();
+        updateAdvancedVisibility();
+        refreshStepperValidation();
+      }
+
+      function resetScenario(options = {}) {
+        resetAllInputs(options);
       }
 
       function loadPreset() {
@@ -6248,6 +6551,204 @@
         const safeScenario = (data.activeScenarioId || "Aktif").replace(/\W+/g, "_");
         doc.save(`Laporan_UMS_Water_${safeScenario}_${data.fileDate}.pdf`);
       }
+
+      async function downloadTopMgmtPptx() {
+        const PptxGenJS = window.PptxGenJS;
+        if (!PptxGenJS) {
+          alert("Library PowerPoint (PptxGenJS) tidak dimuatkan.");
+          return;
+        }
+        if (!hasCalculated) {
+          const proceed = confirm("Sila tekan KIRA SEKARANG terlebih dahulu untuk jana PowerPoint.\nPilih OK untuk Kira & Jana PPTX, atau Batal untuk kembali.");
+          if (!proceed) return;
+          const ok = runCalculation({ scroll: false });
+          if (!ok) return;
+        }
+
+        await loadUmsLogoDataUrl();
+        const data = await collectReportData();
+        const pptx = new PptxGenJS();
+        pptx.layout = "16x9";
+
+        const primary = "0c8ed9";
+        const dark = "12324a";
+        const soft = "e6f4ff";
+        const scenarioLabel = data.activeScenarioName || `Senario ${data.activeScenarioId || "Aktif"}`;
+        const today = data.fileDate || new Date().toISOString().slice(0, 10);
+        const safeScenario = (data.activeScenarioId || "Aktif").replace(/\W+/g, "_");
+        const headerOpts = { bold: true, color: dark, fill: soft, fontSize: 12 };
+        const safeNumber = (val) =>
+          isFinite(val) ? formatNumber(val) : val || "–";
+
+        const summary = data.summary || {};
+        const financeSummary = data.financeSummary || {};
+        const paybackText = isFinite(lastAltSummary.payback)
+          ? formatNumber(lastAltSummary.payback)
+          : financeSummary.payback || "–";
+        const titleSlide = pptx.addSlide();
+        titleSlide.background = { color: "f7fbff" };
+        titleSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 5.6, w: "100%", h: 1.4, fill: { color: soft } });
+        titleSlide.addText("UMS Water Demand–Supply & CBA Summary", {
+          x: 0.5,
+          y: 0.7,
+          w: 9,
+          h: 1.2,
+          fontSize: 28,
+          bold: true,
+          color: dark,
+        });
+        titleSlide.addText(`Senario: ${scenarioLabel}`, { x: 0.5, y: 2.0, fontSize: 16, color: primary, bold: true });
+        titleSlide.addText(`Tarikh: ${today}`, { x: 0.5, y: 2.55, fontSize: 14, color: dark });
+        titleSlide.addText(`Konteks: Ringkasan pengurusan tertinggi (demand–supply + CBA)`, { x: 0.5, y: 3.05, fontSize: 13, color: "#245070" });
+        if (data.preparedBy) {
+          titleSlide.addText(`Disediakan oleh: ${data.preparedBy}`, { x: 0.5, y: 3.55, fontSize: 12, color: "#245070" });
+        }
+        if (umsLogoDataUrl) {
+          titleSlide.addImage({ data: umsLogoDataUrl, x: 8.4, y: 0.45, w: 1.5, h: 1.5 });
+        }
+        titleSlide.addText("Fokus: status terkini permintaan & bekalan, kesan sumber alternatif, dan KPI kewangan utama untuk keputusan pantas.", {
+          x: 0.5,
+          y: 4.2,
+          w: 9,
+          fontSize: 12.5,
+          color: dark,
+        });
+
+        const kpiSlide = pptx.addSlide();
+        kpiSlide.background = { color: "ffffff" };
+        kpiSlide.addText("Sorotan KPI & Graf", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+
+        const kpiTable = [
+          [
+            { text: "KPI", options: headerOpts },
+            { text: "Nilai", options: headerOpts },
+          ],
+          ["Permintaan purata (MLD)", safeNumber(summary.avgMLD)],
+          ["Permintaan puncak (MLD)", safeNumber(summary.peakMLD)],
+          ["Bekalan efektif (MLD)", safeNumber(summary.effectiveMLD)],
+          ["Lebihan/Defisit purata (MLD)", safeNumber(summary.surplusAvg)],
+          ["Lebihan/Defisit puncak (MLD)", safeNumber(summary.surplusPeak)],
+          ["BCR projek alternatif", financeSummary.bcr || "–"],
+          ["NPV projek alternatif (RM)", financeSummary.npv || "–"],
+          ["Payback anggaran (tahun)", paybackText],
+        ];
+        kpiSlide.addTable(kpiTable, {
+          x: 0.5,
+          y: 1.0,
+          w: 4.6,
+          colW: [2.8, 1.8],
+          border: { color: primary, pt: 0.75 },
+          fontSize: 12,
+        });
+
+        const shareChartImg =
+          chartToImage(shareChart, "demand-share-chart") ||
+          chartToImage(categoryChart, "demand-by-category-chart");
+        const supplyDemandImg = buildSupplyDemandChartImage(summary);
+        const chartImg = shareChartImg || supplyDemandImg || data.charts?.supplyDemand;
+        if (chartImg) {
+          kpiSlide.addImage({
+            data: chartImg,
+            x: 5.4,
+            y: 1.0,
+            w: 4.4,
+            h: 3.2,
+          });
+          kpiSlide.addText("Graf diambil terus daripada kalkulator (Chart.js).", {
+            x: 5.4,
+            y: 4.25,
+            w: 4.4,
+            fontSize: 10,
+            color: "#4b6885",
+          });
+        }
+
+        const highlightBullets = [
+          "Kira semula cepat: bar KIRA kekal di bawah skrin.",
+          "Gunakan bekalan efektif (JANS + alternatif) untuk keputusan tahap kampus.",
+          "Semak BCR/NPV sebelum komit CAPEX; gunakan fasa jika payback panjang.",
+          "Kekalkan senario A/B/C untuk perbandingan cepat tanpa kehilangan data disimpan.",
+          "Eksport Excel/PDF/PPTX terus untuk mesyuarat pengurusan.",
+        ];
+        kpiSlide.addText(highlightBullets, {
+          x: 0.5,
+          y: 5.0,
+          w: 9.2,
+          fontSize: 12,
+          color: dark,
+          bullet: true,
+          lineSpacing: 20,
+        });
+
+        const altSlide = pptx.addSlide();
+        altSlide.background = { color: "ffffff" };
+        altSlide.addText("Sumber Alternatif & Cadangan", { x: 0.5, y: 0.3, fontSize: 20, bold: true, color: dark });
+
+        const altSources = data.altSources?.length ? data.altSources : [];
+        const altTableRows = [
+          [
+            { text: "Sumber", options: headerOpts },
+            { text: "Vol. tahunan (m³/tahun)", options: headerOpts },
+            { text: "CAPEX (RM)", options: headerOpts },
+            { text: "OPEX (RM/tahun)", options: headerOpts },
+            { text: "Saving (RM/tahun)", options: headerOpts },
+            { text: "Payback (tahun)", options: headerOpts },
+            { text: "NPV (RM)", options: headerOpts },
+            { text: "BCR", options: headerOpts },
+          ],
+        ];
+        if (altSources.length) {
+          altSources.forEach((r) => {
+            altTableRows.push([
+              r.name || "-",
+              r.volume || "–",
+              r.capex || "–",
+              r.opex || "–",
+              r.saving || "–",
+              r.payback || "–",
+              r.npv || "–",
+              r.bcr || "–",
+            ]);
+          });
+        } else {
+          altTableRows.push(["Tiada data sumber alternatif", "–", "–", "–", "–", "–", "–", "–"]);
+        }
+        altSlide.addTable(altTableRows, {
+          x: 0.5,
+          y: 1.0,
+          w: 9.3,
+          colW: [1.8, 1.5, 1.3, 1.25, 1.25, 1.2, 1.3, 0.8],
+          fontSize: 11,
+          border: { color: "#c9deef", pt: 0.75 },
+          fill: "ffffff",
+        });
+
+        const nextSteps = [
+          "Kemaskan tarif & utiliti sumber alternatif setiap 6–12 bulan.",
+          "Utamakan sumber dengan BCR > 1 & payback singkat untuk fasa awal.",
+          "Audit data meter/kebocoran bagi kategori demand tertinggi.",
+          "Rancang capex/opex berfasa jika NPV negatif atau defisit puncak besar.",
+        ];
+        altSlide.addText("Cadangan ringkas (boleh dikemas kini):", { x: 0.5, y: 5.8, fontSize: 13, bold: true, color: dark });
+        altSlide.addText(nextSteps, {
+          x: 0.5,
+          y: 6.2,
+          w: 9.2,
+          fontSize: 12,
+          color: dark,
+          bullet: true,
+          lineSpacing: 22,
+        });
+        altSlide.addText("Nota: Anggaran tahap perancangan; sahkan dengan audit teknikal, data meter rasmi dan semakan kewangan terperinci.", {
+          x: 0.5,
+          y: 7.4,
+          w: 9.2,
+          fontSize: 10.5,
+          color: "#3e5875",
+        });
+
+        await pptx.writeFile(`UMS_Water_TopMgmt_${safeScenario}_${today}.pptx`);
+      }
       // END REPORT UPDATE
 
       addItemBtn.addEventListener("click", () => {
@@ -6444,6 +6945,8 @@
         }
       });
 
+      pptxBtn?.addEventListener("click", downloadTopMgmtPptx);
+
       generateReportBtn.addEventListener("click", () => {
         generateReportPDF();
       });
@@ -6570,9 +7073,15 @@
         saveActiveScenario();
         alert("Senario disimpan dalam pelayar.");
       };
+      const handleResetAction = () => {
+        const includeSaved = confirm(
+          "Reset termasuk senario tersimpan dalam pelayar?\nOK: Padam semua senario tersimpan & kosongkan input.\nCancel: Hanya reset input senario aktif."
+        );
+        resetAllInputs({ includeSavedScenarios: includeSaved });
+      };
       saveScenarioBtn.addEventListener("click", handleSaveScenario);
       saveScenarioCtaBtn?.addEventListener("click", handleSaveScenario);
-      resetScenarioBtn?.addEventListener("click", resetScenario);
+      resetScenarioBtn?.addEventListener("click", handleResetAction);
       presetBtn?.addEventListener("click", loadPreset);
 
       jumpCalcBtn?.addEventListener("click", () => {
@@ -6584,19 +7093,13 @@
         loadPreset();
         runCalculation({ scroll: true });
       });
-      resetInputsBtn?.addEventListener("click", () => {
-        resetScenario();
-        hasCalculated = false;
-        clearMissingHighlights();
-        showMissingPanel([]);
-        revealOutputs();
-        updateStatusChip();
-      });
+      resetInputsBtn?.addEventListener("click", handleResetAction);
 
       attachHero();
       buildInputSteps();
       buildOutputLayout();
       moveExportUI();
+      renderStickyActionBar();
       revealOutputs();
       buildStepper();
       initStepperBehavior();
