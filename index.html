@@ -154,6 +154,17 @@
       font-weight: 700;
     }
 
+    .error-banner {
+      display: none;
+      border-radius: 0.85rem;
+      padding: 0.85rem 0.95rem;
+      background: #fff4f4;
+      border: 1px solid rgba(211, 50, 47, 0.35);
+      color: #8b1f1b;
+      font-weight: 700;
+      margin: 0.8rem 0 0;
+    }
+
     .calc-alert ul {
       margin: 0.35rem 0 0.1rem 1rem;
       padding: 0;
@@ -1648,6 +1659,7 @@
 
     <section class="card output-hidden" id="output-wrapper">
       <h2><span class="icon">📤</span> OUTPUT & Analisis</h2>
+      <div id="error-banner" class="error-banner" role="alert"></div>
       <div id="output-empty" class="empty-output">Belum ada hasil. Lengkapkan INPUT dan tekan <strong>KIRA SEKARANG</strong>.</div>
       <div id="output-block" class="output-block"></div>
     </section>
@@ -2080,7 +2092,7 @@
       <h2><span class="icon">🚀</span> Jalankan Kiraan & Simpan Senario</h2>
       <div id="calc-alert" class="calc-alert hidden"></div>
       <div class="btn-row">
-        <button id="calculate-btn" type="button" class="primary">
+        <button id="btnKira" type="button" class="primary">
           🚀 KIRA SEKARANG
         </button>
         <button type="button" class="secondary" id="btn-save-scenario-cta">💾 SIMPAN SENARIO</button>
@@ -2626,6 +2638,7 @@
       const outputWrapper = document.getElementById("output-wrapper");
       const outputBlock = document.getElementById("output-block");
       const outputEmpty = document.getElementById("output-empty");
+      const errorBanner = document.getElementById("error-banner");
       const exportWrapper = document.getElementById("export-wrapper");
       const exportSlot = document.getElementById("export-slot");
       const jumpCalcBtn = document.getElementById("btn-jump-calc");
@@ -2650,7 +2663,7 @@
       };
 
       const addRowBtn = document.getElementById("add-row-btn");
-      const calcBtn = document.getElementById("calculate-btn");
+      const calcBtn = document.getElementById("btnKira");
       const exportBtn = document.getElementById("export-excel-btn");
       const pptxBtn = document.getElementById("btn-download-pptx");
       const generateReportBtn = document.getElementById("btn-generate-report");
@@ -2859,7 +2872,7 @@
         horizon: ["#analysis-years", "label:Tempoh analisis"],
         discount: ["#discount-rate", "label:Kadar diskaun"],
         alternatives: ["#alt-body", "#alt-results-table", "label:Sumber alternatif"],
-        calcBtn: ["#calculate-btn", "text:Kira"],
+        calcBtn: ["#btnKira", "text:Kira"],
         summary: ["#summary-table", "#summary-text"],
         exportExcel: ["#export-excel-btn", "text:Eksport"],
         exportPdf: ["#btn-generate-report", "text:Jana Laporan"],
@@ -3226,6 +3239,34 @@
         if (outputBlock) outputBlock.style.display = hasCalculated ? "grid" : "none";
       }
 
+      function showOutputSectionAndScroll() {
+        if (outputWrapper) {
+          outputWrapper.classList.remove("output-hidden");
+          outputWrapper.style.display = "";
+        }
+        if (exportWrapper) {
+          exportWrapper.classList.remove("output-hidden");
+        }
+        if (outputEmpty) outputEmpty.style.display = hasCalculated ? "none" : "block";
+        if (outputBlock) outputBlock.style.display = hasCalculated ? "grid" : "none";
+        const target = outputWrapper || outputBlock;
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function clearErrorBanner() {
+        if (!errorBanner) return;
+        errorBanner.textContent = "";
+        errorBanner.style.display = "none";
+      }
+
+      function showErrorBanner(message) {
+        if (!errorBanner) return;
+        errorBanner.textContent = message || "Ralat tidak diketahui semasa kiraan.";
+        errorBanner.style.display = "block";
+      }
+
       function scrollToOutput() {
         const first = outputBlock?.querySelector(".output-section");
         if (first) {
@@ -3271,8 +3312,10 @@
       }
 
       // Pusatkan logik KIRA supaya semua butang rujuk handler yang sama.
-      function handleKiraClick() {
-        console.log("KIRA clicked", { mode: appState.mode, demandMode: appState.demandMode });
+      function handleKiraClick(e) {
+        e?.preventDefault?.();
+        clearErrorBanner();
+        console.log("[KIRA] clicked", { mode: appState.mode, demandMode: appState.demandMode });
         console.log("inputs:", {
           quick: {
             pop: quickInputs.pop.value,
@@ -3288,14 +3331,23 @@
           discountRate: discountRateInput.value,
           demandMode: appState.demandMode,
         });
-        const ok = runCalculation();
-        if (ok) {
-          console.log("results:", {
-            summary: activeScenario()?.outputs?.summary,
-            finance: activeScenario()?.outputs?.finance,
-          });
-        } else {
-          console.log("results:", "validation failed");
+        try {
+          const ok = runCalculation({ scroll: false });
+          if (ok) {
+            console.log("[KIRA] done", {
+              summary: activeScenario()?.outputs?.summary,
+              finance: activeScenario()?.outputs?.finance,
+            });
+            showOutputSectionAndScroll();
+          } else {
+            console.warn("[KIRA] validation failed");
+            showErrorBanner("Input wajib belum lengkap. Sila lengkapkan medan ditanda untuk teruskan kiraan.");
+            showOutputSectionAndScroll();
+          }
+        } catch (err) {
+          console.error("[KIRA] failed", err);
+          showErrorBanner(err?.message || "Ralat tidak diketahui semasa kiraan.");
+          showOutputSectionAndScroll();
         }
         setStepperExpanded(false, { source: "calculate" });
       }
@@ -6817,7 +6869,7 @@
       // Lindungi pemilih KIRA jika seksyen CTA disembunyikan.
       calcBtn?.addEventListener("click", handleKiraClick);
       document.addEventListener("click", (e) => {
-        if (e.target.closest("#sticky-calc-btn") || e.target.closest("#calculate-btn")) {
+        if (e.target.closest("#sticky-calc-btn") || e.target.closest("#btnKira")) {
           handleKiraClick();
         }
       });
