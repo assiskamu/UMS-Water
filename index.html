@@ -1480,6 +1480,11 @@
 
     .chart-explain-block { margin-top: 0.4rem; font-size: 0.86rem; color: #2d4c69; }
 
+    .chart-area {
+      position: relative;
+      overflow: visible;
+    }
+
     .chart-area canvas {
       max-height: 320px;
     }
@@ -1490,6 +1495,7 @@
     #cba-payback-chart {
       max-height: 320px;
     }
+    #demand-share-chart.long { max-height: none; }
     #demand-by-category-chart.long { max-height: none; }
 
     body.pdf-exporting {
@@ -2527,7 +2533,9 @@
         Rajah menunjukkan sumbangan (%) setiap kategori kepada permintaan purata
         keseluruhan kampus.
       </p>
-      <canvas id="demand-share-chart" height="200"></canvas>
+      <div class="chart-area" id="share-chart-area">
+        <canvas id="demand-share-chart" height="200"></canvas>
+      </div>
       <div class="summary-text" id="chart-explain-share"></div>
     </section>
 
@@ -5737,24 +5745,31 @@
         const shareCanvas = shareChartCtx?.canvas;
         const shareParent = shareCanvas?.parentElement;
         const useShareBar = labels.length > 30;
-        const tickFont = labels.length > 60 ? 8 : labels.length > 40 ? 9 : 10;
-        if (shareParent) shareParent.style.height = "";
+        const rowHeight = labels.length > 80 ? 26 : 28;
+        const tickFont =
+          labels.length > 80 ? 7 : labels.length > 60 ? 8 : labels.length > 40 ? 9 : 10;
+        const baseShareHeight = 320;
+        const truncateLabel = (label = "") =>
+          label && label.length > 55 ? `${label.slice(0, 55)}…` : label || "";
+        if (shareParent) {
+          shareParent.style.height = "";
+          shareParent.style.minHeight = "";
+        }
         if (shareCanvas) {
+          shareCanvas.classList.toggle("long", useShareBar);
           shareCanvas.style.height = "";
-          shareCanvas.style.width = "";
-          if (!useShareBar) {
-            shareCanvas.height = 200;
-            shareCanvas.setAttribute("height", "200");
-          }
+          shareCanvas.style.width = "100%";
+          shareCanvas.height = baseShareHeight;
+          shareCanvas.setAttribute("height", `${baseShareHeight}`);
         }
 
         if (useShareBar) {
-          const targetHeight = Math.min(2200, Math.max(600, 240 + labels.length * 22));
+          const targetHeight = Math.max(720, 280 + labels.length * rowHeight);
           if (shareParent) shareParent.style.height = `${targetHeight}px`;
           if (shareCanvas) {
-            shareCanvas.style.height = "100%";
-            shareCanvas.style.width = "100%";
             shareCanvas.height = targetHeight;
+            shareCanvas.style.height = `${targetHeight}px`;
+            shareCanvas.setAttribute("height", `${targetHeight}`);
           }
           const sharePairs = labels.map((label, idx) => ({
             label,
@@ -5765,10 +5780,12 @@
           const percentData = sharePairs.map((item) =>
             totalAvg > 0 ? (item.value / totalAvg) * 100 : 0
           );
+          const sortedLabels = sharePairs.map((item) => item.label);
+          const displayLabels = sortedLabels.map(truncateLabel);
           shareChart = new Chart(shareChartCtx, {
             type: "bar",
             data: {
-              labels: sharePairs.map((item) => item.label),
+              labels: displayLabels,
               datasets: [
                 {
                   label: "Sumbangan (%)",
@@ -5792,7 +5809,11 @@
                 },
                 tooltip: {
                   callbacks: {
-                    label: (ctx) => `${ctx.parsed.x?.toFixed(1) || 0}%`,
+                    label: (ctx) => {
+                      const pct = ctx.parsed.x ?? 0;
+                      const fullLabel = sortedLabels[ctx.dataIndex] || ctx.label || "";
+                      return `${fullLabel}: ${pct.toFixed(1)}%`;
+                    },
                   },
                 },
               },
@@ -5800,11 +5821,14 @@
                 x: {
                   beginAtZero: true,
                   title: { display: true, text: "% daripada jumlah" },
+                  ticks: { padding: 8 },
                 },
                 y: {
                   ticks: {
                     autoSkip: false,
+                    padding: 8,
                     font: { size: tickFont },
+                    callback: (_value, idx) => displayLabels[idx] || "",
                   },
                 },
               },
