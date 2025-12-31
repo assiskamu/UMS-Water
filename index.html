@@ -1492,6 +1492,28 @@
     }
     #demand-by-category-chart.long { max-height: none; }
 
+    body.pdf-exporting {
+      max-width: 190mm;
+      margin: 0 auto;
+      padding: 10mm;
+      background: #ffffff;
+      overflow: visible;
+    }
+    body.pdf-exporting .two-column,
+    body.pdf-exporting .output-block {
+      grid-template-columns: 1fr !important;
+    }
+    body.pdf-exporting .card {
+      overflow: visible;
+    }
+    body.pdf-exporting canvas {
+      max-height: none !important;
+      width: 100% !important;
+    }
+    body.pdf-exporting .chart-area {
+      overflow: visible;
+    }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -2473,6 +2495,9 @@
             <button id="btn-download-pptx" type="button" class="secondary">
               📑 Muat turun PowerPoint (Top Mgmt)
             </button>
+            <button id="btn-print-pdf" type="button" class="secondary">
+              🖨️ Print PDF OUTPUT & Analisis
+            </button>
             <button id="btn-generate-report" type="button" class="primary">
               Jana Laporan (PDF)
             </button>
@@ -2706,6 +2731,7 @@
       const calcBtn = document.getElementById("btnKira");
       const exportBtn = document.getElementById("export-excel-btn");
       const pptxBtn = document.getElementById("btn-download-pptx");
+      const printPdfBtn = document.getElementById("btn-print-pdf");
       const generateReportBtn = document.getElementById("btn-generate-report");
       const backToInputBtn = document.getElementById("btn-back-to-input");
       const confidentialToggle = document.getElementById("confidential-toggle");
@@ -2865,6 +2891,7 @@
 
       const umsLogoPath = "UMS logo.png";
       let umsLogoDataUrl = "";
+      let pdfLibPromise = null;
       let pptxLibPromise = null;
 
       let categoryChart = null;
@@ -5238,6 +5265,43 @@
         return pptxLibPromise;
       }
 
+      function ensurePdfLibLoaded() {
+        const hasHtml2Canvas = typeof window.html2canvas === "function";
+        const hasJsPdf = !!(window.jspdf?.jsPDF);
+        if (hasHtml2Canvas && hasJsPdf) {
+          return Promise.resolve({ html2canvas: window.html2canvas, jsPDF: window.jspdf.jsPDF });
+        }
+        if (pdfLibPromise) return pdfLibPromise;
+        const loadScript = (src, name) =>
+          new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = src;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error(`${name || "Skrip"} gagal dimuat`));
+            document.head.appendChild(script);
+          });
+        pdfLibPromise = Promise.all([
+          hasHtml2Canvas
+            ? Promise.resolve()
+            : loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js", "html2canvas"),
+          hasJsPdf
+            ? Promise.resolve()
+            : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", "jsPDF"),
+        ])
+          .then(() => {
+            if (typeof window.html2canvas !== "function" || !window.jspdf?.jsPDF) {
+              throw new Error("Library PDF tidak dimuatkan.");
+            }
+            return { html2canvas: window.html2canvas, jsPDF: window.jspdf.jsPDF };
+          })
+          .catch((err) => {
+            pdfLibPromise = null;
+            throw err;
+          });
+        return pdfLibPromise;
+      }
+
       function waitForNextFrame() {
         return new Promise((resolve) => requestAnimationFrame(() => resolve()));
       }
@@ -5259,6 +5323,42 @@
               })
           )
         );
+      }
+
+      function cloneSectionForPdf(section, canvasCopyPromises = []) {
+        const clone = section.cloneNode(true);
+        const sourceCanvases = Array.from(section.querySelectorAll("canvas"));
+        const clonedCanvases = Array.from(clone.querySelectorAll("canvas"));
+        clonedCanvases.forEach((canvas, idx) => {
+          const source = sourceCanvases[idx];
+          if (!source) return;
+          let dataUrl = "";
+          try {
+            dataUrl = source.toDataURL("image/png");
+          } catch (err) {
+            console.warn("Gagal menyalin kanvas untuk PDF", err);
+          }
+          if (!dataUrl) return;
+          const width = source.width || source.clientWidth || 800;
+          const height = source.height || source.clientHeight || 400;
+          canvas.width = width;
+          canvas.height = height;
+          canvas.style.width = source.style.width || "100%";
+          canvas.style.height = source.style.height || `${height}px`;
+          const ctx = canvas.getContext("2d");
+          const promise = new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              ctx.clearRect(0, 0, width, height);
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve();
+            };
+            img.onerror = resolve;
+            img.src = dataUrl;
+          });
+          canvasCopyPromises.push(promise);
+        });
+        return clone;
       }
 
       function waitForFonts() {
@@ -5563,8 +5663,14 @@
       }
 
       function updateDemandCharts(labels, avgData, peakData) {
-        if (categoryChart) categoryChart.destroy();
-        if (shareChart) shareChart.destroy();
+        if (categoryChart) {
+          categoryChart.destroy();
+          categoryChart = null;
+        }
+        if (shareChart) {
+          shareChart.destroy();
+          shareChart = null;
+        }
 
         const isLongList = labels.length > 30;
         if (balanceTwoColumn) {
@@ -5629,14 +5735,27 @@
         });
 
         const shareCanvas = shareChartCtx?.canvas;
+        const shareParent = shareCanvas?.parentElement;
         const useShareBar = labels.length > 30;
+        const tickFont = labels.length > 60 ? 8 : labels.length > 40 ? 9 : 10;
+        if (shareParent) shareParent.style.height = "";
         if (shareCanvas) {
-          const baseHeight = useShareBar ? Math.min(2200, 140 + labels.length * 18) : 200;
-          shareCanvas.height = baseHeight;
-          shareCanvas.style.height = `${baseHeight}px`;
+          shareCanvas.style.height = "";
+          shareCanvas.style.width = "";
+          if (!useShareBar) {
+            shareCanvas.height = 200;
+            shareCanvas.setAttribute("height", "200");
+          }
         }
 
         if (useShareBar) {
+          const targetHeight = Math.min(2200, Math.max(600, 240 + labels.length * 22));
+          if (shareParent) shareParent.style.height = `${targetHeight}px`;
+          if (shareCanvas) {
+            shareCanvas.style.height = "100%";
+            shareCanvas.style.width = "100%";
+            shareCanvas.height = targetHeight;
+          }
           const sharePairs = labels.map((label, idx) => ({
             label,
             value: Number(avgData?.[idx]) || 0,
@@ -5683,7 +5802,10 @@
                   title: { display: true, text: "% daripada jumlah" },
                 },
                 y: {
-                  ticks: { autoSkip: false },
+                  ticks: {
+                    autoSkip: false,
+                    font: { size: tickFont },
+                  },
                 },
               },
             },
@@ -6781,6 +6903,123 @@
           const pageIdx = pages.findIndex((p) => p.id === target);
           el.textContent = pageIdx >= 0 ? pageIdx + 1 : "–";
         });
+      }
+
+      async function printOutputsToPdf() {
+        const btn = printPdfBtn;
+        const originalText = btn?.textContent;
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Menjana PDF…";
+        }
+        try {
+          const libs = await ensurePdfLibLoaded();
+          const html2canvasFn = libs.html2canvas || window.html2canvas;
+          const jsPdfCtor = libs?.jsPDF || window.jspdf?.jsPDF;
+          if (!jsPdfCtor || typeof html2canvasFn !== "function") {
+            throw new Error("Library PDF tidak dimuatkan.");
+          }
+          if (!hasCalculated) {
+            const ok = runCalculation({ scroll: false });
+            if (!ok) throw new Error("Sila lengkapkan input dan tekan KIRA sebelum menjana PDF Output.");
+          }
+          const sections = Array.from(document.querySelectorAll("#output-block .output-section")).slice(0, 7);
+          if (!sections.length) {
+            throw new Error("Output 1–7 belum sedia. Sila tekan KIRA untuk jana output.");
+          }
+
+          document.body.classList.add("pdf-exporting");
+          const sandbox = document.createElement("div");
+          sandbox.id = "pdf-export-sandbox";
+          sandbox.style.position = "absolute";
+          sandbox.style.left = "-9999px";
+          sandbox.style.top = "0";
+          sandbox.style.width = "210mm";
+          sandbox.style.background = "#ffffff";
+          sandbox.style.padding = "0";
+          const canvasCopyPromises = [];
+          sections.forEach((section) => {
+            const clone = cloneSectionForPdf(section, canvasCopyPromises);
+            sandbox.appendChild(clone);
+          });
+          document.body.appendChild(sandbox);
+          await Promise.all(canvasCopyPromises);
+          await waitForImages(sandbox);
+          await wait(40);
+
+          const doc = new jsPdfCtor({
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+            compress: true,
+          });
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const margin = 10;
+          const usableWidth = pageWidth - margin * 2;
+          const usableHeight = pageHeight - margin * 2;
+          const scenarioLabel = activeScenario()?.name || `Senario ${appState.activeScenarioId || "Aktif"}`;
+          const safeScenario = scenarioLabel.replace(/\s+/g, "_");
+          const dateStr = new Date().toISOString().slice(0, 10);
+          const headerTitle = "OUTPUT & Analisis Permintaan-Bekalan Air UMS";
+          const addHeader = () => {
+            doc.setFontSize(11);
+            doc.setTextColor(20, 68, 105);
+            doc.text(headerTitle, margin, margin);
+            doc.setFontSize(9);
+            doc.setTextColor(62, 85, 110);
+            doc.text(`Senario: ${scenarioLabel} | Tarikh: ${dateStr}`, margin, margin + 5);
+            doc.setDrawColor(12, 110, 189);
+            doc.setLineWidth(0.3);
+            doc.line(margin, margin + 7, pageWidth - margin, margin + 7);
+          };
+
+          let isFirstPage = true;
+          for (const section of Array.from(sandbox.children)) {
+            const canvas = await html2canvasFn(section, {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: "#ffffff",
+            });
+            const imgWidth = usableWidth;
+            const pxPerMm = canvas.width / imgWidth;
+            const sliceHeightPx = usableHeight * pxPerMm;
+            let offsetPx = 0;
+            while (offsetPx < canvas.height) {
+              if (!isFirstPage) doc.addPage();
+              isFirstPage = false;
+              addHeader();
+              const sliceHeight = Math.min(sliceHeightPx, canvas.height - offsetPx);
+              let imgData = "";
+              if (sliceHeight === canvas.height && offsetPx === 0) {
+                imgData = canvas.toDataURL("image/png");
+              } else {
+                const sliceCanvas = document.createElement("canvas");
+                sliceCanvas.width = canvas.width;
+                sliceCanvas.height = sliceHeight;
+                const ctx = sliceCanvas.getContext("2d");
+                ctx.drawImage(canvas, 0, -offsetPx);
+                imgData = sliceCanvas.toDataURL("image/png");
+              }
+              const drawHeight = sliceHeight / pxPerMm;
+              doc.addImage(imgData, "PNG", margin, margin + 9, imgWidth, drawHeight, undefined, "FAST");
+              offsetPx += sliceHeight;
+            }
+          }
+          doc.save(`OUTPUT_Analisis_${safeScenario}_${dateStr}.pdf`);
+          clearErrorBanner();
+        } catch (err) {
+          console.error("Gagal menjana PDF output", err);
+          showErrorBanner(err?.message || "Gagal menjana PDF Output. Sila cuba lagi.");
+        } finally {
+          document.body.classList.remove("pdf-exporting");
+          const sandbox = document.getElementById("pdf-export-sandbox");
+          if (sandbox) sandbox.remove();
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = originalText || "🖨️ Print PDF OUTPUT & Analisis";
+          }
+        }
       }
 
       async function generateReportPDF() {
@@ -7888,6 +8127,10 @@
       });
 
       pptxBtn?.addEventListener("click", downloadTopMgmtPptx);
+
+      printPdfBtn?.addEventListener("click", () => {
+        printOutputsToPdf();
+      });
 
       generateReportBtn.addEventListener("click", () => {
         generateReportPDF();
